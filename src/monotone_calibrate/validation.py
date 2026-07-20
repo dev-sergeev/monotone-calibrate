@@ -11,7 +11,7 @@ from typing import Iterable
 
 import numpy as np
 
-from .engine import CandidateSet, FitOptions, fit_candidates
+from .engine import CandidateSet, FitOptions, SearchPolicy, fit_candidates
 from .model_runtime import FittedModel
 
 
@@ -20,7 +20,6 @@ class ValidationOptions:
     repetitions: int = 10
     bootstrap_resamples: int = 200
     base_seed: int = 20260716
-    fast_elementary_starts: int = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -287,7 +286,11 @@ def validate_candidates(
     selected_edge: list[bool] = []
     success_count = 0
     attempted_fits = resolved.repetitions * folds
-    fast_options = FitOptions(max_elementary_starts=resolved.fast_elementary_starts)
+    fold_options = FitOptions(
+        min_segment_share=full_candidates.search_trace.min_segment_share,
+        max_elementary_starts=full_candidates.search_trace.max_elementary_starts,
+        search_policy=SearchPolicy(full_candidates.search_trace.profile),
+    )
 
     for repetition in range(resolved.repetitions):
         assignment = _grouped_assignment(xv, folds, repetition, resolved.base_seed)
@@ -296,7 +299,7 @@ def validate_candidates(
             train_mask = ~test_mask
             train_x, train_y = xv[train_mask], yv[train_mask]
             test_x, test_y = xv[test_mask], yv[test_mask]
-            fitted = fit_candidates(train_x, train_y, fast_options)
+            fitted = fit_candidates(train_x, train_y, fold_options)
             prediction_one = _validation_predict(fitted.one.model, test_x)
             train_mean = float(np.mean(train_y))
             if not np.all(np.isfinite(prediction_one)):

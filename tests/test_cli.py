@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+from pathlib import Path
 
 from monotone_calibrate.cli import main
 
@@ -40,6 +41,8 @@ def test_cli_run_verify_and_predict_form_one_complete_local_workflow(
     assert run_output["status"] == "ok"
     assert run_output["output_dir"] == str(bundle)
     assert run_output["recommendation"] == "P1"
+    assert run_output["search"]["profile"] == "fast"
+    assert run_output["search"]["approximate"] is True
     assert "INVALID_ROWS_SKIPPED" in run_output["warnings"]
     assert (bundle / "report.html").is_file()
     assert (bundle / "recommended-model.json").is_file()

@@ -4,8 +4,42 @@ import numpy as np
 import pytest
 
 from monotone_calibrate import engine
-from monotone_calibrate.engine import FitOptions, StartOverride, fit_candidates, p1_start_slots
+from monotone_calibrate.engine import (
+    FitOptions,
+    SearchPolicy,
+    StartOverride,
+    fit_candidates,
+    p1_start_slots,
+)
 from monotone_calibrate.model_runtime import FittedModel, SegmentModel
+
+
+def _logistic_mix_fixture() -> tuple[np.ndarray, np.ndarray]:
+    x = np.linspace(0.0, 100.0, 60)
+    z = x / 100.0
+    boundary = 0.48
+
+    def expit(value):
+        return 1.0 / (1.0 + np.exp(-value))
+
+    left = 20.0 + 55.0 * (expit(8.0 * (z / boundary - 0.55)) - expit(-4.4)) / (
+        expit(3.6) - expit(-4.4)
+    )
+    right = 75.0 + 70.0 * np.log1p(8.0 * np.maximum((z - boundary) / (1.0 - boundary), 0.0)) / np.log(9.0)
+    mean = np.where(z <= boundary, left, right)
+    return x, mean + np.random.default_rng(3).normal(0.0, 0.6, x.size)
+
+
+def _high_noise_fixture() -> tuple[np.ndarray, np.ndarray]:
+    x = np.linspace(0.0, 100.0, 30)
+    z = x / 100.0
+    boundary, left_slope, right_slope = 0.58, 0.40, 0.80
+    mean = np.where(
+        z <= boundary,
+        3.0 + left_slope * 100.0 * z,
+        3.0 + left_slope * 100.0 * boundary + right_slope * 100.0 * (z - boundary),
+    )
+    return x, mean + np.random.default_rng(6).normal(0.0, 15.0, x.size)
 
 
 def test_one_function_recovers_a_monotone_cubic_with_a_global_certificate() -> None:
@@ -24,6 +58,30 @@ def test_one_function_recovers_a_monotone_cubic_with_a_global_certificate() -> N
     assert np.all(np.isfinite(predicted))
     assert np.all(np.diff(predicted) >= -1e-10)
     assert candidates.one.model.monotonicity_certified is True
+    assert candidates.one.model.coefficient_decimal_places == 3
+    assert all(
+        value == round(value, 3)
+        for segment in candidates.one.model.segments
+        for value in segment.parameters.values()
+    )
+
+
+def test_candidate_sse_is_scored_from_the_thousandth_grid_model() -> None:
+    x = np.linspace(0.0, 10.0, 21)
+    t = x / 10.0
+    y = 1.23456 + 2.34567 * t
+
+    candidate = fit_candidates(x, y).one
+    prediction = np.asarray(candidate.model.predict(x))
+
+    assert candidate.model.coefficient_decimal_places == 3
+    assert all(
+        value == round(value, 3)
+        for segment in candidate.model.segments
+        for value in segment.parameters.values()
+    )
+    assert candidate.sse == pytest.approx(float(np.sum((y - prediction) ** 2)))
+    assert candidate.sse > 0.0
 
 
 def test_two_function_candidate_is_continuous_monotone_and_balanced_at_raw_x_gap() -> None:
@@ -45,6 +103,12 @@ def test_two_function_candidate_is_continuous_monotone_and_balanced_at_raw_x_gap
     assert candidates.two.r2_refit > candidates.one.r2_refit
     assert candidates.two.model.segment_count == 2
     assert candidates.two.model.breakpoint == breakpoint
+    assert candidates.two.model.coefficient_decimal_places == 3
+    assert all(
+        value == round(value, 3)
+        for segment in candidates.two.model.segments
+        for value in segment.parameters.values()
+    )
     left, right = candidates.two.model.segments
     assert float(left.predict_unchecked(breakpoint)) == pytest.approx(
         float(right.predict_unchecked(breakpoint)),
@@ -52,6 +116,68 @@ def test_two_function_candidate_is_continuous_monotone_and_balanced_at_raw_x_gap
     )
     grid = np.linspace(x.min(), x.max(), 1001)
     assert np.all(np.diff(candidates.two.model.predict(grid)) >= -1e-10)
+
+
+def test_budgeted_search_profiles_are_reproducible_and_close_to_exhaustive() -> None:
+    x = np.arange(60, dtype=float)
+    breakpoint = 23.5
+    join = 2.0 + 0.15 * breakpoint
+    y = np.where(
+        x <= 23.0,
+        join + 0.15 * (x - breakpoint),
+        join + 1.20 * (x - breakpoint),
+    )
+
+    exhaustive = fit_candidates(
+        x,
+        y,
+        FitOptions(search_policy=SearchPolicy("exhaustive")),
+    )
+    fast = fit_candidates(
+        x,
+        y,
+        FitOptions(search_policy=SearchPolicy("fast")),
+    )
+    repeated = fit_candidates(
+        x,
+        y,
+        FitOptions(search_policy=SearchPolicy("fast")),
+    )
+
+    assert exhaustive.two is not None
+    assert fast.two is not None
+    assert fast.two.sse <= exhaustive.two.sse * 1.001 + 1e-10
+    assert fast.two.model.model_instance_hash == repeated.two.model.model_instance_hash
+    assert fast.search_trace.profile == "fast"
+    assert fast.search_trace.approximate is True
+    assert fast.search_trace.evaluated_candidates < exhaustive.search_trace.evaluated_candidates
+
+
+def test_fast_profile_keeps_the_full_nonlinear_shape_registry() -> None:
+    x, y = _high_noise_fixture()
+
+    exhaustive = fit_candidates(x, y, FitOptions(search_policy=SearchPolicy("exhaustive")))
+    fast = fit_candidates(x, y, FitOptions(search_policy=SearchPolicy("fast")))
+
+    assert exhaustive.two is not None
+    assert fast.two is not None
+    assert fast.two.sse == pytest.approx(exhaustive.two.sse, abs=1e-10)
+    assert fast.two.breakpoint == pytest.approx(exhaustive.two.breakpoint, abs=1e-12)
+    assert fast.two.model.model_instance_hash == exhaustive.two.model.model_instance_hash
+
+
+def test_fast_profile_adaptively_refines_a_nonlinear_breakpoint() -> None:
+    x, y = _logistic_mix_fixture()
+
+    exhaustive = fit_candidates(x, y, FitOptions(search_policy=SearchPolicy("exhaustive")))
+    fast = fit_candidates(x, y, FitOptions(search_policy=SearchPolicy("fast")))
+
+    assert exhaustive.two is not None
+    assert fast.two is not None
+    assert fast.two.sse == pytest.approx(exhaustive.two.sse, abs=1e-10)
+    assert fast.two.breakpoint == pytest.approx(exhaustive.two.breakpoint, abs=1e-12)
+    assert fast.two.model.model_instance_hash == exhaustive.two.model.model_instance_hash
+    assert fast.search_trace.evaluated_cells < exhaustive.search_trace.evaluated_cells
 
 
 def test_repeated_x_group_cannot_be_split_to_manufacture_a_small_segment() -> None:
@@ -63,6 +189,47 @@ def test_repeated_x_group_cannot_be_split_to_manufacture_a_small_segment() -> No
     assert candidates.one.status == "VALID"
     assert candidates.two is None
     assert candidates.two_status == "NO_BALANCED_SPLIT"
+
+
+def test_every_eligible_p2_breakpoint_is_on_the_thousandth_grid() -> None:
+    x = np.linspace(0.000123, 1.000987, 30)
+
+    cells = engine._eligible_cells(x, 0.40)
+
+    assert cells
+    assert all(breakpoint == round(breakpoint, 3) for _, breakpoint in cells)
+
+
+def test_quantized_p2_join_preserves_the_global_direction() -> None:
+    x = np.linspace(0.000123, 1.000987, 60)
+    source_breakpoint = 0.483
+    join = 1.23456 + 0.34567 * source_breakpoint
+    y = np.where(
+        x <= source_breakpoint,
+        join + 0.34567 * (x - source_breakpoint),
+        join + 1.23456 * (x - source_breakpoint),
+    )
+
+    candidate = fit_candidates(x, y).two
+
+    assert candidate is not None
+    assert candidate.model.direction == "increasing"
+    breakpoint = candidate.model.breakpoint
+    assert breakpoint is not None
+    left, right = candidate.model.segments
+    left_join = float(left.predict_unchecked(breakpoint))
+    right_join = float(right.predict_unchecked(breakpoint))
+    assert right_join >= left_join - 1e-12
+    assert right_join - left_join <= 0.001 + 1e-12
+    grid = np.unique(
+        np.concatenate(
+            (
+                np.linspace(x.min(), x.max(), 1001),
+                np.asarray([breakpoint, np.nextafter(breakpoint, np.inf)]),
+            )
+        )
+    )
+    assert np.all(np.diff(candidate.model.predict(grid)) >= -1e-12)
 
 
 def test_constant_response_is_canonical_one_function_not_a_fake_two_segment_fit() -> None:

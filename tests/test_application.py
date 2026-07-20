@@ -37,6 +37,42 @@ def _clear_llm_environment(monkeypatch) -> None:
         monkeypatch.delenv(f"MONOTONE_CALIBRATE_LLM_{suffix}", raising=False)
 
 
+def test_budgeted_search_admits_the_reported_large_input_to_the_solver(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    source = tmp_path / "large-curve.csv"
+    output = tmp_path / "oversized-report"
+    source.write_text(
+        "x,y\n"
+        + "\n".join(
+            f"{value / 1000:.3f},{2.0 + value / 2000:.4f}"
+            for value in range(5000)
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    class SolverEntered(RuntimeError):
+        pass
+
+    def mark_solver_entry(*_args, **_kwargs):
+        raise SolverEntered
+
+    monkeypatch.setattr(application, "fit_candidates", mark_solver_entry)
+
+    with pytest.raises(SolverEntered):
+        run_calibration(
+            RunRequest(
+                input_path=source,
+                output_dir=output,
+                dotenv_path=None,
+            )
+        )
+
+    assert not output.exists()
+
+
 def test_offline_run_publishes_one_complete_bundle_and_returns_final_paths(
     tmp_path,
     monkeypatch,

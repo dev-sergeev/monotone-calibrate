@@ -208,7 +208,7 @@ def _bounds(x: np.ndarray, y: np.ndarray) -> tuple[float, float, float, float]:
 
 
 def _metric_text(value: object) -> str:
-    return "R² не определён" if value is None else repr(float(value))
+    return "R² не определён" if value is None else f"{float(value):.3f}"
 
 
 def _svg_plot(
@@ -344,7 +344,7 @@ _HTML_TEMPLATE = """<!doctype html>
     <p>OOF R²: {% if validation_available %}{{ validation.two.r2_oos|metric }}{% else %}недоступен{% endif %}</p>
     <p><code>{{ p2.model.formula }}</code></p>
     <table><caption>Локальные refit-метрики P2</caption><thead><tr><th scope="col">Интервал</th><th scope="col">n</th><th scope="col">доля</th><th scope="col">R²</th></tr></thead><tbody>
-    {% for item in p2.segment_metrics %}<tr><td>{{ item.segment_id }}</td><td>{{ item.n }}</td><td>{{ item.share }}</td><td>{{ item.r2_refit|metric }}</td></tr>{% endfor %}
+    {% for item in p2.segment_metrics %}<tr><td>{{ item.segment_id }}</td><td>{{ item.n }}</td><td>{{ item.share|metric }}</td><td>{{ item.r2_refit|metric }}</td></tr>{% endfor %}
     </tbody></table>
   {% else %}<p>Недоступна: <code>{{ p2.status }}</code>.</p>{% endif %}
   </section>
@@ -412,6 +412,21 @@ def write_report_bundle(
 
     p1 = _candidate_dict(candidates.one, candidates.one.status)
     p2 = _candidate_dict(candidates.two, candidates.two_status)
+    trace = candidates.search_trace
+    search = {
+        "policy_id": trace.policy_id,
+        "profile": trace.profile,
+        "approximate": trace.approximate,
+        "variant_count": trace.variant_count,
+        "min_segment_share": trace.min_segment_share,
+        "max_elementary_starts": trace.max_elementary_starts,
+        "eligible_cells": trace.eligible_cells,
+        "coarse_cells": trace.coarse_cells,
+        "evaluated_cells": trace.evaluated_cells,
+        "evaluated_candidates": trace.evaluated_candidates,
+        "refinement_pairs": trace.refinement_pairs,
+        "termination": trace.termination,
+    }
     warnings = tuple(
         sorted(set(dataset.warning_codes) | set(validation.warning_codes) | set(extra_warning_codes))
     )
@@ -429,6 +444,7 @@ def write_report_bundle(
             {
                 "input_sha256": dataset.input_sha256,
                 "decision_state": validation.decision_state,
+                "search": search,
                 "recommended_model": None
                 if recommendation is None
                 else recommendation.model.model_instance_hash,
@@ -436,7 +452,7 @@ def write_report_bundle(
         )
     ).hexdigest()
     report = {
-        "schema_version": "monotone-report-v1",
+        "schema_version": "monotone-report-v2",
         "report_id": report_id,
         "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "input": {
@@ -447,6 +463,7 @@ def write_report_bundle(
             "n_unique_x": dataset.n_unique_x,
             "extra_columns_ignored": list(dataset.extra_columns),
         },
+        "search": search,
         "candidates": {"P1": p1, "P2": p2},
         "validation": validation.to_dict(),
         "recommendation": {

@@ -222,6 +222,7 @@ def _advisor_refit(
         min_segment_share=request.fit_options.min_segment_share,
         max_elementary_starts=request.fit_options.max_elementary_starts,
         start_overrides=overrides,
+        search_policy=request.fit_options.search_policy,
     )
     advised = fit_candidates(x, y, advised_options)
     retained = advised.one.sse <= baseline.one.sse
@@ -230,6 +231,7 @@ def _advisor_refit(
         one=final_one,
         two=baseline.two,
         two_status=baseline.two_status,
+        search_trace=baseline.search_trace,
     )
     final_hash = final_one.model.model_instance_hash
     influenced = retained and final_hash != baseline_hash

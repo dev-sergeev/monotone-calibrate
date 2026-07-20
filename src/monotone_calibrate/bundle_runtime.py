@@ -31,7 +31,7 @@ _CORE_ARTIFACTS = frozenset(
     }
 )
 _OPTIONAL_ARTIFACTS = frozenset({"recommended-model.json"})
-_REPORT_FIELDS = frozenset(
+_REPORT_FIELDS_V1 = frozenset(
     {
         "schema_version",
         "report_id",
@@ -43,6 +43,23 @@ _REPORT_FIELDS = frozenset(
         "warnings",
         "diagnostics",
         "llm_advisor",
+    }
+)
+_REPORT_FIELDS_V2 = _REPORT_FIELDS_V1 | {"search"}
+_SEARCH_FIELDS = frozenset(
+    {
+        "policy_id",
+        "profile",
+        "approximate",
+        "variant_count",
+        "min_segment_share",
+        "max_elementary_starts",
+        "eligible_cells",
+        "coarse_cells",
+        "evaluated_cells",
+        "evaluated_candidates",
+        "refinement_pairs",
+        "termination",
     }
 )
 
@@ -173,10 +190,53 @@ def _artifact_records(manifest: Mapping[str, object]) -> tuple[dict[str, object]
 
 def _verify_report_and_model(root: Path, report_id: str, model_present: bool) -> None:
     report = _load_json_object(root / "report.json", "report.json")
-    if set(report) != _REPORT_FIELDS or report.get("schema_version") != "monotone-report-v1":
-        _fail("INVALID_REPORT", "report.json is not a closed monotone-report-v1 object")
+    schema_version = report.get("schema_version")
+    expected_fields = (
+        _REPORT_FIELDS_V1
+        if schema_version == "monotone-report-v1"
+        else _REPORT_FIELDS_V2 if schema_version == "monotone-report-v2" else None
+    )
+    if expected_fields is None or set(report) != expected_fields:
+        _fail("INVALID_REPORT", "report.json is not a supported closed monotone-report object")
     if report.get("report_id") != report_id:
         _fail("REPORT_ID_MISMATCH", "manifest and report report_id values differ")
+    if schema_version == "monotone-report-v2":
+        search = report.get("search")
+        if (
+            not isinstance(search, dict)
+            or set(search) != _SEARCH_FIELDS
+            or search.get("policy_id") != "candidate-search-v1"
+            or search.get("profile") not in {"fast", "balanced", "quality", "exhaustive"}
+            or not isinstance(search.get("approximate"), bool)
+            or not isinstance(search.get("variant_count"), int)
+            or isinstance(search.get("variant_count"), bool)
+            or search["variant_count"] < 1
+            or not isinstance(search.get("min_segment_share"), (int, float))
+            or isinstance(search.get("min_segment_share"), bool)
+            or not 0.0 < search["min_segment_share"] <= 0.5
+            or (
+                search.get("max_elementary_starts") is not None
+                and (
+                    not isinstance(search.get("max_elementary_starts"), int)
+                    or isinstance(search.get("max_elementary_starts"), bool)
+                    or search["max_elementary_starts"] < 0
+                )
+            )
+            or not all(
+                isinstance(search.get(name), int)
+                and not isinstance(search.get(name), bool)
+                and search[name] >= 0
+                for name in (
+                    "eligible_cells",
+                    "coarse_cells",
+                    "evaluated_cells",
+                    "evaluated_candidates",
+                    "refinement_pairs",
+                )
+            )
+            or not isinstance(search.get("termination"), str)
+        ):
+            _fail("INVALID_REPORT", "report search provenance is malformed")
     recommendation = report.get("recommendation")
     if not isinstance(recommendation, dict) or set(recommendation) != {
         "structure",
@@ -207,8 +267,9 @@ def _verify_report_and_model(root: Path, report_id: str, model_present: bool) ->
     expected_segments = 1 if structure == "P1" else 2
     if model.segment_count != expected_segments:
         _fail("MODEL_STRUCTURE_MISMATCH", "recommended structure and model segment count differ")
+    serialized_formula = model_payload.get("formula")
     if (
-        recommendation.get("formula") != model.formula
+        recommendation.get("formula") != serialized_formula
         or recommendation.get("model_instance_hash") != model.model_instance_hash
     ):
         _fail("MODEL_IDENTITY_MISMATCH", "report formula/hash do not match the typed model")
@@ -230,7 +291,7 @@ def _verify_report_and_model(root: Path, report_id: str, model_present: bool) ->
         candidate_model.segment_count != expected_segments
         or candidate_model.model_structure_hash != model.model_structure_hash
         or candidate_model.model_instance_hash != model.model_instance_hash
-        or candidate_model.formula != model.formula
+        or candidate_payload.get("formula") != serialized_formula
     ):
         _fail("MODEL_IDENTITY_MISMATCH", "report candidate and recommended model differ")
 

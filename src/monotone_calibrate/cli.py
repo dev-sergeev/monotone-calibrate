@@ -12,6 +12,7 @@ from . import __version__
 from .application import CalibrationRunError, RunRequest, run_calibration
 from .bundle_runtime import BundleRuntimeError, verify_bundle, write_predictions
 from .data import DataContractError
+from .engine import FitOptions, SearchPolicy
 from .validation import ValidationOptions
 
 
@@ -39,6 +40,12 @@ def build_parser() -> argparse.ArgumentParser:
     dotenv.add_argument("--no-dotenv", action="store_const", const=None, dest="dotenv")
     run.add_argument("--validation-repetitions", type=int, default=10, metavar="N")
     run.add_argument("--bootstrap-resamples", type=int, default=200, metavar="N")
+    run.add_argument(
+        "--search-profile",
+        choices=("fast", "balanced", "quality", "exhaustive"),
+        default="fast",
+        help="candidate-search budget (default: fast)",
+    )
 
     predict = subparsers.add_parser("predict", help="apply a recommended model to an x CSV")
     predict.add_argument("model", type=Path, help="recommended-model.json")
@@ -64,6 +71,9 @@ def _run(arguments: argparse.Namespace) -> dict[str, object]:
             output_dir=arguments.output,
             dotenv_path=arguments.dotenv,
             llm_start_advisor=arguments.llm_start_advisor,
+            fit_options=FitOptions(
+                search_policy=SearchPolicy(arguments.search_profile),
+            ),
             validation_options=ValidationOptions(
                 repetitions=arguments.validation_repetitions,
                 bootstrap_resamples=arguments.bootstrap_resamples,
@@ -81,6 +91,7 @@ def _run(arguments: argparse.Namespace) -> dict[str, object]:
         if structure == "P2"
         else result.validation.one if structure == "P1" else None
     )
+    trace = result.candidates.search_trace
     return {
         "status": "ok",
         "output_dir": str(result.bundle.root),
@@ -95,6 +106,20 @@ def _run(arguments: argparse.Namespace) -> dict[str, object]:
         "r2_oos": None if validation_metrics is None else validation_metrics.r2_oos,
         "warnings": list(result.warning_codes),
         "llm_status": result.llm_advisor["status"],
+        "search": {
+            "policy_id": trace.policy_id,
+            "profile": trace.profile,
+            "approximate": trace.approximate,
+            "variant_count": trace.variant_count,
+            "min_segment_share": trace.min_segment_share,
+            "max_elementary_starts": trace.max_elementary_starts,
+            "eligible_cells": trace.eligible_cells,
+            "coarse_cells": trace.coarse_cells,
+            "evaluated_cells": trace.evaluated_cells,
+            "evaluated_candidates": trace.evaluated_candidates,
+            "refinement_pairs": trace.refinement_pairs,
+            "termination": trace.termination,
+        },
     }
 
 
@@ -118,10 +143,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:  # pragma: no cover - argparse owns the finite command set
             raise AssertionError("unreachable command")
     except (CalibrationRunError, BundleRuntimeError, DataContractError, OSError, ValueError) as error:
+        code = getattr(error, "code", type(error).__name__)
         _emit(
             {
                 "status": "error",
-                "code": getattr(error, "code", type(error).__name__),
+                "code": code,
                 "message": str(error),
             },
             error=True,

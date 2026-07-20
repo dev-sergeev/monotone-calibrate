@@ -26,10 +26,10 @@ def test_report_bundle_contains_comparison_plots_metrics_and_executable_recommen
 ) -> None:
     source = tmp_path / "curve.csv"
     rows = ["x,y,row_id"]
-    c = 11.5
+    c = 23.5
     join = 2.0 + 0.15 * c
-    for value in range(30):
-        response = join + (0.15 if value <= 11 else 1.20) * (value - c)
+    for value in range(60):
+        response = join + (0.15 if value <= 23 else 1.20) * (value - c)
         rows.append(f"{value},{response},point-{value:02d}")
     source.write_text("\n".join(rows) + "\n", encoding="utf-8")
     dataset = read_xy_csv(source)
@@ -80,10 +80,17 @@ def test_report_bundle_contains_comparison_plots_metrics_and_executable_recommen
     assert report["candidates"]["P1"]["metrics"]["r2_refit"] is not None
     assert report["candidates"]["P2"]["metrics"]["r2_refit"] > 0.999999
     assert len(report["candidates"]["P2"]["segment_metrics"]) == 2
+    assert report["search"]["policy_id"] == "candidate-search-v1"
+    assert report["search"]["profile"] == "fast"
+    assert report["search"]["approximate"] is True
     assert report["recommendation"]["structure"] == "P2"
     assert report["diagnostics"]["source"] == "grouped_oof"
     assert report["llm_advisor"] == llm_provenance
     assert "LLM_ADVISOR_NO_IMPROVEMENT" in report["warnings"]
+    rendered_html = bundle.report_html.read_text(encoding="utf-8")
+    raw_r2 = report["candidates"]["P2"]["metrics"]["r2_refit"]
+    assert f"Refit global R²: {raw_r2}</p>" not in rendered_html
+    assert f"Refit global R²: {raw_r2:.3f}" in rendered_html
     serialized_bundle = "\n".join(
         path.read_text(encoding="utf-8", errors="ignore")
         for path in bundle.root.iterdir()
@@ -96,7 +103,7 @@ def test_report_bundle_contains_comparison_plots_metrics_and_executable_recommen
     assert 'stroke="#c62828"' in svg
     assert 'data-segment="left"' in svg
     assert 'data-segment="right"' in svg
-    assert svg.count('data-role="observation"') == 30
+    assert svg.count('data-role="observation"') == 60
     loaded = model_from_dict(json.loads(bundle.recommended_model.read_text(encoding="utf-8")))
     expected = candidates.two.model.predict(x)  # type: ignore[union-attr]
     assert np.allclose(loaded.predict(x), expected)

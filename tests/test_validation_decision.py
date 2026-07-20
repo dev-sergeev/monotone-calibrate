@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import numpy as np
 
-from monotone_calibrate.engine import fit_candidates
+import monotone_calibrate.validation as validation_module
+from monotone_calibrate.engine import FitOptions, SearchPolicy, fit_candidates
 from monotone_calibrate.validation import ValidationOptions, validate_candidates
 
 
 def test_strong_two_segment_signal_earns_recommendation_from_grouped_oof_uplift() -> None:
-    x = np.arange(30, dtype=float)
-    c = 11.5
+    x = np.arange(60, dtype=float)
+    c = 23.5
     join = 2.0 + 0.15 * c
-    y = np.where(x <= 11.0, join + 0.15 * (x - c), join + 1.20 * (x - c))
+    y = np.where(x <= 23.0, join + 0.15 * (x - c), join + 1.20 * (x - c))
     full = fit_candidates(x, y)
 
     result = validate_candidates(
@@ -70,3 +71,36 @@ def test_equal_x_observations_are_atomic_in_every_outer_split() -> None:
                 if row.repetition == repetition and row.x == value
             }
             assert len(folds) == 1
+
+
+def test_validation_replays_the_full_fit_search_policy(monkeypatch) -> None:
+    x = np.arange(20, dtype=float)
+    y = 1.0 + 0.4 * x
+    full = fit_candidates(
+        x,
+        y,
+        FitOptions(
+            min_segment_share=0.45,
+            max_elementary_starts=1,
+            search_policy=SearchPolicy("balanced"),
+        ),
+    )
+    seen: list[FitOptions] = []
+
+    def record_options(_x, _y, options):
+        seen.append(options)
+        return full
+
+    monkeypatch.setattr(validation_module, "fit_candidates", record_options)
+
+    validate_candidates(
+        x,
+        y,
+        full,
+        ValidationOptions(repetitions=1, bootstrap_resamples=0),
+    )
+
+    assert seen
+    assert all(options.min_segment_share == 0.45 for options in seen)
+    assert all(options.max_elementary_starts == 1 for options in seen)
+    assert all(options.search_policy.profile == "balanced" for options in seen)

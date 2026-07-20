@@ -24,8 +24,65 @@ from .registry import (
 )
 
 
+COEFFICIENT_DECIMAL_PLACES = 3
+COEFFICIENT_QUANTUM = 10.0**-COEFFICIENT_DECIMAL_PLACES
+_GRID_ARITHMETIC_TOLERANCE = 1e-12
+
+
 def _canonical_float(value: float) -> str:
     return float(value).hex()
+
+
+def _format_coefficient(value: float, decimal_places: int | None) -> str:
+    if decimal_places is None:
+        return f"{float(value):.17g}"
+    rounded = round(float(value), decimal_places)
+    if rounded == 0.0:
+        rounded = 0.0
+    return f"{rounded:.{decimal_places}f}"
+
+
+def _format_signed_coefficient(value: float, decimal_places: int | None) -> str:
+    if decimal_places is None:
+        return "+" + _format_coefficient(value, decimal_places)
+    rounded = round(float(value), decimal_places)
+    if rounded == 0.0:
+        rounded = 0.0
+    return f"{rounded:+.{decimal_places}f}"
+
+
+def _is_on_coefficient_grid(value: float, decimal_places: int) -> bool:
+    """Return whether the executable float is the rounded grid value itself."""
+
+    rounded = round(float(value), decimal_places)
+    if rounded == 0.0:
+        rounded = 0.0
+    return float(value) == rounded
+
+
+def _join_tolerances(
+    left_value: float,
+    right_value: float,
+    decimal_places: int | None,
+) -> tuple[float, float]:
+    if decimal_places is None:
+        arithmetic = 1e-10 * max(1.0, abs(left_value), abs(right_value))
+        return arithmetic, arithmetic
+    quantum = 10.0**-decimal_places
+    return _GRID_ARITHMETIC_TOLERANCE, quantum + _GRID_ARITHMETIC_TOLERANCE
+
+
+def _join_preserves_direction(
+    left_value: float,
+    right_value: float,
+    direction: Direction,
+    tolerance: float,
+) -> bool:
+    if direction == "increasing":
+        return right_value >= left_value - tolerance
+    if direction == "decreasing":
+        return right_value <= left_value + tolerance
+    return abs(right_value - left_value) <= tolerance
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,59 +144,97 @@ class SegmentModel:
     def certificate(self, direction: Direction):
         return certify_family(self.family_id, self.parameters, direction)
 
-    def formula(self, variable: str = "x") -> str:
+    def formula(
+        self,
+        variable: str = "x",
+        *,
+        coefficient_decimal_places: int | None = 3,
+    ) -> str:
         """Return a display-only canonical formula with an explicit transform."""
 
         p = self.parameters
-        t = f"(({variable}-{self.x_lower:.17g})/{(self.x_upper - self.x_lower):.17g})"
+        lower = _format_coefficient(self.x_lower, coefficient_decimal_places)
+        span = _format_coefficient(
+            self.x_upper - self.x_lower,
+            coefficient_decimal_places,
+        )
+        t = f"(({variable}-{lower})/{span})"
+
+        def coefficient(name: str) -> str:
+            return _format_coefficient(p[name], coefficient_decimal_places)
+
+        def signed_coefficient(name: str) -> str:
+            return _format_signed_coefficient(p[name], coefficient_decimal_places)
         if self.family_id == "constant_v1":
-            return f"{p['a']:.17g}"
+            return coefficient("a")
         if self.family_id == "poly1_v1":
-            return f"{p['a']:.17g}+{p['b']:.17g}*{t}"
+            return f"{coefficient('a')}{signed_coefficient('b')}*{t}"
         if self.family_id == "poly2_v1":
-            return f"{p['a']:.17g}+{p['b']:.17g}*{t}+{p['c']:.17g}*{t}^2"
+            return (
+                f"{coefficient('a')}{signed_coefficient('b')}*{t}"
+                f"{signed_coefficient('c')}*{t}^2"
+            )
         if self.family_id == "poly3_v1":
             return (
-                f"{p['a']:.17g}+{p['b']:.17g}*{t}+{p['c']:.17g}*{t}^2"
-                f"+{p['d']:.17g}*{t}^3"
+                f"{coefficient('a')}{signed_coefficient('b')}*{t}"
+                f"{signed_coefficient('c')}*{t}^2"
+                f"{signed_coefficient('d')}*{t}^3"
             )
         if self.family_id == "exp_affine_v1":
-            return f"{p['a']:.17g}+{p['b']:.17g}*exp({p['k']:.17g}*{t})"
+            return f"{coefficient('a')}{signed_coefficient('b')}*exp({coefficient('k')}*{t})"
         if self.family_id == "log_shift_v1":
-            return f"{p['a']:.17g}+{p['b']:.17g}*log({t}+{p['d']:.17g})"
+            return f"{coefficient('a')}{signed_coefficient('b')}*log({t}+{coefficient('d')})"
         if self.family_id == "reciprocal_shift_pos_v1":
-            return f"{p['a']:.17g}+{p['b']:.17g}/({t}+{p['d']:.17g})"
+            return f"{coefficient('a')}{signed_coefficient('b')}/({t}+{coefficient('d')})"
         if self.family_id == "logistic_v1":
             return (
-                f"{p['a']:.17g}+{p['b']:.17g}/(1+exp(-{p['k']:.17g}*"
-                f"({t}-{p['m']:.17g})))"
+                f"{coefficient('a')}{signed_coefficient('b')}/(1+exp(-{coefficient('k')}*"
+                f"({t}-{coefficient('m')})))"
             )
         raise AssertionError("registry and formatter are out of sync")
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self, *, coefficient_decimal_places: int | None = 3) -> dict[str, object]:
         return {
             "segment_id": self.segment_id,
             "family_id": self.family_id,
             "canonical_ast_id": self.canonical_ast_id,
             "interval": {"lower": self.x_lower, "upper": self.x_upper},
             "parameters": dict(self.parameters),
-            "formula": self.formula(),
+            "formula": self.formula(
+                coefficient_decimal_places=coefficient_decimal_places,
+            ),
         }
 
 
 @dataclass(frozen=True, slots=True)
 class FittedModel:
-    """One globally monotone P1 or exactly-continuous P2 model."""
+    """One globally monotone P1 or coefficient-grid-contiguous P2 model."""
 
     segments: tuple[SegmentModel, ...]
     direction: Direction
     registry_version: str = REGISTRY_VERSION
+    coefficient_decimal_places: int | None = None
 
     def __post_init__(self) -> None:
         if self.registry_version != REGISTRY_VERSION:
             raise ValueError(f"unsupported registry version: {self.registry_version}")
+        if self.coefficient_decimal_places not in {None, COEFFICIENT_DECIMAL_PLACES}:
+            raise ValueError("unsupported coefficient precision")
         if len(self.segments) not in {1, 2}:
             raise ValueError("v1 models contain exactly one or two segments")
+        if self.coefficient_decimal_places is not None:
+            for segment in self.segments:
+                for value in segment.parameters.values():
+                    if not _is_on_coefficient_grid(
+                        value,
+                        self.coefficient_decimal_places,
+                    ):
+                        raise ValueError("model parameter is outside the coefficient grid")
+            if len(self.segments) == 2 and not _is_on_coefficient_grid(
+                self.segments[0].x_upper,
+                self.coefficient_decimal_places,
+            ):
+                raise ValueError("P2 breakpoint is outside the coefficient grid")
         if any(
             segment.is_constant_function and segment.family_id != "constant_v1"
             for segment in self.segments
@@ -162,9 +257,22 @@ class FittedModel:
             join = left.x_upper
             left_value = float(left.predict_unchecked(join))
             right_value = float(right.predict_unchecked(join))
-            tolerance = 1e-10 * max(1.0, abs(left_value), abs(right_value))
-            if not np.isfinite(left_value) or not np.isfinite(right_value) or abs(left_value - right_value) > tolerance:
-                raise ValueError("P2 branches are not exactly continuous within renderer tolerance")
+            direction_tolerance, join_tolerance = _join_tolerances(
+                left_value,
+                right_value,
+                self.coefficient_decimal_places,
+            )
+            if not np.isfinite(left_value) or not np.isfinite(right_value):
+                raise ValueError("P2 branches are not finite at the breakpoint")
+            if not _join_preserves_direction(
+                left_value,
+                right_value,
+                self.direction,
+                direction_tolerance,
+            ):
+                raise ValueError("P2 join is not globally monotone")
+            if abs(left_value - right_value) > join_tolerance:
+                raise ValueError("P2 branches are not continuous within coefficient precision")
 
     @property
     def segment_count(self) -> int:
@@ -182,13 +290,23 @@ class FittedModel:
             return True
         left, right = self.segments
         join = left.x_upper
+        left_value = float(left.predict_unchecked(join))
+        right_value = float(right.predict_unchecked(join))
+        direction_tolerance, join_tolerance = _join_tolerances(
+            left_value,
+            right_value,
+            self.coefficient_decimal_places,
+        )
         return bool(
-            np.isclose(
-                float(left.predict_unchecked(join)),
-                float(right.predict_unchecked(join)),
-                rtol=1e-10,
-                atol=1e-10,
+            np.isfinite(left_value)
+            and np.isfinite(right_value)
+            and _join_preserves_direction(
+                left_value,
+                right_value,
+                self.direction,
+                direction_tolerance,
             )
+            and abs(left_value - right_value) <= join_tolerance
         )
 
     @property
@@ -209,12 +327,28 @@ class FittedModel:
 
     @property
     def formula(self) -> str:
+        return self._formula(
+            coefficient_decimal_places=self.coefficient_decimal_places,
+        )
+
+    def _formula(self, *, coefficient_decimal_places: int | None) -> str:
         if len(self.segments) == 1:
-            return f"f(x)={self.segments[0].formula()}"
+            return (
+                "f(x)="
+                + self.segments[0].formula(
+                    coefficient_decimal_places=coefficient_decimal_places,
+                )
+            )
         left, right = self.segments
+        breakpoint = _format_coefficient(
+            left.x_upper,
+            coefficient_decimal_places,
+        )
         return (
-            f"f(x)={left.formula()} for x<={left.x_upper:.17g}; "
-            f"{right.formula()} for x>{left.x_upper:.17g}"
+            f"f(x)={left.formula(coefficient_decimal_places=coefficient_decimal_places)} "
+            f"for x<={breakpoint}; "
+            f"{right.formula(coefficient_decimal_places=coefficient_decimal_places)} "
+            f"for x>{breakpoint}"
         )
 
     def predict(self, x: np.ndarray | float) -> np.ndarray | float:
@@ -265,26 +399,46 @@ class FittedModel:
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return sha256(encoded).hexdigest()
 
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "schema_version": "model-runtime-v1",
+    def to_dict(self, *, schema_version: str | None = None) -> dict[str, object]:
+        resolved_schema = schema_version or (
+            "model-runtime-v2"
+            if self.coefficient_decimal_places == COEFFICIENT_DECIMAL_PLACES
+            else "model-runtime-v1"
+        )
+        if resolved_schema not in {"model-runtime-v1", "model-runtime-v2"}:
+            raise ValueError("unsupported model runtime schema version")
+        if resolved_schema == "model-runtime-v2" and self.coefficient_decimal_places != COEFFICIENT_DECIMAL_PLACES:
+            raise ValueError("model-runtime-v2 requires thousandth-grid coefficients")
+        coefficient_decimal_places = None if resolved_schema == "model-runtime-v1" else COEFFICIENT_DECIMAL_PLACES
+        payload = {
+            "schema_version": resolved_schema,
             "registry_version": self.registry_version,
             "direction": self.direction,
             "segment_count": self.segment_count,
             "polynomial_degree": self.polynomial_degree,
             "monotonicity_certified": self.monotonicity_certified,
             "breakpoint": self.breakpoint,
-            "segments": [segment.to_dict() for segment in self.segments],
-            "formula": self.formula,
+            "segments": [
+                segment.to_dict(
+                    coefficient_decimal_places=coefficient_decimal_places,
+                )
+                for segment in self.segments
+            ],
+            "formula": self._formula(
+                coefficient_decimal_places=coefficient_decimal_places,
+            ),
             "model_structure_hash": self.model_structure_hash,
             "model_instance_hash": self.model_instance_hash,
         }
+        if resolved_schema == "model-runtime-v2":
+            payload["coefficient_decimal_places"] = COEFFICIENT_DECIMAL_PLACES
+        return payload
 
 
 def model_from_dict(payload: Mapping[str, object]) -> FittedModel:
     """Reconstruct a typed model while rejecting formula-driven execution."""
 
-    required = {
+    required_v1 = {
         "schema_version",
         "registry_version",
         "direction",
@@ -297,8 +451,21 @@ def model_from_dict(payload: Mapping[str, object]) -> FittedModel:
         "model_structure_hash",
         "model_instance_hash",
     }
-    if set(payload) != required or payload.get("schema_version") != "model-runtime-v1":
-        raise ValueError("invalid model-runtime-v1 object")
+    schema_version = payload.get("schema_version")
+    required_v2 = required_v1 | {"coefficient_decimal_places"}
+    expected_fields = required_v1 if schema_version == "model-runtime-v1" else required_v2
+    if (
+        schema_version not in {"model-runtime-v1", "model-runtime-v2"}
+        or set(payload) != expected_fields
+        or (
+            schema_version == "model-runtime-v2"
+            and payload.get("coefficient_decimal_places") != COEFFICIENT_DECIMAL_PLACES
+        )
+    ):
+        raise ValueError("invalid model-runtime object")
+    coefficient_decimal_places = (
+        None if schema_version == "model-runtime-v1" else COEFFICIENT_DECIMAL_PLACES
+    )
     raw_segments = payload.get("segments")
     if not isinstance(raw_segments, list):
         raise ValueError("model segments must be a list")
@@ -326,19 +493,33 @@ def model_from_dict(payload: Mapping[str, object]) -> FittedModel:
             parameters={str(name): float(value) for name, value in parameters.items()},
             segment_id=str(raw["segment_id"]),
         )
-        if raw["canonical_ast_id"] != segment.canonical_ast_id or raw["formula"] != segment.formula():
+        if (
+            raw["canonical_ast_id"] != segment.canonical_ast_id
+            or raw["formula"]
+            != segment.formula(
+                coefficient_decimal_places=coefficient_decimal_places,
+            )
+        ):
             raise ValueError("segment identity/display formula mismatch")
         segments.append(segment)
     direction = str(payload["direction"])
     if direction not in {"increasing", "decreasing", "flat"}:
         raise ValueError("invalid model direction")
-    model = FittedModel(tuple(segments), direction, str(payload["registry_version"]))  # type: ignore[arg-type]
+    model = FittedModel(
+        tuple(segments),
+        direction,  # type: ignore[arg-type]
+        registry_version=str(payload["registry_version"]),
+        coefficient_decimal_places=coefficient_decimal_places,
+    )
     if (
         payload["segment_count"] != model.segment_count
         or payload["polynomial_degree"] != model.polynomial_degree
         or payload["monotonicity_certified"] is not True
         or payload["breakpoint"] != model.breakpoint
-        or payload["formula"] != model.formula
+        or payload["formula"]
+        != model._formula(
+            coefficient_decimal_places=coefficient_decimal_places,
+        )
         or payload["model_structure_hash"] != model.model_structure_hash
         or payload["model_instance_hash"] != model.model_instance_hash
     ):

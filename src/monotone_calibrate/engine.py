@@ -1,20 +1,22 @@
 """Deterministic finite-registry fitting for one and two monotone segments.
 
 The public interface deliberately hides solver starts, conditional linear
-algebra and certificate construction.  P2 continuity is structural: both
-branches share the same fitted value at the raw-x breakpoint.
+algebra and certificate construction. Solver proposals are projected onto a
+thousandth coefficient grid before scoring and certification; P2 branches may
+differ at the raw-x breakpoint by no more than one direction-preserving grid
+step.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 from typing import Iterable, Literal
 
 import numpy as np
-from scipy.optimize import lsq_linear, minimize
+from scipy.optimize import lsq_linear, minimize, nnls
 
-from .model_runtime import FittedModel, SegmentModel
+from .model_runtime import COEFFICIENT_DECIMAL_PLACES, FittedModel, SegmentModel
 from .registry import (
     FAMILY_IDS,
     Direction,
@@ -35,6 +37,62 @@ class SegmentMetrics:
     r2: float | None
     rmse: float
     mae: float
+
+
+def _quantize_parameters(parameters: dict[str, float]) -> dict[str, float]:
+    quantized: dict[str, float] = {}
+    for name, value in parameters.items():
+        rounded = round(float(value), COEFFICIENT_DECIMAL_PLACES)
+        quantized[name] = 0.0 if rounded == 0.0 else rounded
+    return quantized
+
+
+def _align_quantized_join(
+    left: SegmentModel,
+    right: SegmentModel,
+    direction: Direction,
+) -> SegmentModel:
+    """Shift the right intercept onto the nearest direction-safe join cell."""
+
+    join = left.x_upper
+    left_value = float(left.predict_unchecked(join))
+    right_value = float(right.predict_unchecked(join))
+    delta = right_value - left_value
+    quantum = 10.0**-COEFFICIENT_DECIMAL_PLACES
+    arithmetic = 1e-12
+    if direction == "increasing":
+        steps = math.ceil((-delta - arithmetic) / quantum)
+    elif direction == "decreasing":
+        steps = math.floor((-delta + arithmetic) / quantum)
+    else:
+        steps = round(-delta / quantum)
+    if steps == 0:
+        return right
+    parameters = dict(right.parameters)
+    parameters["a"] = round(
+        parameters["a"] + steps * quantum,
+        COEFFICIENT_DECIMAL_PLACES,
+    )
+    if parameters["a"] == 0.0:
+        parameters["a"] = 0.0
+    return SegmentModel(
+        right.family_id,
+        right.x_lower,
+        right.x_upper,
+        parameters,
+        right.segment_id,
+    )
+
+
+def _quantized_model(
+    segments: tuple[SegmentModel, ...],
+    direction: Direction,
+) -> FittedModel:
+    return FittedModel(
+        segments,
+        direction,
+        coefficient_decimal_places=COEFFICIENT_DECIMAL_PLACES,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +121,38 @@ class CandidateSet:
     one: FitCandidate
     two: FitCandidate | None
     two_status: str
+    search_trace: SearchTrace
+
+
+SearchProfile = Literal["fast", "balanced", "quality", "exhaustive"]
+SEARCH_POLICY_ID = "candidate-search-v1"
+
+
+@dataclass(frozen=True, slots=True)
+class SearchPolicy:
+    """Named deterministic budget for the internal candidate search."""
+
+    profile: SearchProfile = "fast"
+
+    def __post_init__(self) -> None:
+        if self.profile not in {"fast", "balanced", "quality", "exhaustive"}:
+            raise ValueError("unknown search profile")
+
+
+@dataclass(frozen=True, slots=True)
+class SearchTrace:
+    profile: SearchProfile
+    approximate: bool
+    variant_count: int
+    min_segment_share: float
+    max_elementary_starts: int | None
+    eligible_cells: int
+    coarse_cells: int
+    evaluated_cells: int
+    evaluated_candidates: int
+    refinement_pairs: int
+    termination: str
+    policy_id: str = SEARCH_POLICY_ID
 
 
 @dataclass(frozen=True, slots=True)
@@ -119,6 +209,7 @@ class FitOptions:
     min_segment_share: float = 0.40
     max_elementary_starts: int | None = None
     start_overrides: tuple[StartOverride, ...] = ()
+    search_policy: SearchPolicy = field(default_factory=SearchPolicy)
 
     def __post_init__(self) -> None:
         if not np.isfinite(self.min_segment_share) or not 0.0 < self.min_segment_share <= 0.5:
@@ -129,6 +220,8 @@ class FitOptions:
             or self.max_elementary_starts < 0
         ):
             raise ValueError("max_elementary_starts must be nonnegative or None")
+        if not isinstance(self.search_policy, SearchPolicy):
+            raise ValueError("search_policy must be a SearchPolicy")
         known_slots = {slot.slot_id: slot for slot in p1_start_slots()}
         normalized: list[StartOverride] = []
         seen: set[str] = set()
@@ -255,6 +348,37 @@ def _fit_linear_bounded(
     return float(np.dot(residual, residual)), np.asarray(result.x), prediction
 
 
+def _fit_join_nonnegative(
+    design: np.ndarray,
+    y: np.ndarray,
+) -> tuple[float, np.ndarray, np.ndarray] | None:
+    """Solve an unbounded join plus nonnegative branch increments efficiently."""
+
+    features = design[:, 1:]
+    if features.shape[1] == 0:
+        return None
+    feature_mean = np.mean(features, axis=0)
+    y_mean = float(np.mean(y))
+    centered_features = features - feature_mean
+    centered_y = y - y_mean
+    try:
+        increments, _ = nnls(centered_features, centered_y, maxiter=250)
+    except (RuntimeError, ValueError, np.linalg.LinAlgError):
+        return _fit_linear_bounded(
+            design,
+            y,
+            np.r_[-np.inf, np.zeros(features.shape[1])],
+            np.full(1 + features.shape[1], np.inf),
+        )
+    join = y_mean - float(np.dot(feature_mean, increments))
+    coefficients = np.r_[join, increments]
+    prediction = design @ coefficients
+    if not np.all(np.isfinite(prediction)):
+        return None
+    residual = y - prediction
+    return float(np.dot(residual, residual)), coefficients, prediction
+
+
 def _elementary_profile(
     family_id: str,
     t: np.ndarray,
@@ -301,8 +425,8 @@ def _fit_one(x: np.ndarray, y: np.ndarray, options: FitOptions) -> FitCandidate:
     contenders: list[tuple[float, int, int, FittedModel, np.ndarray]] = []
     start_overrides = {override.slot_id: override.parameter_vector for override in options.start_overrides}
 
-    constant = float(np.mean(y))
-    constant_model = FittedModel(
+    constant = round(float(np.mean(y)), COEFFICIENT_DECIMAL_PLACES)
+    constant_model = _quantized_model(
         (SegmentModel("constant_v1", lower_x, upper_x, {"a": constant}),),
         "flat",
     )
@@ -330,11 +454,13 @@ def _fit_one(x: np.ndarray, y: np.ndarray, options: FitOptions) -> FitCandidate:
                 sse, coefficients, _ = solved
                 sign = 1.0 if direction == "increasing" else -1.0
                 controls = coefficients[0] + sign * np.r_[0.0, np.cumsum(coefficients[1:])]
-                parameters = _controls_to_parameters(family_id, controls)
+                parameters = _quantize_parameters(
+                    _controls_to_parameters(family_id, controls)
+                )
                 if not certify_family(family_id, parameters, direction).valid:
                     continue
                 try:
-                    model = FittedModel(
+                    model = _quantized_model(
                         (SegmentModel(family_id, lower_x, upper_x, parameters),),
                         direction,
                     )
@@ -375,15 +501,19 @@ def _fit_one(x: np.ndarray, y: np.ndarray, options: FitOptions) -> FitCandidate:
                         fitted = _elementary_profile(family_id, t, y, direction, shape)
                         if fitted is None:
                             continue
-                        sse, parameters, _ = fitted
+                        _, parameters, _ = fitted
+                        parameters = _quantize_parameters(parameters)
+                        if not certify_family(family_id, parameters, direction).valid:
+                            continue
                         try:
-                            model = FittedModel(
+                            model = _quantized_model(
                                 (SegmentModel(family_id, lower_x, upper_x, parameters),),
                                 direction,
                             )
                         except ValueError:
                             continue
                         prediction = np.asarray(model.predict(x))
+                        sse = float(np.sum((y - prediction) ** 2))
                         contenders.append((sse, 4, registry_index, model, prediction))
 
     sse, _, _, model, prediction = min(
@@ -412,7 +542,12 @@ def _eligible_cells(x: np.ndarray, minimum_share: float) -> tuple[tuple[int, flo
         ):
             lo = float(unique[index])
             hi = float(unique[index + 1])
-            breakpoint = lo + (hi - lo) / 2.0
+            breakpoint = round(
+                lo + (hi - lo) / 2.0,
+                COEFFICIENT_DECIMAL_PLACES,
+            )
+            if breakpoint == 0.0:
+                breakpoint = 0.0
             if lo <= breakpoint < hi:
                 cells.append((left_n, breakpoint))
     return tuple(cells)
@@ -491,38 +626,153 @@ def _branch_parameters(
     return parameters_from_parts(variant.family_id, intercept, (amplitude,), variant.shape)
 
 
-def _fit_two(x: np.ndarray, y: np.ndarray, options: FitOptions) -> tuple[FitCandidate | None, str]:
+@dataclass(frozen=True, slots=True)
+class _SearchBudget:
+    coarse_cells: int
+    refinement_pairs: int
+    refinement_grid: int
+    final_span: int
+
+
+@dataclass(frozen=True, slots=True)
+class _PairBest:
+    key: tuple[float, int, int]
+    cell_index: int
+
+
+@dataclass(frozen=True, slots=True)
+class _TwoIncumbent:
+    sse: float
+    complexity: int
+    registry_order: int
+    model: FittedModel
+    prediction: np.ndarray
+    left_n: int
+
+    @property
+    def key(self) -> tuple[float, int, int, str]:
+        return (
+            round(self.sse, 12),
+            self.complexity,
+            self.registry_order,
+            self.model.model_instance_hash,
+        )
+
+
+_SEARCH_BUDGETS: dict[SearchProfile, _SearchBudget] = {
+    "fast": _SearchBudget(9, 2, 9, 8),
+    "balanced": _SearchBudget(33, 8, 9, 6),
+    "quality": _SearchBudget(65, 12, 11, 4),
+    "exhaustive": _SearchBudget(2**63 - 1, 0, 0, 0),
+}
+
+
+def _uniform_cell_indices(total: int, maximum: int) -> tuple[int, ...]:
+    if total <= maximum:
+        return tuple(range(total))
+    return tuple(
+        map(
+            int,
+            np.unique(np.linspace(0, total - 1, maximum, dtype=np.int64)),
+        )
+    )
+
+
+def _fit_two(
+    x: np.ndarray,
+    y: np.ndarray,
+    options: FitOptions,
+) -> tuple[FitCandidate | None, str, SearchTrace]:
+    profile = options.search_policy.profile
+    variants = _variants(options)
     cells = _eligible_cells(x, options.min_segment_share)
     if not cells:
-        return None, "NO_BALANCED_SPLIT"
-    variants = _variants(options)
-    contenders: list[tuple[float, int, int, FittedModel, np.ndarray, int]] = []
+        return (
+            None,
+            "NO_BALANCED_SPLIT",
+            SearchTrace(
+                profile,
+                profile != "exhaustive",
+                len(variants),
+                options.min_segment_share,
+                options.max_elementary_starts,
+                0,
+                0,
+                0,
+                0,
+                0,
+                "NO_BALANCED_SPLIT",
+            ),
+        )
+    all_pairs = tuple(
+        (direction, left_variant, right_variant)
+        for direction in ("increasing", "decreasing")
+        for left_variant in variants
+        for right_variant in variants
+        if not (left_variant.family_id == right_variant.family_id == "constant_v1")
+    )
     lower_x = float(x[0])
     upper_x = float(x[-1])
-    for left_n, breakpoint in cells:
-        left_x, right_x = x[:left_n], x[left_n:]
-        left_y, right_y = y[:left_n], y[left_n:]
-        left_t = (left_x - lower_x) / (breakpoint - lower_x)
-        right_t = (right_x - breakpoint) / (upper_x - breakpoint)
-        for direction in ("increasing", "decreasing"):
-            sign = 1.0 if direction == "increasing" else -1.0
-            for left_variant in variants:
-                left_spec = family_spec(left_variant.family_id)
-                if left_x.size < max(3, left_spec.free_parameter_count + 1):
-                    continue
-                try:
-                    left_columns = _branch_columns(left_variant, left_t, "left", sign)
-                except ValueError:
-                    continue
-                for right_variant in variants:
-                    if left_variant.family_id == right_variant.family_id == "constant_v1":
+    best: _TwoIncumbent | None = None
+    pair_scores: dict[tuple[Direction, _Variant, _Variant], _PairBest] = {}
+    evaluated_pair_cells: dict[tuple[Direction, _Variant, _Variant], set[int]] = {}
+    evaluated_candidates = 0
+    evaluated_cells: set[int] = set()
+
+    def evaluate_cells(
+        cell_indices: Iterable[int],
+        pairs: tuple[tuple[Direction, _Variant, _Variant], ...],
+    ) -> None:
+        nonlocal best, evaluated_candidates
+        pairs_by_direction = {
+            direction: tuple(pair for pair in pairs if pair[0] == direction)
+            for direction in ("increasing", "decreasing")
+        }
+        for cell_index in cell_indices:
+            evaluated_cells.add(cell_index)
+            left_n, breakpoint = cells[cell_index]
+            left_x, right_x = x[:left_n], x[left_n:]
+            left_t = (left_x - lower_x) / (breakpoint - lower_x)
+            right_t = (right_x - breakpoint) / (upper_x - breakpoint)
+            for direction in ("increasing", "decreasing"):
+                sign = 1.0 if direction == "increasing" else -1.0
+                left_cache: dict[_Variant, np.ndarray | None] = {}
+                right_cache: dict[_Variant, np.ndarray | None] = {}
+                for _, left_variant, right_variant in pairs_by_direction[direction]:
+                    pair = (direction, left_variant, right_variant)
+                    pair_cells = evaluated_pair_cells.setdefault(pair, set())
+                    if cell_index in pair_cells:
                         continue
+                    pair_cells.add(cell_index)
+                    left_spec = family_spec(left_variant.family_id)
                     right_spec = family_spec(right_variant.family_id)
+                    if left_x.size < max(3, left_spec.free_parameter_count + 1):
+                        continue
                     if right_x.size < max(3, right_spec.free_parameter_count + 1):
                         continue
-                    try:
-                        right_columns = _branch_columns(right_variant, right_t, "right", sign)
-                    except ValueError:
+                    if left_variant not in left_cache:
+                        try:
+                            left_cache[left_variant] = _branch_columns(
+                                left_variant,
+                                left_t,
+                                "left",
+                                sign,
+                            )
+                        except ValueError:
+                            left_cache[left_variant] = None
+                    if right_variant not in right_cache:
+                        try:
+                            right_cache[right_variant] = _branch_columns(
+                                right_variant,
+                                right_t,
+                                "right",
+                                sign,
+                            )
+                        except ValueError:
+                            right_cache[right_variant] = None
+                    left_columns = left_cache[left_variant]
+                    right_columns = right_cache[right_variant]
+                    if left_columns is None or right_columns is None:
                         continue
                     left_width = left_columns.shape[1]
                     right_width = right_columns.shape[1]
@@ -530,47 +780,58 @@ def _fit_two(x: np.ndarray, y: np.ndarray, options: FitOptions) -> tuple[FitCand
                     design[:, 0] = 1.0
                     design[:left_n, 1 : 1 + left_width] = left_columns
                     design[left_n:, 1 + left_width :] = right_columns
-                    solved = _fit_linear_bounded(
-                        design,
-                        y,
-                        np.r_[-np.inf, np.zeros(left_width + right_width)],
-                        np.full(1 + left_width + right_width, np.inf),
-                    )
+                    evaluated_candidates += 1
+                    solved = _fit_join_nonnegative(design, y)
                     if solved is None:
                         continue
-                    sse, coefficients, _ = solved
-                    join = float(coefficients[0])
-                    left_parameters = _branch_parameters(
-                        left_variant,
-                        "left",
-                        join,
-                        coefficients[1 : 1 + left_width],
-                        sign,
+                    _, coefficients, _ = solved
+                    complexity = left_spec.free_parameter_count + right_spec.free_parameter_count + 1
+                    registry_order = FAMILY_IDS.index(left_variant.family_id) * len(FAMILY_IDS) + FAMILY_IDS.index(
+                        right_variant.family_id
                     )
-                    right_parameters = _branch_parameters(
-                        right_variant,
-                        "right",
-                        join,
-                        coefficients[1 + left_width :],
-                        sign,
+                    join = float(coefficients[0])
+                    left_parameters = _quantize_parameters(
+                        _branch_parameters(
+                            left_variant,
+                            "left",
+                            join,
+                            coefficients[1 : 1 + left_width],
+                            sign,
+                        )
+                    )
+                    right_parameters = _quantize_parameters(
+                        _branch_parameters(
+                            right_variant,
+                            "right",
+                            join,
+                            coefficients[1 + left_width :],
+                            sign,
+                        )
                     )
                     try:
-                        model = FittedModel(
+                        left_segment = SegmentModel(
+                            left_variant.family_id,
+                            lower_x,
+                            breakpoint,
+                            left_parameters,
+                            "left",
+                        )
+                        right_segment = SegmentModel(
+                            right_variant.family_id,
+                            breakpoint,
+                            upper_x,
+                            right_parameters,
+                            "right",
+                        )
+                        right_segment = _align_quantized_join(
+                            left_segment,
+                            right_segment,
+                            direction,
+                        )
+                        model = _quantized_model(
                             (
-                                SegmentModel(
-                                    left_variant.family_id,
-                                    lower_x,
-                                    breakpoint,
-                                    left_parameters,
-                                    "left",
-                                ),
-                                SegmentModel(
-                                    right_variant.family_id,
-                                    breakpoint,
-                                    upper_x,
-                                    right_parameters,
-                                    "right",
-                                ),
+                                left_segment,
+                                right_segment,
                             ),
                             direction,
                         )
@@ -580,17 +841,85 @@ def _fit_two(x: np.ndarray, y: np.ndarray, options: FitOptions) -> tuple[FitCand
                     if not np.all(np.isfinite(prediction)):
                         continue
                     sse = float(np.sum((y - prediction) ** 2))
-                    complexity = left_spec.free_parameter_count + right_spec.free_parameter_count + 1
-                    registry_order = FAMILY_IDS.index(left_variant.family_id) * len(FAMILY_IDS) + FAMILY_IDS.index(
-                        right_variant.family_id
+                    pair_score = (round(sse, 12), complexity, registry_order)
+                    if pair not in pair_scores or pair_score < pair_scores[pair].key:
+                        pair_scores[pair] = _PairBest(pair_score, cell_index)
+                    if best is not None and pair_score > best.key[:3]:
+                        continue
+                    contender = _TwoIncumbent(
+                        sse,
+                        complexity,
+                        registry_order,
+                        model,
+                        prediction,
+                        left_n,
                     )
-                    contenders.append((sse, complexity, registry_order, model, prediction, left_n))
-    if not contenders:
-        return None, "NO_VALID_TWO_MODEL"
-    sse, _, _, model, prediction, left_n = min(
-        contenders,
-        key=lambda item: (round(item[0], 12), item[1], item[2], item[3].model_instance_hash),
-    )
+                    if best is None or contender.key < best.key:
+                        best = contender
+
+    budget = _SEARCH_BUDGETS[profile]
+    coarse_indices = _uniform_cell_indices(len(cells), budget.coarse_cells)
+    evaluate_cells(coarse_indices, all_pairs)
+    refinement_pairs = 0
+    if profile != "exhaustive" and len(coarse_indices) < len(cells) and pair_scores:
+        ranked_pairs = tuple(
+            (pair, pair_best.cell_index)
+            for pair, pair_best in sorted(
+                pair_scores.items(),
+                key=lambda item: (
+                    item[1].key,
+                    item[0][0],
+                    item[0][1].family_id,
+                    item[0][1].shape,
+                    item[0][2].family_id,
+                    item[0][2].shape,
+                ),
+            )[: budget.refinement_pairs]
+        )
+        refinement_pairs = len(ranked_pairs)
+        for pair, anchor in ranked_pairs:
+            anchor_position = coarse_indices.index(anchor)
+            lower = coarse_indices[max(0, anchor_position - 1)]
+            upper = coarse_indices[min(len(coarse_indices) - 1, anchor_position + 1)]
+            while upper - lower > budget.final_span:
+                probes = tuple(
+                    lower + offset
+                    for offset in _uniform_cell_indices(
+                        upper - lower + 1,
+                        budget.refinement_grid,
+                    )
+                )
+                evaluate_cells(probes, (pair,))
+                best_cell = pair_scores[pair].cell_index
+                best_position = min(
+                    range(len(probes)),
+                    key=lambda index: (abs(probes[index] - best_cell), index),
+                )
+                lower = probes[max(0, best_position - 1)]
+                upper = probes[min(len(probes) - 1, best_position + 1)]
+            evaluate_cells(range(lower, upper + 1), (pair,))
+    if best is None:
+        return (
+            None,
+            "NO_VALID_TWO_MODEL",
+            SearchTrace(
+                profile,
+                profile != "exhaustive",
+                len(variants),
+                options.min_segment_share,
+                options.max_elementary_starts,
+                len(cells),
+                len(coarse_indices),
+                len(evaluated_cells),
+                evaluated_candidates,
+                refinement_pairs,
+                "NO_VALID_TWO_MODEL",
+            ),
+        )
+    sse = best.sse
+    model = best.model
+    prediction = best.prediction
+    left_n = best.left_n
     sse, r2, rmse, mae = _metric_values(y, prediction)
     metrics: list[SegmentMetrics] = []
     for segment_id, subset in (("left", slice(0, left_n)), ("right", slice(left_n, x.size))):
@@ -606,7 +935,24 @@ def _fit_two(x: np.ndarray, y: np.ndarray, options: FitOptions) -> tuple[FitCand
                 local_mae,
             )
         )
-    return FitCandidate("P2", "VALID", model, sse, r2, rmse, mae, tuple(metrics), prediction), "VALID"
+    trace = SearchTrace(
+        profile,
+        profile != "exhaustive",
+        len(variants),
+        options.min_segment_share,
+        options.max_elementary_starts,
+        len(cells),
+        len(coarse_indices),
+        len(evaluated_cells),
+        evaluated_candidates,
+        refinement_pairs,
+        "EXHAUSTIVE_SPACE" if profile == "exhaustive" else "BUDGET_COMPLETE",
+    )
+    return (
+        FitCandidate("P2", "VALID", model, sse, r2, rmse, mae, tuple(metrics), prediction),
+        "VALID",
+        trace,
+    )
 
 
 def fit_candidates(
@@ -619,7 +965,9 @@ def fit_candidates(
     resolved = FitOptions() if options is None else options
     xv, yv = _as_problem(x, y)
     one = _fit_one(xv, yv, resolved)
-    two, two_status = _fit_two(xv, yv, resolved)
+    two, two_status, search_trace = _fit_two(xv, yv, resolved)
+    if two is None and one.model.direction == "flat" and two_status == "NO_VALID_TWO_MODEL":
+        two_status = "COLLAPSED_TO_P1"
     if two is not None:
         grid = np.linspace(float(xv[0]), float(xv[-1]), 1001)
         difference = np.max(
@@ -629,4 +977,9 @@ def fit_candidates(
         if difference <= 1e-10 * scale:
             two = None
             two_status = "COLLAPSED_TO_P1"
-    return CandidateSet(one=one, two=two, two_status=two_status)
+    return CandidateSet(
+        one=one,
+        two=two,
+        two_status=two_status,
+        search_trace=search_trace,
+    )
