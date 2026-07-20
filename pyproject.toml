@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "monotone-calibrate"
+version = "0.1.0"
+description = "Local monotone one-vs-two curve calibration with transparent reports"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "jinja2>=3.1.6,<4",
+  "jsonschema>=4.25,<5",
+  "langchain-openai>=1.0,<2",
+  "numpy>=2.3,<3",
+  "python-dotenv>=1.1,<2",
+  "scipy>=1.16,<2",
+]
+
+[project.scripts]
+monotone-calibrate = "monotone_calibrate.cli:main"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4,<10",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/monotone_calibrate"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+

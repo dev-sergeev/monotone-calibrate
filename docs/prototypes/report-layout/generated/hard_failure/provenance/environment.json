@@ -1,0 +1,7 @@
+{
+  "status": "prototype_static_not_runtime_benchmark",
+  "python_implementation": "CPython",
+  "python_version": "3.12.11",
+  "platform": "darwin",
+  "thread_policy": "single_process_single_thread"
+}

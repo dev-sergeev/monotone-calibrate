@@ -1,0 +1,264 @@
+{
+  "model_schema_version": "prototype-final-refit-dossier-1.0.0",
+  "prototype_only": true,
+  "usable_for_prediction": false,
+  "notice": "SYNTHETIC FINAL-REFIT DOSSIER; not recommended-model.json",
+  "report_id": "prototype-crossfit_test_y_changed",
+  "role": "two",
+  "registry_version": "registry_v1",
+  "refit": {
+    "status": "certified",
+    "reason": null,
+    "registry_version": "registry_v1",
+    "registry_role": "core",
+    "incubator_excluded": true,
+    "family_left": "poly1_v1",
+    "family_right": "poly1_v1",
+    "ordered_family_pair": "poly1_v1|poly1_v1",
+    "canonical_ast_left": {
+      "ast_id": "registry_v1:poly1_v1",
+      "root": "add",
+      "prefix": [
+        "add",
+        "parameter:a",
+        "multiply",
+        "parameter:b",
+        "variable:t"
+      ],
+      "node_count": 5
+    },
+    "canonical_ast_right": {
+      "ast_id": "registry_v1:poly1_v1",
+      "root": "add",
+      "prefix": [
+        "add",
+        "parameter:a",
+        "multiply",
+        "parameter:b",
+        "variable:t"
+      ],
+      "node_count": 5
+    },
+    "formula_left": "F(x) = 3.51 + 1.76 * (((x - 0.0) / 5.5) - 1.0)",
+    "formula_right": "F(x) = 3.51 + 5.39 * ((x - 5.5) / 5.5)",
+    "transforms": {
+      "left_x": {
+        "kind": "affine_unit_interval",
+        "offset": 0.0,
+        "scale": 5.5,
+        "target_interval": [
+          0.0,
+          1.0
+        ],
+        "invertible": true
+      },
+      "right_x": {
+        "kind": "affine_unit_interval",
+        "offset": 5.5,
+        "scale": 5.5,
+        "target_interval": [
+          0.0,
+          1.0
+        ],
+        "invertible": true
+      },
+      "y": {
+        "kind": "affine_center_scale",
+        "offset": 5.649166666666666,
+        "scale": 9.350833333333334,
+        "target_interval": null,
+        "invertible": true
+      }
+    },
+    "parameters": {
+      "c": 5.5,
+      "mu": 3.51,
+      "q_left": 1.76,
+      "q_right": 5.39
+    },
+    "boundary": 5.5,
+    "shared_mu": 3.51,
+    "membership": "x<=c:left;x>c:right",
+    "membership_cell": {
+      "cell_id": "raw-cell-006",
+      "lower_x": 5.0,
+      "upper_x_exclusive": 6.0,
+      "left_n": 6,
+      "right_n": 6,
+      "left_share": 0.5,
+      "right_share": 0.5,
+      "ties_atomic": true
+    },
+    "domain": [
+      0.0,
+      11.0
+    ],
+    "direction": "nondecreasing",
+    "continuity_residual": 0.0,
+    "certificate": "PASS",
+    "derivative_certificate_left": {
+      "status": "PASS",
+      "reason": null,
+      "method": "analytic_family_specific",
+      "family_id": "poly1_v1",
+      "polynomial_degree_after_simplification": 1,
+      "interval": [
+        0.0,
+        5.5
+      ],
+      "direction": "nondecreasing",
+      "analytic_derivative": "0.32",
+      "critical_points": [],
+      "minimum_signed_derivative": 0.32,
+      "domain_margin": 1.0,
+      "finite_function": true,
+      "finite_derivative": true
+    },
+    "derivative_certificate_right": {
+      "status": "PASS",
+      "reason": null,
+      "method": "analytic_family_specific",
+      "family_id": "poly1_v1",
+      "polynomial_degree_after_simplification": 1,
+      "interval": [
+        5.5,
+        11.0
+      ],
+      "direction": "nondecreasing",
+      "analytic_derivative": "0.98",
+      "critical_points": [],
+      "minimum_signed_derivative": 0.98,
+      "domain_margin": 1.0,
+      "finite_function": true,
+      "finite_derivative": true
+    },
+    "identifiability_status": "IDENTIFIED",
+    "bound_status": "NO_ACTIVE_BOUNDS",
+    "collapse_status": "NO_COLLAPSE",
+    "solver_status": "SUCCEEDED",
+    "stability_status": "STABLE",
+    "optimizer": {
+      "strategy": "PROFILE_CELLS",
+      "scope": "full_data_p2_refit",
+      "status": "SUCCEEDED",
+      "reason": null,
+      "trace_path": "trace/fit-attempts.jsonl.gz",
+      "tie_safe_cell_count": 3,
+      "eligible_cell_count": 3,
+      "starts_per_cell": 2,
+      "start_count": 6,
+      "attempt_count": 6,
+      "trace_record_count": 6,
+      "successful_attempt_count": 6,
+      "failed_attempt_count": 0,
+      "evaluation_count": 78,
+      "competing_basin_count": 0,
+      "competing_basin_status": "NONE",
+      "certificate_result": "PASS",
+      "reason_codes": [],
+      "warning_codes": []
+    },
+    "model_structure_hash": "5a52741c2358f102dc0e6861d88fbfa13dad7999cc790e09fde17732d419d0ab",
+    "model_instance_hash": "61cdf2583e08d08ed852f24e799987f75cf2bacc753967765a4ae94c7858bc6a",
+    "model_path": "models/two-segment-model.json",
+    "left": {
+      "n": 6,
+      "share": 0.5,
+      "n_unique_x": 6,
+      "span": [
+        0.0,
+        5.0
+      ],
+      "r2_fit": {
+        "value": -0.15089381397490342,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "in_sample_sse",
+        "unit": "1"
+      },
+      "rmse_fit": {
+        "value": 5.043860954996017,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "segment_root_mean_squared_full_data_refit_error",
+        "unit": "mV"
+      },
+      "mae_fit": {
+        "value": 2.44,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "segment_mean_absolute_full_data_refit_error",
+        "unit": "mV"
+      }
+    },
+    "right": {
+      "n": 6,
+      "share": 0.5,
+      "n_unique_x": 6,
+      "span": [
+        6.0,
+        11.0
+      ],
+      "r2_fit": {
+        "value": 0.6286764427266864,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "in_sample_sse",
+        "unit": "1"
+      },
+      "rmse_fit": {
+        "value": 0.6389966092763458,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "segment_root_mean_squared_full_data_refit_error",
+        "unit": "mV"
+      },
+      "mae_fit": {
+        "value": 0.5350000000000003,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "segment_mean_absolute_full_data_refit_error",
+        "unit": "mV"
+      }
+    },
+    "r2_fit_all": {
+      "value": -0.04037455597502704,
+      "status": "defined",
+      "reason": null,
+      "scope": "in_sample",
+      "definition": "in_sample_sse",
+      "unit": "1"
+    },
+    "rmse_fit_all": {
+      "value": 3.5950556323929117,
+      "status": "defined",
+      "reason": null,
+      "scope": "in_sample",
+      "definition": "root_mean_squared_full_data_refit_error",
+      "unit": "mV"
+    },
+    "mae_fit_all": {
+      "value": 1.4875,
+      "status": "defined",
+      "reason": null,
+      "scope": "in_sample",
+      "definition": "mean_absolute_full_data_refit_error",
+      "unit": "mV"
+    },
+    "n": 12,
+    "n_unique_x": 12,
+    "plot": {
+      "path": "figures/two-segment.svg",
+      "status": "branches_boundary_and_points",
+      "line_present": true,
+      "boundary_present": true
+    }
+  },
+  "extrapolation": "forbidden"
+}

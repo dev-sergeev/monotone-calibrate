@@ -1,0 +1,153 @@
+{
+  "$schema": "urn:monotone-calibrate:work-policy:v1",
+  "policy_id": "work-policy-v1",
+  "arithmetic": "non-negative checked unsigned 128-bit; any overflow rejects",
+  "limits": {
+    "max_work_units": 2000000000,
+    "max_task_nodes": 50000000,
+    "max_workdir_bytes": 8589934592
+  },
+  "validation_policy": {
+    "split_policy_path": "docs/acceptance/split-policy-v1.json",
+    "split_policy_sha256": "6466c9aeb9a78804831998ef7cd0bcfad0693feedf7a2e5c8f4c940568677b2e",
+    "g_at_least_10": {"outer_folds": 5, "repetitions": 10},
+    "g_8_or_9": {"outer_folds": 4, "repetitions": 20},
+    "g_below_8": "DESCRIPTIVE_ONLY",
+    "inner_fit_scopes": 0,
+    "reason": "registry, solver budgets and thresholds are frozen before the request; each outer train reruns the full selector and the outer test honestly evaluates that complete procedure"
+  },
+  "fit_budget": {
+    "profile_grid_rows": 501,
+    "objective_row_weight": 1,
+    "certificate_row_weight": 2,
+    "certificate_rule": "one independent certificate for the best reduced start of each branch-expanded structure/cell/direction, not one certificate per start",
+    "p1": {
+      "constant_v1": {"branches": 1, "directions": 1, "starts": 1, "outer_evaluations_per_start": 1},
+      "poly1_v1": {"branches": 1, "directions": 2, "starts": 1, "outer_evaluations_per_start": 1},
+      "poly2_v1": {"branches": 1, "directions": 2, "starts": 1, "outer_evaluations_per_start": 1},
+      "poly3_v1": {"branches": 1, "directions": 2, "starts": 1, "outer_evaluations_per_start": 1},
+      "exp_affine_v1": {"branches": 2, "directions": 2, "starts": 3, "outer_evaluations_per_start": 64},
+      "log_shift_v1": {"branches": 1, "directions": 2, "starts": 3, "outer_evaluations_per_start": 64},
+      "reciprocal_shift_pos_v1": {"branches": 1, "directions": 2, "starts": 3, "outer_evaluations_per_start": 64},
+      "logistic_v1": {"branches": 1, "directions": 2, "starts": 5, "outer_evaluations_per_start": 96}
+    },
+    "p1_scope_totals": {
+      "fit_attempts": 41,
+      "certified_structures": 17,
+      "objective_row_evaluation_factor": 2503,
+      "work_formula": "2503*n_scope + 17*2*(n_scope+501)"
+    },
+    "p2_branch_expansion": {
+      "linear_variants": 4,
+      "nonlinear_variants": 5,
+      "excluded_pair": "constant_v1/constant_v1",
+      "structures_per_cell_per_direction": {
+        "zero_nonlinear_atoms": 15,
+        "one_nonlinear_atom": 40,
+        "two_nonlinear_atoms": 25
+      },
+      "budget_per_structure": {
+        "zero_nonlinear_atoms": {"starts": 1, "outer_evaluations_per_start": 1},
+        "one_nonlinear_atom": {"starts": 3, "outer_evaluations_per_start": 64},
+        "two_nonlinear_atoms": {"starts": 5, "outer_evaluations_per_start": 128}
+      },
+      "directions": 2,
+      "fit_attempts_per_cell_per_direction": 260,
+      "objective_row_evaluation_factor_per_cell_per_direction": 23695,
+      "certified_structures_per_cell_per_direction": 80,
+      "balanced_cells_formula": "count j in [0,g_scope-2] such that ceil(0.40*n_scope) <= cumulative_rows_through_sorted_x_group[j] <= floor(0.60*n_scope); every raw-binary64 equal-x group is atomic",
+      "balanced_cells_accounting": "before solver, enumerate the exact canonical group-size vector separately for full data, every frozen outer-training scope and every leave-one-group influence scope; forecast all balance-valid gaps even when later family support/rank checks will reject them",
+      "work_formula": "cells*2*(23695*n_scope + 80*2*(n_scope+501))"
+    }
+  },
+  "llm_start_advisor": {
+    "default_enabled": false,
+    "call_count_formula": "if enabled: 1 + R*K (full-data plus every outer-training registry scope); influence, bootstrap and predictor make no calls",
+    "request_bytes_max_each": 65536,
+    "response_bytes_max_each": 32768,
+    "reserved_workdir_bytes_per_call": 98304,
+    "task_nodes_per_call": 1,
+    "solver_work_units_added": 0,
+    "start_slot_policy_path": "docs/acceptance/start-slot-policy-v1.json",
+    "start_slot_policy_sha256": "2e9c4f12755d2576b5a7bb7d5a9de688a7a3421411ed181c7dd9e9ab00cbe28b",
+    "p1_replaceable_slots": "for each nonlinear structure keep every anchor and replace at most the final one of 3 starts or final two of 5 starts",
+    "p2_replaceable_slots": "per structure/cell/direction keep every anchor and replace at most the final one of 3 starts or final two of 5 starts",
+    "invalid_or_missing_response": "use the exact deterministic start originally assigned to that slot",
+    "admission_rule": "advisor calls and reserved bytes are added before any network/solver activity; they never increase fit-attempt, evaluation or certificate budgets"
+  },
+  "task_graph": {
+    "construction": "materialize the complete deterministic DAG before the first solver call from rows, canonical x-groups, fixed outer splits, registry branches, starts, OOF bootstrap seeds and selected-structure LGO budgets",
+    "fit_scopes": "one full-data P1/P2 registry scope plus R*K outer-training P1/P2 registry scopes; there are no inner fit scopes",
+    "bootstrap": "200 aggregation-only nodes resample canonical x-group IDs and sum frozen paired OOF loss contributions; no fitting, selection or prediction occurs",
+    "bootstrap_work_formula": "8*sum(selected OOF appearances including multiplicity) over all 200 resamples",
+    "influence": "for every canonical x-group, refit only the selected full-data P1 structure and selected P2 family-pair/direction across all remaining balanced boundary cells; do not rerun registry selection, validation, bootstrap or recommendation",
+    "influence_worst_case_formula_per_group": "5*96*n_minus_group + 2*(n_minus_group+501) + cells_minus_group*(5*128*n_minus_group + 2*(n_minus_group+501))",
+    "non_fit_nodes": {
+      "input_adapter": 1,
+      "request_and_admission": 2,
+      "split_build_per_outer_split": 1,
+      "metrics_per_procedure_per_repetition": 1,
+      "pooled_metrics_per_procedure": 1,
+      "bootstrap_summary_per_resample": 1,
+      "influence_summary_per_group": 1,
+      "publication_per_declared_artifact": 1,
+      "manifest_and_commit": 2
+    },
+    "task_nodes_formula": "all fit-attempt and certificate nodes plus the enumerated non-fit nodes",
+    "work_units_formula": "all frozen objective/certificate work plus 8 units per paired OOF metric appearance, 8 per selected bootstrap appearance and 4 per model/grid influence comparison",
+    "actual_accounting": "each executed node records actual objective evaluations and row-equivalent units; actual values must not exceed its frozen node budget or the run fails WORK_ACCOUNTING_EXCEEDED"
+  },
+  "workdir_forecast": {
+    "fixed_private_metadata_bytes": 33554432,
+    "publication_staging_bytes": 268435456,
+    "input_snapshot_expansion_multiplier": 6,
+    "bytes_per_task_node": 192,
+    "bytes_per_fit_attempt": 2048,
+    "bytes_per_procedure_oof_appearance": 384,
+    "bytes_per_p2_outer_fit": 512,
+    "bytes_per_bootstrap_resample": 256,
+    "bytes_per_bootstrap_group_entry": 64,
+    "bytes_per_influence_group": 8192,
+    "bytes_per_plot_row": 256,
+    "plot_rows_max": 20000,
+    "identifier_replication_bound": "3*input_snapshot_bytes*(2*repetitions+4) reserves worst-case UTF-8 percent expansion for both procedure rows in every OOF repetition plus observations, plot/report and one spare identifier-bearing copy; fixed per-row syntax remains in per-row terms",
+    "formula": "33554432 + 268435456 + 6*input_snapshot_bytes + 3*input_snapshot_bytes*(2*repetitions+4) + 192*task_nodes + 2048*fit_attempts + 384*2*paired_oof_appearances + 512*p2_outer_fits + 256*bootstrap_resamples + 64*bootstrap_resamples*g_scope + 8192*influence_groups + 256*min(plot_rows,20000) + 98304*llm_advisor_calls",
+    "writer_rule": "every writer reserves against the forecast and refuses before an append that would exceed it; actual retained workdir bytes must not exceed forecast"
+  },
+  "demo_forecast": {
+    "fixture": "docs/acceptance/fixtures/demo-strong-p2-v1.csv",
+    "fixture_sha256": "2cb8c3455e3ad236cc5844696ba2d9f36cf46d64d7f984e1b8d1e869afa4dcad",
+    "input_snapshot_bytes": 644,
+    "n": 30,
+    "g": 30,
+    "outer_folds": 5,
+    "repetitions": 10,
+    "full_balanced_cells": 7,
+    "outer_training_n": 24,
+    "outer_training_g": 24,
+    "outer_balanced_cells": 5,
+    "registry_fit_attempts": 135731,
+    "registry_certificates": 41987,
+    "influence_fit_attempts": 1050,
+    "influence_certificates": 210,
+    "task_nodes": 179317,
+    "work_units": 346000344,
+    "workdir_bytes": 617669880,
+    "declared_success_artifacts": 32,
+    "oracle": "each value is independently recomputed by audit_acceptance.py from this policy and the frozen demo; every value is below its production limit"
+  },
+  "demo_advisor_enabled_forecast": {
+    "advisor_calls": 51,
+    "additional_conditional_artifacts": 1,
+    "task_nodes": 179369,
+    "work_units": 346000344,
+    "workdir_bytes": 622693368,
+    "oracle": "the advisor substitutes existing starts, so solver work is unchanged; call nodes, one trace publication node and 98304 reserved bytes per call are added and remain below production limits"
+  },
+  "boundary_acceptance": {
+    "exact_limit": "a test-only signed policy copy sets one guard equal to the independently recomputed forecast and must admit",
+    "limit_plus_one": "the same copy sets that guard to forecast-1 and must reject before solver; production limits and request are otherwise byte-identical",
+    "checked_overflow": "synthetic maximal counts overflow the checked formula and reject before solver",
+    "policy_mutation_scope": "test-only admission oracle; it cannot be supplied by the public CLI and never changes a fitted result"
+  }
+}

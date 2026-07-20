@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:source-inventory-policy:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "root_files",
+    "source_roots",
+    "excluded_top_level_entries",
+    "excluded_prefixes",
+    "ignored_directory_names",
+    "ignored_file_names",
+    "ignored_suffixes",
+    "required_files",
+    "limits",
+    "semantic_files"
+  ],
+  "properties": {
+    "schema_version": {"const": "source-inventory-policy-v1"},
+    "policy_id": {"const": "monotone-calibrate-source-inventory-v1"},
+    "root_files": {"$ref": "#/$defs/paths"},
+    "source_roots": {"$ref": "#/$defs/paths"},
+    "excluded_top_level_entries": {"$ref": "#/$defs/names"},
+    "excluded_prefixes": {"$ref": "#/$defs/paths"},
+    "ignored_directory_names": {"$ref": "#/$defs/names"},
+    "ignored_file_names": {"$ref": "#/$defs/names"},
+    "ignored_suffixes": {"$ref": "#/$defs/names"},
+    "required_files": {"$ref": "#/$defs/paths"},
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_file_bytes_max", "source_files_max", "source_total_bytes_max"],
+      "properties": {
+        "source_file_bytes_max": {"const": 67108864},
+        "source_files_max": {"const": 4096},
+        "source_total_bytes_max": {"const": 1073741824}
+      }
+    },
+    "semantic_files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resolved_policy", "registry"],
+      "properties": {
+        "resolved_policy": {"$ref": "#/$defs/semantic_file"},
+        "registry": {"$ref": "#/$defs/semantic_file"}
+      }
+    }
+  },
+  "$defs": {
+    "paths": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 512}
+    },
+    "names": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 128}
+    },
+    "semantic_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_path", "schema_sha256", "identity_field", "identity_value"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "schema_path": {"type": "string", "minLength": 1},
+        "schema_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "identity_field": {"type": "string", "minLength": 1},
+        "identity_value": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

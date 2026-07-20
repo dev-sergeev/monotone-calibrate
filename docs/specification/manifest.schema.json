@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:manifest:1",
+  "title": "Monotone calibration bundle manifest v1",
+  "description": "Integrity inventory for a complete immutable production report bundle.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "analysis_id",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "manifest-v1"
+    },
+    "analysis_id": {
+      "$ref": "#/$defs/sha256"
+    },
+    "report_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "$comment": "The verifier MUST require paths to be unique and entries to be ordered by ascending UTF-8 byte sequence of path. JSON Schema cannot express cross-item uniqueness by one property or sorted order."
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "complete_marker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "analysis_id", "manifest_sha256"],
+      "properties": {
+        "schema_version": {"const": "complete-v1"},
+        "analysis_id": {"$ref": "#/$defs/sha256"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "media_type",
+        "size",
+        "sha256",
+        "role"
+      ],
+      "properties": {
+        "path": {
+          "allOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*$"
+            },
+            {
+              "not": {
+                "enum": [
+                  "manifest.json",
+                  "COMPLETE"
+                ]
+              }
+            }
+          ]
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "role": {
+          "enum": [
+            "human_report",
+            "machine_report",
+            "schema",
+            "model_candidate",
+            "model_recommended",
+            "observations",
+            "oof_appearances",
+            "diagnostics",
+            "plot_data",
+            "figure",
+            "trace",
+            "provenance",
+            "metadata"
+          ]
+        }
+      }
+    }
+  }
+}

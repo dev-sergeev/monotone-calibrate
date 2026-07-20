@@ -1,0 +1,43 @@
+{
+  "request_schema_version": "prototype-synthetic-request-v1",
+  "logical_adapter_version": "prototype-synthetic-input-v1",
+  "result_bearing_scenario": {
+    "decision_reason": "CLEAR_PRACTICAL_UPLIFT",
+    "p1_oof_predictions": [
+      4.143473954906463,
+      4.217866971740014,
+      4.3155078063340495,
+      4.436396458688568,
+      4.510789475522119,
+      4.608430310116154,
+      4.729318962470674,
+      4.803711979304225,
+      4.90135281389826,
+      5.022241466252779,
+      5.09663448308633,
+      5.194275317680364
+    ],
+    "p2_oof_predictions": [
+      4.143473954906463,
+      2.972559179792603,
+      3.3421389776195216,
+      3.79971396540523,
+      4.081298573273359,
+      4.608430310116154,
+      4.9084533588859856,
+      5.190037966754115,
+      5.559617764581033,
+      6.017192752366741,
+      5.09663448308633,
+      6.668357158061788
+    ],
+    "p2_partial_fallback_code": "OPTIMIZER_FAILURE",
+    "p2_partial_fallback_outer_fit_ids": [
+      "outer-01-fold-1"
+    ],
+    "profile": "one",
+    "r2_one": 0.4,
+    "r2_two": 0.7,
+    "recommendation": "two"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "artifacts": [
+    {
+      "bytes": 450,
+      "path": "input-audit.json",
+      "sha256": "faefb6f64341bd1f618eb509115839e099b85b7ebdba2681467c5ede69ea6313"
+    },
+    {
+      "bytes": 8164,
+      "path": "model-comparison.json",
+      "sha256": "c9e12c864bf79adada170a22f2c3867b62e2aee12ad0da9c30ad95c5e00084cf"
+    },
+    {
+      "bytes": 4390,
+      "path": "observations.csv",
+      "sha256": "b33eda073e9536ba0c758536ed67b1517d9c1083310332e896274ac16159d4b4"
+    },
+    {
+      "bytes": 9868,
+      "path": "plot-one.svg",
+      "sha256": "8b38cb9c1c85cd4ce9aa071458f31f64d51f208623f86073029fed26069bf853"
+    },
+    {
+      "bytes": 14552,
+      "path": "plot-two.svg",
+      "sha256": "cc411e8935fc176614e319d3595a35fcc817b2300cb19a2d098c61bc3a3ae7e8"
+    },
+    {
+      "bytes": 1775,
+      "path": "recommended-model.json",
+      "sha256": "0109ee4f9b137c721ebb9f709783ed3ca071284cabb8d345c4e0bd8c9b43c9e2"
+    },
+    {
+      "bytes": 3549,
+      "path": "report.html",
+      "sha256": "5b75808dd8d2f6f658395f3f04e492e9ba2cf42935db52d40ec4f93e5abb4706"
+    },
+    {
+      "bytes": 10375,
+      "path": "report.json",
+      "sha256": "b9ad1db76d880aee31f2824c39ab36a16c6507fe56ab6ef4ffa64d15cf3e1021"
+    }
+  ],
+  "report_id": "77296d7f8512d681e14913065a91ebd1cbc19e5ccfdb3d5e997eb75659075ce2",
+  "schema_version": "bundle-manifest-v1"
+}

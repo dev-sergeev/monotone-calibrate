@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:acceptance-review:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "signed_payload", "signature"],
+  "properties": {
+    "schema_version": {"const": "acceptance-review-v1"},
+    "signed_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewer_id", "axis", "verdict", "evidence_digest", "release_snapshot_digest", "verifier_runtime_lock_sha256", "public_key_sha256"],
+      "properties": {
+        "reviewer_id": {"type": "string", "minLength": 1},
+        "axis": {"enum": ["statistical_model", "security_operations"]},
+        "verdict": {"const": "GO"},
+        "evidence_digest": {"$ref": "#/$defs/hash"},
+        "release_snapshot_digest": {"$ref": "#/$defs/hash"},
+        "verifier_runtime_lock_sha256": {"$ref": "#/$defs/hash"},
+        "public_key_sha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value_base64"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "value_base64": {"type": "string", "pattern": "^[A-Za-z0-9+/]{86}==$"}
+      }
+    }
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

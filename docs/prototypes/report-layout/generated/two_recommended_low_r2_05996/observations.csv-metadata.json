@@ -1,0 +1,107 @@
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "observations.csv",
+  "dc:title": "PROTOTYPE synthetic observations",
+  "dialect": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "lineTerminators": [
+      "\n"
+    ],
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "header": true,
+    "null": [
+      ""
+    ]
+  },
+  "tableSchema": {
+    "columns": [
+      {
+        "name": "row_id"
+      },
+      {
+        "name": "source_row_id"
+      },
+      {
+        "name": "x"
+      },
+      {
+        "name": "y"
+      },
+      {
+        "name": "x_group_id"
+      },
+      {
+        "name": "input_status"
+      },
+      {
+        "name": "input_reason"
+      },
+      {
+        "name": "pred_null_oof"
+      },
+      {
+        "name": "pred_one_oof"
+      },
+      {
+        "name": "resid_one_oof"
+      },
+      {
+        "name": "pred_two_oof"
+      },
+      {
+        "name": "resid_two_oof"
+      },
+      {
+        "name": "p2_oof_fallback_code"
+      },
+      {
+        "name": "pred_one_refit"
+      },
+      {
+        "name": "pred_two_refit"
+      },
+      {
+        "name": "segment_refit"
+      },
+      {
+        "name": "residual_flags"
+      },
+      {
+        "name": "influence_flags"
+      },
+      {
+        "name": "robust_scale"
+      },
+      {
+        "name": "z_median"
+      },
+      {
+        "name": "score_median_abs_z"
+      },
+      {
+        "name": "flag_rate"
+      },
+      {
+        "name": "appearance_count"
+      },
+      {
+        "name": "refit_residual"
+      },
+      {
+        "name": "influence_dmax"
+      },
+      {
+        "name": "influence_drms"
+      },
+      {
+        "name": "influence_delta_c"
+      },
+      {
+        "name": "action"
+      }
+    ]
+  },
+  "identifierEncoding": "id: + UTF-8 percent encoding"
+}

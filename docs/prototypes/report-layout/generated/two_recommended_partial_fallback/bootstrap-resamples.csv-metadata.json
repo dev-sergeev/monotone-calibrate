@@ -1,0 +1,35 @@
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "bootstrap-resamples.csv",
+  "dc:title": "PROTOTYPE synthetic full-pipeline bootstrap results",
+  "dialect": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "lineTerminators": [
+      "\n"
+    ],
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "header": true,
+    "null": [
+      ""
+    ]
+  },
+  "tableSchema": {
+    "columns": [
+      {
+        "name": "resample_id"
+      },
+      {
+        "name": "status"
+      },
+      {
+        "name": "rel_mse_uplift"
+      },
+      {
+        "name": "failure_code"
+      }
+    ]
+  },
+  "identifierEncoding": "id: + UTF-8 percent encoding"
+}

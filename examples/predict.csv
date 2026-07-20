@@ -1,0 +1,6 @@
+row_id,x
+left-interval,5
+near-boundary,11.5
+right-interval,20
+outside-support,35
+invalid-x,not-a-number

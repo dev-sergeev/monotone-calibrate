@@ -1,0 +1,82 @@
+{
+  "$schema": "urn:monotone-calibrate:start-slot-policy:v1",
+  "policy_id": "start-slot-policy-v1",
+  "purpose": "Freeze every advisor-replaceable nonlinear start shape without increasing the deterministic solver budget.",
+  "slot_id": {
+    "scope_id": "64 lowercase hex training_scope_id computed exactly by split-policy-v1.json from its canonical membership ledger and scope payload; it is non-circular and contains no row values",
+    "p1_template": "{scope_id}:p1:{variant_id}:{direction}:s{ordinal_2d}",
+    "p2_template": "{scope_id}:p2:c{cell_ordinal_6d}:{direction}:{left_variant_id}:{right_variant_id}:s{ordinal_2d}",
+    "direction_values": ["inc", "dec"],
+    "cell_ordinal": "zero-based order of admissible raw-x membership gaps sorted by their left x group; the gap values are not encoded in the slot ID",
+    "maximum_utf8_bytes": 256
+  },
+  "nonlinear_variants": [
+    {
+      "variant_id": "exp_affine_neg_v1",
+      "family_id": "exp_affine_v1",
+      "parameter_names": ["k"],
+      "bounds": [[-12.0, -0.1]],
+      "p1_three": [[-11.0], [-1.0], [-6.05]],
+      "p2_three": [[-11.0], [-1.0], [-6.05]],
+      "p2_five": [[-11.0], [-6.05], [-1.0], [-8.0], [-3.0]]
+    },
+    {
+      "variant_id": "exp_affine_pos_v1",
+      "family_id": "exp_affine_v1",
+      "parameter_names": ["k"],
+      "bounds": [[0.1, 12.0]],
+      "p1_three": [[1.0], [11.0], [6.05]],
+      "p2_three": [[1.0], [11.0], [6.05]],
+      "p2_five": [[1.0], [6.05], [11.0], [3.0], [8.0]]
+    },
+    {
+      "variant_id": "log_shift_v1",
+      "family_id": "log_shift_v1",
+      "parameter_names": ["d"],
+      "bounds": [[0.02, 20.0]],
+      "p1_three": [[0.05], [15.0], [1.0]],
+      "p2_three": [[0.05], [15.0], [1.0]],
+      "p2_five": [[0.05], [1.0], [15.0], [0.2], [5.0]]
+    },
+    {
+      "variant_id": "reciprocal_shift_pos_v1",
+      "family_id": "reciprocal_shift_pos_v1",
+      "parameter_names": ["d"],
+      "bounds": [[0.05, 20.0]],
+      "p1_three": [[0.1], [15.0], [1.0]],
+      "p2_three": [[0.1], [15.0], [1.0]],
+      "p2_five": [[0.1], [1.0], [15.0], [0.3], [5.0]]
+    },
+    {
+      "variant_id": "logistic_v1",
+      "family_id": "logistic_v1",
+      "parameter_names": ["k", "m"],
+      "bounds": [[0.25, 20.0], [0.0, 1.0]],
+      "p1_five": [[0.5, 0.1], [10.0, 0.5], [19.0, 0.9], [5.0, 0.35], [15.0, 0.65]],
+      "p2_three": [[0.5, 0.1], [19.0, 0.9], [10.0, 0.5]],
+      "p2_five": [[0.5, 0.1], [10.0, 0.5], [19.0, 0.9], [5.0, 0.35], [15.0, 0.65]]
+    }
+  ],
+  "p1_rule": {
+    "exp_affine_neg_v1": {"start_count": 3, "anchor_ordinals": [0, 1], "replaceable_ordinals": [2], "schedule": "p1_three"},
+    "exp_affine_pos_v1": {"start_count": 3, "anchor_ordinals": [0, 1], "replaceable_ordinals": [2], "schedule": "p1_three"},
+    "log_shift_v1": {"start_count": 3, "anchor_ordinals": [0, 1], "replaceable_ordinals": [2], "schedule": "p1_three"},
+    "reciprocal_shift_pos_v1": {"start_count": 3, "anchor_ordinals": [0, 1], "replaceable_ordinals": [2], "schedule": "p1_three"},
+    "logistic_v1": {"start_count": 5, "anchor_ordinals": [0, 1, 2], "replaceable_ordinals": [3, 4], "schedule": "p1_five"}
+  },
+  "p2_rule": {
+    "zero_nonlinear_atoms": {"start_count": 1, "anchor_ordinals": [0], "replaceable_ordinals": []},
+    "one_nonlinear_atom": {"start_count": 3, "anchor_ordinals": [0, 1], "replaceable_ordinals": [2], "schedule": "p2_three"},
+    "two_nonlinear_atoms": {"start_count": 5, "anchor_ordinals": [0, 1, 2], "replaceable_ordinals": [3, 4], "schedule": "p2_five"},
+    "vector_order": "concatenate nonlinear parameters of the left variant, then the right variant; a linear variant contributes no values",
+    "linear_variant_ids": ["constant_v1", "poly1_v1", "poly2_v1", "poly3_v1"]
+  },
+  "validation": {
+    "known_slots": "The application materializes the exact slot ledger for every full-data and outer-training scope before any advisor request or solver call.",
+    "default_vector": "For each replaceable ordinal, the deterministic schedule vector at that ordinal is retained unless one unique schema-valid suggestion for the exact slot ID passes length, binary64 finiteness and inclusive-bound checks.",
+    "duplicates": "Any repeated slot_id invalidates the complete response for that scope.",
+    "unknown_slots": "Any slot_id absent from that scope's frozen ledger invalidates the complete response for that scope.",
+    "cardinality": "Omitted slots keep defaults; suggestions cannot create slots, starts, structures, cells, directions or families.",
+    "atomic_scope_fallback": "Malformed JSON, schema failure, duplicate/unknown slot or any invalid vector rejects all suggestions for that scope and restores every deterministic default."
+  }
+}

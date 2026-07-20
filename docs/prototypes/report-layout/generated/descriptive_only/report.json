@@ -1,0 +1,2562 @@
+{
+  "schema_version": "prototype-report-1.0.0",
+  "report_type": "curve_calibration_regression",
+  "prototype_only": true,
+  "prototype_notice": "PROTOTYPE — synthetic fixture — not a performed calibration",
+  "report_id": "prototype-descriptive_only",
+  "generated_at": "2026-07-16T12:00:00+03:00",
+  "status": {
+    "bundle_status": "PROTOTYPE_NOT_PUBLISHED",
+    "analysis_status": "NO_RECOMMENDATION",
+    "recommendation_status": "NO_VALIDATED_RECOMMENDATION",
+    "decision_reason": "DESCRIPTIVE_ONLY"
+  },
+  "decision": {
+    "code": "DESCRIPTIVE_ONLY",
+    "reason": "Fits available, validation unavailable",
+    "recommended_procedure": null,
+    "related_reason_codes": [
+      "DESCRIPTIVE_ONLY",
+      "VALIDATION_UNAVAILABLE"
+    ]
+  },
+  "recommendation": {
+    "role": null,
+    "model_preview_path": null,
+    "formula_display": null,
+    "domain": null,
+    "global_primary_r2_oos": {
+      "value": null,
+      "status": "undefined",
+      "reason": "NO_VALIDATED_RECOMMENDATION",
+      "scope": "oof",
+      "definition": "pooled_oof_cross_fitted_null",
+      "unit": "1"
+    },
+    "global_primary_rmse_oof": {
+      "value": null,
+      "status": "undefined",
+      "reason": "NO_VALIDATED_RECOMMENDATION",
+      "scope": "oof",
+      "definition": "pooled_oof_rmse",
+      "unit": "mV"
+    },
+    "global_primary_mae_oof": {
+      "value": null,
+      "status": "undefined",
+      "reason": "NO_VALIDATED_RECOMMENDATION",
+      "scope": "oof",
+      "definition": "pooled_oof_mae",
+      "unit": "mV"
+    },
+    "extrapolation": null
+  },
+  "input": {
+    "filename": "synthetic-demo.csv",
+    "media_type": "text/csv",
+    "n_input": 6,
+    "n_used": 6,
+    "n_excluded": 0,
+    "n_unique_x": 6,
+    "repeated_x_groups": 0,
+    "exact_duplicate_records": 0,
+    "invalid_reason_counts": {},
+    "x_unit": "s",
+    "y_unit": "mV",
+    "domain": [
+      0.0,
+      5.0
+    ],
+    "input_sha256": "999336e160d771b76837926adf2dd077921ec97d5f8c31eda85cdb053d5d904f",
+    "exclusions": []
+  },
+  "preprocessing": {
+    "sorting": "stable_by_x_then_row_id",
+    "row_id_policy": "preserve_stable_logical_row_id",
+    "weights": "equal",
+    "invalid_rows": "skipped_with_audit",
+    "automatic_outlier_removal": false,
+    "ties_atomic_for_validation_and_segmentation": true,
+    "affine_transforms": {
+      "status": "available",
+      "reason": null,
+      "x": {
+        "kind": "affine_unit_interval",
+        "offset": 0.0,
+        "scale": 5.0,
+        "target_interval": [
+          0.0,
+          1.0
+        ],
+        "invertible": true
+      },
+      "y": {
+        "kind": "affine_center_scale",
+        "offset": 2.1166666666666667,
+        "scale": 1.0166666666666666,
+        "target_interval": null,
+        "invertible": true
+      }
+    }
+  },
+  "validation": {
+    "estimand": "new_x_group_within_observed_domain",
+    "null_baseline": "same-appearance outer-train mean; synthetic prototype uses leave-one-x-group-out means",
+    "outer_inner_folds": null,
+    "outer_fold_policy": "grouped_by_x_group_id; same appearances for P1/P2/null",
+    "inner_fold_policy": "grouped_by_x_group_id inside each outer training scope",
+    "group_key": "x_group_id",
+    "split_id_hashes": [],
+    "repetitions": 0,
+    "policy_sha256": "6d28a5bf154d83319c5f7946baf5ab0e4cec8a48fd8390c270999f02e03f5e2e",
+    "appearance_export": "oof-appearances.csv",
+    "pooled_null_sse": {
+      "value": null,
+      "status": "undefined",
+      "reason": "VALIDATION_UNAVAILABLE",
+      "scope": "oof",
+      "definition": "sum_squared_error_of_same_appearance_null_predictions",
+      "unit": "(mV)^2"
+    },
+    "procedures": {
+      "p1": {
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "r2_oos": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "pooled_oof_cross_fitted_null",
+          "unit": "1"
+        },
+        "mse_oof": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "mean_squared_oof_error",
+          "unit": "(mV)^2"
+        },
+        "rmse_oof": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "root_mean_squared_oof_error",
+          "unit": "mV"
+        },
+        "mae_oof": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "mean_absolute_oof_error",
+          "unit": "mV"
+        },
+        "oof_appearances": 0,
+        "successful_appearances": 0,
+        "direction_frequency": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "dominant_direction_frequency_across_outer_fits",
+          "unit": "fraction"
+        },
+        "family_frequency": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "dominant_canonical_family_frequency_across_outer_fits",
+          "unit": "fraction"
+        },
+        "fallback_rate": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "fallback_appearances_over_all_appearances",
+          "unit": "fraction"
+        }
+      },
+      "p2": {
+        "status": "unavailable",
+        "attempt_status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "full_data_refit_status": "unavailable",
+        "r2_oos": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "pooled_oof_cross_fitted_null",
+          "unit": "1"
+        },
+        "mse_oof": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "mean_squared_oof_error_including_p1_fallback",
+          "unit": "(mV)^2"
+        },
+        "rmse_oof": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "root_mean_squared_oof_error_including_p1_fallback",
+          "unit": "mV"
+        },
+        "mae_oof": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "mean_absolute_oof_error_including_p1_fallback",
+          "unit": "mV"
+        },
+        "oof_appearances": 0,
+        "successful_appearances": 0,
+        "fallback_appearances": 0,
+        "fallback_outer_fit_ids": [],
+        "fallback_reason_counts": {},
+        "direction_frequency": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "dominant_direction_frequency_across_nonfallback_outer_fits",
+          "unit": "fraction"
+        },
+        "family_frequency": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "dominant_canonical_family_pair_frequency_across_nonfallback_outer_fits",
+          "unit": "fraction"
+        },
+        "fallback_rate": {
+          "value": null,
+          "status": "undefined",
+          "reason": "VALIDATION_UNAVAILABLE",
+          "scope": "oof",
+          "definition": "p1_fallback_appearances_over_all_p2_procedure_appearances",
+          "unit": "fraction"
+        }
+      }
+    },
+    "uplift": {
+      "delta_mse": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "p1_mse_minus_p2_mse",
+        "unit": "(mV)^2"
+      },
+      "delta_rmse": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "p1_rmse_minus_p2_rmse",
+        "unit": "mV"
+      },
+      "delta_mae": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "p1_mae_minus_p2_mae",
+        "unit": "mV"
+      },
+      "delta_r2": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "p2_r2_minus_p1_r2",
+        "unit": "1"
+      },
+      "rel_mse_uplift": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "p1_mse_minus_p2_mse_over_p1_mse",
+        "unit": "fraction"
+      },
+      "decision": "DESCRIPTIVE_ONLY",
+      "positive_repetition_share": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "repetitions_with_positive_paired_uplift",
+        "unit": "fraction"
+      }
+    },
+    "decision_gates": [
+      {
+        "id": "PRACTICAL_REL_MSE_UPLIFT",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.1,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "POSITIVE_REPETITION_SHARE",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.9,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "SPLIT_SENSITIVITY_P10",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.0,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "BOOTSTRAP_STABILITY_LOWER",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.05,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "DELTA_RMSE_POSITIVE",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.0,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "MAE_NO_HARM_RATIO",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 1.02,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "P2_VALID_FIT_RATE",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.9,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "P2_DIRECTION_FREQUENCY",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.8,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "P2_DOMINANT_PAIR_FREQUENCY",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.6,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "P2_BOUNDARY_WIDTH_FRACTION",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.25,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "P2_EDGE_HIT_RATE",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.2,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "P2_DEGENERACY_RATE",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.1,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "P2_HARD_FAILURE_RATE",
+        "policy_version": "prototype-policy-v1",
+        "threshold": 0.1,
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      },
+      {
+        "id": "P2_FULL_REFIT_CERTIFIED",
+        "policy_version": "prototype-policy-v1",
+        "threshold": "certified",
+        "observed": null,
+        "status": "unavailable",
+        "reason": "VALIDATION_UNAVAILABLE"
+      }
+    ],
+    "split_sensitivity": {
+      "status": "unavailable",
+      "label": "split sensitivity; not a confidence interval",
+      "p10": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "p10_of_repetition_level_relative_mse_uplift",
+        "unit": "fraction"
+      },
+      "repetition_distribution": []
+    },
+    "bootstrap_stability": {
+      "status": "unavailable",
+      "label": "central 90% full-pipeline bootstrap stability interval",
+      "target": "full_pipeline_rel_mse_uplift",
+      "level": 0.9,
+      "unit": "fraction",
+      "interval": null,
+      "resampling_unit": "x_group",
+      "selection_scope": "full_pipeline",
+      "percentile_method": "linear_interpolation_at_5_and_95_percent",
+      "resample_export": "bootstrap-resamples.csv",
+      "successful_resamples": 0,
+      "requested_resamples": 200,
+      "failed_resamples": 200,
+      "failure_reasons": {
+        "UNCERTAINTY_UNAVAILABLE": 200
+      },
+      "reason": "VALIDATION_UNAVAILABLE"
+    },
+    "p2_stability": {
+      "status": "unavailable",
+      "valid_fit_rate": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "nonfallback_valid_p2_fit_rate",
+        "unit": "fraction"
+      },
+      "dominant_family_pair_frequency": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "dominant_family_pair_frequency_among_nonfallback_fits",
+        "unit": "fraction"
+      },
+      "dominant_family_pair": null,
+      "direction_frequency": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "dominant_direction_frequency_among_nonflat_nonfallback_fits",
+        "unit": "fraction"
+      },
+      "outer_fit_ledger": [],
+      "outer_fit_export": "p2-stability-outer-fits.csv",
+      "outer_fit_denominator": 0,
+      "valid_fit_count": 0,
+      "fallback_fit_count": 0,
+      "breakpoint_distribution": [],
+      "breakpoint_central80_interval": null,
+      "boundary_width_fraction": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "central_boundary_interval_width_over_domain",
+        "unit": "fraction_of_observed_x_domain"
+      },
+      "edge_hit_rate": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "outer_p2_boundaries_at_40_or_60_percent_edges",
+        "unit": "fraction"
+      },
+      "fallback_rate": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "p1_fallback_outer_fits_over_all_p2_outer_fits",
+        "unit": "fraction"
+      },
+      "flat_profile_rate": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "FLAT_PROFILE_frequency",
+        "unit": "fraction"
+      },
+      "multiple_near_optima_rate": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "MULTIPLE_NEAR_OPTIMA_frequency",
+        "unit": "fraction"
+      },
+      "collapse_rate": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "segment_collapse_frequency",
+        "unit": "fraction"
+      },
+      "degeneracy_rate": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "flat_profile_near_optima_or_segment_collapse_rate",
+        "unit": "fraction"
+      },
+      "hard_failure_rate": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "oof",
+        "definition": "hard_fit_or_certificate_failure_rate",
+        "unit": "fraction"
+      },
+      "sensitivity_estimands": [
+        "full_pipeline_group_bootstrap_rel_mse_uplift",
+        "leave_one_x_group_out_refit_prediction_change"
+      ],
+      "policy_sha256": "6d28a5bf154d83319c5f7946baf5ab0e4cec8a48fd8390c270999f02e03f5e2e",
+      "reason": "VALIDATION_UNAVAILABLE"
+    }
+  },
+  "refit": {
+    "p1": {
+      "status": "certified",
+      "reason": null,
+      "registry_version": "registry_v1",
+      "registry_role": "core",
+      "incubator_excluded": true,
+      "family_id": "poly1_v1",
+      "canonical_ast_id": "registry_v1:poly1_v1",
+      "canonical_ast": {
+        "ast_id": "registry_v1:poly1_v1",
+        "root": "add",
+        "prefix": [
+          "add",
+          "parameter:a",
+          "multiply",
+          "parameter:b",
+          "variable:t"
+        ],
+        "node_count": 5
+      },
+      "formula_display": "f(x) = 1.25 + 3.2 * ((x - 0.0) / 5.0)",
+      "transforms": {
+        "x": {
+          "kind": "affine_unit_interval",
+          "offset": 0.0,
+          "scale": 5.0,
+          "target_interval": [
+            0.0,
+            1.0
+          ],
+          "invertible": true
+        },
+        "y": {
+          "kind": "affine_center_scale",
+          "offset": 2.1166666666666667,
+          "scale": 1.0166666666666666,
+          "target_interval": null,
+          "invertible": true
+        }
+      },
+      "parameters": {
+        "a": 1.25,
+        "b": 3.2
+      },
+      "domain": [
+        0.0,
+        5.0
+      ],
+      "direction": "nondecreasing",
+      "certificate": "PASS",
+      "derivative_certificate": {
+        "status": "PASS",
+        "reason": null,
+        "method": "analytic_family_specific",
+        "family_id": "poly1_v1",
+        "polynomial_degree_after_simplification": 1,
+        "interval": [
+          0.0,
+          5.0
+        ],
+        "direction": "nondecreasing",
+        "analytic_derivative": "0.64",
+        "critical_points": [],
+        "minimum_signed_derivative": 0.64,
+        "domain_margin": 1.0,
+        "finite_function": true,
+        "finite_derivative": true
+      },
+      "identifiability_status": "IDENTIFIED",
+      "bound_status": "NO_ACTIVE_BOUNDS",
+      "collapse_status": "NO_COLLAPSE",
+      "solver_status": "SUCCEEDED",
+      "model_structure_hash": "0c7ba335a4a53f66a9da38d67cd2e5ed83a87b8183ae1466bc36b1d3b75733ce",
+      "model_instance_hash": "e11b33ebbb27dc5ce334ecb4e983be704380a044741c84acc5227987f95efd2d",
+      "model_path": "models/one-model.json",
+      "r2_fit_all": {
+        "value": -0.2676363636363639,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "in_sample_sse",
+        "unit": "1"
+      },
+      "rmse_fit_all": {
+        "value": 0.8233063423376098,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "root_mean_squared_full_data_refit_error",
+        "unit": "mV"
+      },
+      "mae_fit_all": {
+        "value": 0.7333333333333334,
+        "status": "defined",
+        "reason": null,
+        "scope": "in_sample",
+        "definition": "mean_absolute_full_data_refit_error",
+        "unit": "mV"
+      },
+      "n": 6,
+      "n_unique_x": 6,
+      "plot": {
+        "path": "figures/one-function.svg",
+        "status": "line_and_points",
+        "line_present": true
+      }
+    },
+    "p2": {
+      "status": "unavailable",
+      "reason": "VALIDATION_UNAVAILABLE",
+      "registry_version": "registry_v1",
+      "registry_role": "core",
+      "incubator_excluded": true,
+      "family_left": null,
+      "family_right": null,
+      "ordered_family_pair": null,
+      "canonical_ast_left": null,
+      "canonical_ast_right": null,
+      "formula_left": null,
+      "formula_right": null,
+      "transforms": null,
+      "parameters": null,
+      "boundary": null,
+      "shared_mu": null,
+      "membership": null,
+      "membership_cell": null,
+      "domain": null,
+      "direction": null,
+      "continuity_residual": null,
+      "certificate": "VALIDATION_UNAVAILABLE",
+      "derivative_certificate_left": {
+        "status": "UNAVAILABLE",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "method": null,
+        "family_id": null,
+        "polynomial_degree_after_simplification": null,
+        "interval": null,
+        "direction": null,
+        "analytic_derivative": null,
+        "critical_points": null,
+        "minimum_signed_derivative": null,
+        "domain_margin": null,
+        "finite_function": null,
+        "finite_derivative": null
+      },
+      "derivative_certificate_right": {
+        "status": "UNAVAILABLE",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "method": null,
+        "family_id": null,
+        "polynomial_degree_after_simplification": null,
+        "interval": null,
+        "direction": null,
+        "analytic_derivative": null,
+        "critical_points": null,
+        "minimum_signed_derivative": null,
+        "domain_margin": null,
+        "finite_function": null,
+        "finite_derivative": null
+      },
+      "identifiability_status": "UNAVAILABLE",
+      "bound_status": "UNAVAILABLE",
+      "collapse_status": "UNAVAILABLE",
+      "solver_status": "NOT_RUN",
+      "stability_status": "UNAVAILABLE",
+      "optimizer": {
+        "strategy": "PROFILE_CELLS",
+        "scope": "full_data_p2_refit",
+        "status": "NOT_RUN",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "trace_path": "trace/fit-attempts.jsonl.gz",
+        "tie_safe_cell_count": 1,
+        "eligible_cell_count": 1,
+        "starts_per_cell": 0,
+        "start_count": 0,
+        "attempt_count": 0,
+        "trace_record_count": 0,
+        "successful_attempt_count": 0,
+        "failed_attempt_count": 0,
+        "evaluation_count": 0,
+        "competing_basin_count": 0,
+        "competing_basin_status": "UNAVAILABLE",
+        "certificate_result": "NOT_RUN",
+        "reason_codes": [
+          "VALIDATION_UNAVAILABLE"
+        ],
+        "warning_codes": []
+      },
+      "model_structure_hash": null,
+      "model_instance_hash": null,
+      "model_path": null,
+      "left": {
+        "n": null,
+        "share": null,
+        "n_unique_x": null,
+        "span": null,
+        "r2_fit": {
+          "value": null,
+          "status": "undefined",
+          "reason": "UNDEFINED_LOCAL_R2",
+          "scope": "in_sample",
+          "definition": "in_sample_sse",
+          "unit": "1"
+        },
+        "rmse_fit": {
+          "value": null,
+          "status": "undefined",
+          "reason": "UNDEFINED_LOCAL_RMSE",
+          "scope": "in_sample",
+          "definition": "segment_root_mean_squared_full_data_refit_error",
+          "unit": "mV"
+        },
+        "mae_fit": {
+          "value": null,
+          "status": "undefined",
+          "reason": "UNDEFINED_LOCAL_MAE",
+          "scope": "in_sample",
+          "definition": "segment_mean_absolute_full_data_refit_error",
+          "unit": "mV"
+        }
+      },
+      "right": {
+        "n": null,
+        "share": null,
+        "n_unique_x": null,
+        "span": null,
+        "r2_fit": {
+          "value": null,
+          "status": "undefined",
+          "reason": "UNDEFINED_LOCAL_R2",
+          "scope": "in_sample",
+          "definition": "in_sample_sse",
+          "unit": "1"
+        },
+        "rmse_fit": {
+          "value": null,
+          "status": "undefined",
+          "reason": "UNDEFINED_LOCAL_RMSE",
+          "scope": "in_sample",
+          "definition": "segment_root_mean_squared_full_data_refit_error",
+          "unit": "mV"
+        },
+        "mae_fit": {
+          "value": null,
+          "status": "undefined",
+          "reason": "UNDEFINED_LOCAL_MAE",
+          "scope": "in_sample",
+          "definition": "segment_mean_absolute_full_data_refit_error",
+          "unit": "mV"
+        }
+      },
+      "r2_fit_all": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "in_sample",
+        "definition": "in_sample_sse",
+        "unit": "1"
+      },
+      "rmse_fit_all": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "in_sample",
+        "definition": "root_mean_squared_full_data_refit_error",
+        "unit": "mV"
+      },
+      "mae_fit_all": {
+        "value": null,
+        "status": "undefined",
+        "reason": "VALIDATION_UNAVAILABLE",
+        "scope": "in_sample",
+        "definition": "mean_absolute_full_data_refit_error",
+        "unit": "mV"
+      },
+      "n": null,
+      "n_unique_x": null,
+      "plot": {
+        "path": "figures/two-segment.svg",
+        "status": "typed_failure_with_points",
+        "line_present": false,
+        "boundary_present": false
+      }
+    }
+  },
+  "diagnostics": {
+    "policy": {
+      "version": "prototype-policy-v1",
+      "tau_z": 3.5,
+      "extreme_tau_z": 5.25,
+      "persistent_flag_rate": 0.5,
+      "scale_estimators": [
+        "qn_finite_sample",
+        "finite_sample_s_mad"
+      ],
+      "local_bin_rule": "B=max(1,min(4,floor(G_train/5)))",
+      "local_floor_factor": 0.5,
+      "zero_scale_tolerance_rule": "64*eps*max(1,max_abs_y_train)",
+      "influence_thresholds": {
+        "dmax": 0.5,
+        "drms": 0.25,
+        "delta_c": 0.05,
+        "segment_share_delta": 0.05,
+        "oof_rmse_relative_delta": 0.1,
+        "rel_mse_uplift_delta": 0.05
+      }
+    },
+    "oof": {
+      "status": "unavailable",
+      "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "procedure": null,
+      "residual_definition": "y - same-appearance out-of-fold prediction",
+      "prediction_count": 0,
+      "appearance_export": "diagnostic-appearances.csv",
+      "scale_trace_export": "diagnostic-scale-trace.csv",
+      "threshold": 3.5,
+      "scale_method": "qn_then_mad_fallback",
+      "scale_scope": "outer_train_inner_oof",
+      "separate_from_refit_influence": true,
+      "plot": {
+        "path": "figures/residuals.svg",
+        "status": "typed_unavailable_with_descriptive_refit",
+        "panels": [
+          "oof_residual_vs_x",
+          "oof_residual_vs_prediction",
+          "absolute_z_vs_x",
+          "refit_influence_by_x_group"
+        ]
+      }
+    },
+    "rows": [
+      {
+        "row_id": "row-01",
+        "source_row_id": "2",
+        "x": 0.0,
+        "y": 1.1,
+        "x_group_id": "x:0x0.0p+0",
+        "segment_refit": null,
+        "procedure": null,
+        "oof_prediction_median": null,
+        "oof_prediction_mean": null,
+        "oof_prediction_spread": null,
+        "oof_residual_median": null,
+        "oof_residual_mean": null,
+        "oof_residual_spread": null,
+        "appearance_count": 0,
+        "outer_fold_ids": [],
+        "robust_scale": {
+          "value": null,
+          "status": "undefined",
+          "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+          "method": "qn_finite_sample",
+          "scope": "outer_train_inner_oof"
+        },
+        "scale_trace_index": 0,
+        "z_median": null,
+        "z_spread": null,
+        "score_median_abs_z": null,
+        "threshold": 3.5,
+        "flag_rate": null,
+        "refit_prediction": 1.25,
+        "refit_residual": -0.1499999999999999,
+        "refit_label": "descriptive_final_refit",
+        "influence_group": {
+          "x_group_id": "x:0x0.0p+0",
+          "x": 0.0,
+          "row_ids": [
+            "row-01"
+          ],
+          "status": "unassessable",
+          "reason": "INFLUENCE_UNASSESSABLE",
+          "dmax": null,
+          "drms": null,
+          "delta_c": null,
+          "segment_share_delta": null,
+          "oof_rmse_relative_delta": null,
+          "rel_mse_uplift_delta": null,
+          "full_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "without_group_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "recommendation_changed": false,
+          "decision_changed": false,
+          "p2_status_changed": false,
+          "family_changed": false,
+          "direction_changed": false,
+          "certificate_changed": false,
+          "high_refit_influence": false,
+          "action": "review_only"
+        },
+        "flags": [],
+        "action": "review_only"
+      },
+      {
+        "row_id": "row-02",
+        "source_row_id": "3",
+        "x": 1.0,
+        "y": 1.4,
+        "x_group_id": "x:0x1.0000000000000p+0",
+        "segment_refit": null,
+        "procedure": null,
+        "oof_prediction_median": null,
+        "oof_prediction_mean": null,
+        "oof_prediction_spread": null,
+        "oof_residual_median": null,
+        "oof_residual_mean": null,
+        "oof_residual_spread": null,
+        "appearance_count": 0,
+        "outer_fold_ids": [],
+        "robust_scale": {
+          "value": null,
+          "status": "undefined",
+          "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+          "method": "qn_finite_sample",
+          "scope": "outer_train_inner_oof"
+        },
+        "scale_trace_index": 2,
+        "z_median": null,
+        "z_spread": null,
+        "score_median_abs_z": null,
+        "threshold": 3.5,
+        "flag_rate": null,
+        "refit_prediction": 1.8900000000000001,
+        "refit_residual": -0.4900000000000002,
+        "refit_label": "descriptive_final_refit",
+        "influence_group": {
+          "x_group_id": "x:0x1.0000000000000p+0",
+          "x": 1.0,
+          "row_ids": [
+            "row-02"
+          ],
+          "status": "unassessable",
+          "reason": "INFLUENCE_UNASSESSABLE",
+          "dmax": null,
+          "drms": null,
+          "delta_c": null,
+          "segment_share_delta": null,
+          "oof_rmse_relative_delta": null,
+          "rel_mse_uplift_delta": null,
+          "full_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "without_group_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "recommendation_changed": false,
+          "decision_changed": false,
+          "p2_status_changed": false,
+          "family_changed": false,
+          "direction_changed": false,
+          "certificate_changed": false,
+          "high_refit_influence": false,
+          "action": "review_only"
+        },
+        "flags": [],
+        "action": "review_only"
+      },
+      {
+        "row_id": "row-03",
+        "source_row_id": "4",
+        "x": 2.0,
+        "y": 1.9,
+        "x_group_id": "x:0x1.0000000000000p+1",
+        "segment_refit": null,
+        "procedure": null,
+        "oof_prediction_median": null,
+        "oof_prediction_mean": null,
+        "oof_prediction_spread": null,
+        "oof_residual_median": null,
+        "oof_residual_mean": null,
+        "oof_residual_spread": null,
+        "appearance_count": 0,
+        "outer_fold_ids": [],
+        "robust_scale": {
+          "value": null,
+          "status": "undefined",
+          "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+          "method": "qn_finite_sample",
+          "scope": "outer_train_inner_oof"
+        },
+        "scale_trace_index": 4,
+        "z_median": null,
+        "z_spread": null,
+        "score_median_abs_z": null,
+        "threshold": 3.5,
+        "flag_rate": null,
+        "refit_prediction": 2.5300000000000002,
+        "refit_residual": -0.6300000000000003,
+        "refit_label": "descriptive_final_refit",
+        "influence_group": {
+          "x_group_id": "x:0x1.0000000000000p+1",
+          "x": 2.0,
+          "row_ids": [
+            "row-03"
+          ],
+          "status": "unassessable",
+          "reason": "INFLUENCE_UNASSESSABLE",
+          "dmax": null,
+          "drms": null,
+          "delta_c": null,
+          "segment_share_delta": null,
+          "oof_rmse_relative_delta": null,
+          "rel_mse_uplift_delta": null,
+          "full_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "without_group_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "recommendation_changed": false,
+          "decision_changed": false,
+          "p2_status_changed": false,
+          "family_changed": false,
+          "direction_changed": false,
+          "certificate_changed": false,
+          "high_refit_influence": false,
+          "action": "review_only"
+        },
+        "flags": [],
+        "action": "review_only"
+      },
+      {
+        "row_id": "row-04",
+        "source_row_id": "5",
+        "x": 3.0,
+        "y": 2.3,
+        "x_group_id": "x:0x1.8000000000000p+1",
+        "segment_refit": null,
+        "procedure": null,
+        "oof_prediction_median": null,
+        "oof_prediction_mean": null,
+        "oof_prediction_spread": null,
+        "oof_residual_median": null,
+        "oof_residual_mean": null,
+        "oof_residual_spread": null,
+        "appearance_count": 0,
+        "outer_fold_ids": [],
+        "robust_scale": {
+          "value": null,
+          "status": "undefined",
+          "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+          "method": "qn_finite_sample",
+          "scope": "outer_train_inner_oof"
+        },
+        "scale_trace_index": 6,
+        "z_median": null,
+        "z_spread": null,
+        "score_median_abs_z": null,
+        "threshold": 3.5,
+        "flag_rate": null,
+        "refit_prediction": 3.17,
+        "refit_residual": -0.8700000000000001,
+        "refit_label": "descriptive_final_refit",
+        "influence_group": {
+          "x_group_id": "x:0x1.8000000000000p+1",
+          "x": 3.0,
+          "row_ids": [
+            "row-04"
+          ],
+          "status": "unassessable",
+          "reason": "INFLUENCE_UNASSESSABLE",
+          "dmax": null,
+          "drms": null,
+          "delta_c": null,
+          "segment_share_delta": null,
+          "oof_rmse_relative_delta": null,
+          "rel_mse_uplift_delta": null,
+          "full_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "without_group_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "recommendation_changed": false,
+          "decision_changed": false,
+          "p2_status_changed": false,
+          "family_changed": false,
+          "direction_changed": false,
+          "certificate_changed": false,
+          "high_refit_influence": false,
+          "action": "review_only"
+        },
+        "flags": [],
+        "action": "review_only"
+      },
+      {
+        "row_id": "row-05",
+        "source_row_id": "6",
+        "x": 4.0,
+        "y": 2.9,
+        "x_group_id": "x:0x1.0000000000000p+2",
+        "segment_refit": null,
+        "procedure": null,
+        "oof_prediction_median": null,
+        "oof_prediction_mean": null,
+        "oof_prediction_spread": null,
+        "oof_residual_median": null,
+        "oof_residual_mean": null,
+        "oof_residual_spread": null,
+        "appearance_count": 0,
+        "outer_fold_ids": [],
+        "robust_scale": {
+          "value": null,
+          "status": "undefined",
+          "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+          "method": "qn_finite_sample",
+          "scope": "outer_train_inner_oof"
+        },
+        "scale_trace_index": 8,
+        "z_median": null,
+        "z_spread": null,
+        "score_median_abs_z": null,
+        "threshold": 3.5,
+        "flag_rate": null,
+        "refit_prediction": 3.81,
+        "refit_residual": -0.9100000000000001,
+        "refit_label": "descriptive_final_refit",
+        "influence_group": {
+          "x_group_id": "x:0x1.0000000000000p+2",
+          "x": 4.0,
+          "row_ids": [
+            "row-05"
+          ],
+          "status": "unassessable",
+          "reason": "INFLUENCE_UNASSESSABLE",
+          "dmax": null,
+          "drms": null,
+          "delta_c": null,
+          "segment_share_delta": null,
+          "oof_rmse_relative_delta": null,
+          "rel_mse_uplift_delta": null,
+          "full_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "without_group_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "recommendation_changed": false,
+          "decision_changed": false,
+          "p2_status_changed": false,
+          "family_changed": false,
+          "direction_changed": false,
+          "certificate_changed": false,
+          "high_refit_influence": false,
+          "action": "review_only"
+        },
+        "flags": [],
+        "action": "review_only"
+      },
+      {
+        "row_id": "row-06",
+        "source_row_id": "7",
+        "x": 5.0,
+        "y": 3.1,
+        "x_group_id": "x:0x1.4000000000000p+2",
+        "segment_refit": null,
+        "procedure": null,
+        "oof_prediction_median": null,
+        "oof_prediction_mean": null,
+        "oof_prediction_spread": null,
+        "oof_residual_median": null,
+        "oof_residual_mean": null,
+        "oof_residual_spread": null,
+        "appearance_count": 0,
+        "outer_fold_ids": [],
+        "robust_scale": {
+          "value": null,
+          "status": "undefined",
+          "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+          "method": "qn_finite_sample",
+          "scope": "outer_train_inner_oof"
+        },
+        "scale_trace_index": 10,
+        "z_median": null,
+        "z_spread": null,
+        "score_median_abs_z": null,
+        "threshold": 3.5,
+        "flag_rate": null,
+        "refit_prediction": 4.45,
+        "refit_residual": -1.35,
+        "refit_label": "descriptive_final_refit",
+        "influence_group": {
+          "x_group_id": "x:0x1.4000000000000p+2",
+          "x": 5.0,
+          "row_ids": [
+            "row-06"
+          ],
+          "status": "unassessable",
+          "reason": "INFLUENCE_UNASSESSABLE",
+          "dmax": null,
+          "drms": null,
+          "delta_c": null,
+          "segment_share_delta": null,
+          "oof_rmse_relative_delta": null,
+          "rel_mse_uplift_delta": null,
+          "full_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "without_group_state": {
+            "recommendation": null,
+            "decision_code": "DESCRIPTIVE_ONLY",
+            "p2_status": "unavailable",
+            "direction": "nondecreasing",
+            "family": "poly1_v1",
+            "certificate": "PASS"
+          },
+          "recommendation_changed": false,
+          "decision_changed": false,
+          "p2_status_changed": false,
+          "family_changed": false,
+          "direction_changed": false,
+          "certificate_changed": false,
+          "high_refit_influence": false,
+          "action": "review_only"
+        },
+        "flags": [],
+        "action": "review_only"
+      }
+    ],
+    "scale_traces": [
+      {
+        "row_id": "row-01",
+        "x_group_id": "x:0x0.0p+0",
+        "procedure": "one",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-01",
+        "x_group_id": "x:0x0.0p+0",
+        "procedure": "two",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-02",
+        "x_group_id": "x:0x1.0000000000000p+0",
+        "procedure": "one",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-02",
+        "x_group_id": "x:0x1.0000000000000p+0",
+        "procedure": "two",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-03",
+        "x_group_id": "x:0x1.0000000000000p+1",
+        "procedure": "one",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-03",
+        "x_group_id": "x:0x1.0000000000000p+1",
+        "procedure": "two",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-04",
+        "x_group_id": "x:0x1.8000000000000p+1",
+        "procedure": "one",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-04",
+        "x_group_id": "x:0x1.8000000000000p+1",
+        "procedure": "two",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-05",
+        "x_group_id": "x:0x1.0000000000000p+2",
+        "procedure": "one",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-05",
+        "x_group_id": "x:0x1.0000000000000p+2",
+        "procedure": "two",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-06",
+        "x_group_id": "x:0x1.4000000000000p+2",
+        "procedure": "one",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      },
+      {
+        "row_id": "row-06",
+        "x_group_id": "x:0x1.4000000000000p+2",
+        "procedure": "two",
+        "status": "unavailable",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "estimator": "qn_finite_sample",
+        "scope": "outer_train_inner_oof",
+        "global_scale": null,
+        "bin_count": 0,
+        "target_bin_id": null,
+        "target_bin_group_ids": [],
+        "raw_local_scale": null,
+        "local_floor": null,
+        "final_scale": null,
+        "zero_tolerance": 1.4210854715202004e-14,
+        "training_sample_count": 0,
+        "local_sample_count": 0
+      }
+    ],
+    "repeated_x_groups": [
+      {
+        "x_group_id": "x:0x0.0p+0",
+        "x": 0.0,
+        "n": 1,
+        "mean_y": 1.1,
+        "median_y": 1.1,
+        "mean_oof_residual": null,
+        "median_oof_residual": null,
+        "within_group_mad_y": 0.0,
+        "positive_residual_share": null,
+        "negative_residual_share": null,
+        "group_systematic_residual": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.0000000000000p+0",
+        "x": 1.0,
+        "n": 1,
+        "mean_y": 1.4,
+        "median_y": 1.4,
+        "mean_oof_residual": null,
+        "median_oof_residual": null,
+        "within_group_mad_y": 0.0,
+        "positive_residual_share": null,
+        "negative_residual_share": null,
+        "group_systematic_residual": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.0000000000000p+1",
+        "x": 2.0,
+        "n": 1,
+        "mean_y": 1.9,
+        "median_y": 1.9,
+        "mean_oof_residual": null,
+        "median_oof_residual": null,
+        "within_group_mad_y": 0.0,
+        "positive_residual_share": null,
+        "negative_residual_share": null,
+        "group_systematic_residual": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.8000000000000p+1",
+        "x": 3.0,
+        "n": 1,
+        "mean_y": 2.3,
+        "median_y": 2.3,
+        "mean_oof_residual": null,
+        "median_oof_residual": null,
+        "within_group_mad_y": 0.0,
+        "positive_residual_share": null,
+        "negative_residual_share": null,
+        "group_systematic_residual": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.0000000000000p+2",
+        "x": 4.0,
+        "n": 1,
+        "mean_y": 2.9,
+        "median_y": 2.9,
+        "mean_oof_residual": null,
+        "median_oof_residual": null,
+        "within_group_mad_y": 0.0,
+        "positive_residual_share": null,
+        "negative_residual_share": null,
+        "group_systematic_residual": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.4000000000000p+2",
+        "x": 5.0,
+        "n": 1,
+        "mean_y": 3.1,
+        "median_y": 3.1,
+        "mean_oof_residual": null,
+        "median_oof_residual": null,
+        "within_group_mad_y": 0.0,
+        "positive_residual_share": null,
+        "negative_residual_share": null,
+        "group_systematic_residual": false,
+        "action": "review_only"
+      }
+    ],
+    "pure_error_lack_of_fit": {
+      "status": "unavailable",
+      "reason": "NO_REPEATED_X",
+      "procedure": null,
+      "sse_total": null,
+      "sse_pure_error": null,
+      "sse_lack_of_fit": null,
+      "test_performed": false
+    },
+    "patterns": [
+      {
+        "code": "SYSTEMATIC_OOF_RESIDUAL",
+        "status": "unavailable",
+        "observed": null,
+        "threshold": "3 adjacent same-sign bins and |mean| >= 0.5*scale",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "action": "review_only"
+      },
+      {
+        "code": "HETEROSCEDASTIC_PATTERN",
+        "status": "unavailable",
+        "observed": null,
+        "threshold": "ratio >= 2.0 in >= 0.80 outer fits",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "action": "review_only"
+      },
+      {
+        "code": "BREAKPOINT_LOCAL_BIAS",
+        "status": "unavailable",
+        "observed": null,
+        "threshold": "n >= 5, sign share >= 0.80, |mean| >= 0.5*scale",
+        "reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+        "action": "review_only"
+      }
+    ],
+    "influence": {
+      "status": "unavailable",
+      "method": "full leave-one-x-group-out rerun (synthetic prototype sensitivity outcomes)",
+      "scope": "sensitivity_only",
+      "grid_export": "influence-grid.csv",
+      "evaluation_grid_size": 501,
+      "thresholds": {
+        "dmax": 0.5,
+        "drms": 0.25,
+        "delta_c": 0.05,
+        "segment_share_delta": 0.05,
+        "oof_rmse_relative_delta": 0.1,
+        "rel_mse_uplift_delta": 0.05
+      },
+      "group_count": 6,
+      "flagged_group_count": 0,
+      "reason": "INFLUENCE_UNASSESSABLE"
+    },
+    "influence_groups": [
+      {
+        "x_group_id": "x:0x0.0p+0",
+        "x": 0.0,
+        "row_ids": [
+          "row-01"
+        ],
+        "status": "unassessable",
+        "reason": "INFLUENCE_UNASSESSABLE",
+        "dmax": null,
+        "drms": null,
+        "delta_c": null,
+        "segment_share_delta": null,
+        "oof_rmse_relative_delta": null,
+        "rel_mse_uplift_delta": null,
+        "full_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "without_group_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "recommendation_changed": false,
+        "decision_changed": false,
+        "p2_status_changed": false,
+        "family_changed": false,
+        "direction_changed": false,
+        "certificate_changed": false,
+        "high_refit_influence": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.0000000000000p+0",
+        "x": 1.0,
+        "row_ids": [
+          "row-02"
+        ],
+        "status": "unassessable",
+        "reason": "INFLUENCE_UNASSESSABLE",
+        "dmax": null,
+        "drms": null,
+        "delta_c": null,
+        "segment_share_delta": null,
+        "oof_rmse_relative_delta": null,
+        "rel_mse_uplift_delta": null,
+        "full_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "without_group_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "recommendation_changed": false,
+        "decision_changed": false,
+        "p2_status_changed": false,
+        "family_changed": false,
+        "direction_changed": false,
+        "certificate_changed": false,
+        "high_refit_influence": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.0000000000000p+1",
+        "x": 2.0,
+        "row_ids": [
+          "row-03"
+        ],
+        "status": "unassessable",
+        "reason": "INFLUENCE_UNASSESSABLE",
+        "dmax": null,
+        "drms": null,
+        "delta_c": null,
+        "segment_share_delta": null,
+        "oof_rmse_relative_delta": null,
+        "rel_mse_uplift_delta": null,
+        "full_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "without_group_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "recommendation_changed": false,
+        "decision_changed": false,
+        "p2_status_changed": false,
+        "family_changed": false,
+        "direction_changed": false,
+        "certificate_changed": false,
+        "high_refit_influence": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.8000000000000p+1",
+        "x": 3.0,
+        "row_ids": [
+          "row-04"
+        ],
+        "status": "unassessable",
+        "reason": "INFLUENCE_UNASSESSABLE",
+        "dmax": null,
+        "drms": null,
+        "delta_c": null,
+        "segment_share_delta": null,
+        "oof_rmse_relative_delta": null,
+        "rel_mse_uplift_delta": null,
+        "full_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "without_group_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "recommendation_changed": false,
+        "decision_changed": false,
+        "p2_status_changed": false,
+        "family_changed": false,
+        "direction_changed": false,
+        "certificate_changed": false,
+        "high_refit_influence": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.0000000000000p+2",
+        "x": 4.0,
+        "row_ids": [
+          "row-05"
+        ],
+        "status": "unassessable",
+        "reason": "INFLUENCE_UNASSESSABLE",
+        "dmax": null,
+        "drms": null,
+        "delta_c": null,
+        "segment_share_delta": null,
+        "oof_rmse_relative_delta": null,
+        "rel_mse_uplift_delta": null,
+        "full_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "without_group_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "recommendation_changed": false,
+        "decision_changed": false,
+        "p2_status_changed": false,
+        "family_changed": false,
+        "direction_changed": false,
+        "certificate_changed": false,
+        "high_refit_influence": false,
+        "action": "review_only"
+      },
+      {
+        "x_group_id": "x:0x1.4000000000000p+2",
+        "x": 5.0,
+        "row_ids": [
+          "row-06"
+        ],
+        "status": "unassessable",
+        "reason": "INFLUENCE_UNASSESSABLE",
+        "dmax": null,
+        "drms": null,
+        "delta_c": null,
+        "segment_share_delta": null,
+        "oof_rmse_relative_delta": null,
+        "rel_mse_uplift_delta": null,
+        "full_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "without_group_state": {
+          "recommendation": null,
+          "decision_code": "DESCRIPTIVE_ONLY",
+          "p2_status": "unavailable",
+          "direction": "nondecreasing",
+          "family": "poly1_v1",
+          "certificate": "PASS"
+        },
+        "recommendation_changed": false,
+        "decision_changed": false,
+        "p2_status_changed": false,
+        "family_changed": false,
+        "direction_changed": false,
+        "certificate_changed": false,
+        "high_refit_influence": false,
+        "action": "review_only"
+      }
+    ],
+    "flagged_rows": []
+  },
+  "warnings": [],
+  "failures": [],
+  "provenance": {
+    "analysis_id": "183ef0a24a728805c1259b7d616b42695a8df8f0ce7ef1b5ff0f5d92173edd2c",
+    "execution_environment_id": "47cbfd161d7904f4d3156040d517b9eac3d94b5ecc3a9b8fa3afd2f974b10978",
+    "policy_version": "prototype-policy-v1",
+    "registry_version": "registry_v1",
+    "input_sha256": "999336e160d771b76837926adf2dd077921ec97d5f8c31eda85cdb053d5d904f",
+    "request_sha256": "c7bc87f14ed0a9adf77b4ac0633ed281d85f83b7257995c467019f77cd9c8bdc",
+    "policy_sha256": "6d28a5bf154d83319c5f7946baf5ab0e4cec8a48fd8390c270999f02e03f5e2e",
+    "registry_sha256": "3d80cd7086509d51b1ecd89c2e1d1d6752fb5a299b6f841c7f3f89e63b3ac347",
+    "source_sha256": "2f84705169c0b240607c4149f56b48512ae4b9f35be1cd2893b5c6635d8c908d",
+    "dependency_lock_sha256": "7890f7d54f6c5c6083a18002c34c4fb852947dd5abee81e34488e78933320474",
+    "solver_backend": "synthetic_reference_closed_form_and_profile_cells",
+    "environment": {
+      "status": "prototype_static_not_runtime_benchmark",
+      "python_implementation": "CPython",
+      "python_version": "3.12.11",
+      "platform": "darwin",
+      "thread_policy": "single_process_single_thread"
+    },
+    "thread_policy": "single_process_single_thread",
+    "base_seed": 20260716,
+    "numerical_tolerances": {
+      "absolute_reconciliation": 1e-12,
+      "continuity": 1e-12,
+      "derivative": 1e-12
+    },
+    "work_counts": {
+      "validation_appearances": 0,
+      "outer_fit_count": 0,
+      "bootstrap_requested": 200,
+      "bootstrap_successful": 0,
+      "bootstrap_failed": 200,
+      "influence_groups": 6,
+      "influence_grid_evaluations": 501,
+      "optimizer_attempts": 0,
+      "optimizer_evaluations": 0
+    },
+    "fallback_failure_counts": {
+      "p2_fallback_appearances": 0,
+      "p2_fallback_outer_fits": 0,
+      "reported_failures": 0
+    },
+    "certificate_versions": {
+      "derivative": "prototype-analytic-certificate-v1",
+      "continuity": "prototype-continuity-certificate-v1"
+    },
+    "timezone": "Europe/Moscow",
+    "hash_payloads": {
+      "policy": {
+        "policy_version": "prototype-policy-v1",
+        "r2_warning_boundary": 0.6,
+        "segment_share_bounds": [
+          0.4,
+          0.6
+        ],
+        "decision_gates": [
+          {
+            "id": "PRACTICAL_REL_MSE_UPLIFT",
+            "threshold": 0.1
+          },
+          {
+            "id": "POSITIVE_REPETITION_SHARE",
+            "threshold": 0.9
+          },
+          {
+            "id": "SPLIT_SENSITIVITY_P10",
+            "threshold": 0.0
+          },
+          {
+            "id": "BOOTSTRAP_STABILITY_LOWER",
+            "threshold": 0.05
+          },
+          {
+            "id": "DELTA_RMSE_POSITIVE",
+            "threshold": 0.0
+          },
+          {
+            "id": "MAE_NO_HARM_RATIO",
+            "threshold": 1.02
+          },
+          {
+            "id": "P2_VALID_FIT_RATE",
+            "threshold": 0.9
+          },
+          {
+            "id": "P2_DIRECTION_FREQUENCY",
+            "threshold": 0.8
+          },
+          {
+            "id": "P2_DOMINANT_PAIR_FREQUENCY",
+            "threshold": 0.6
+          },
+          {
+            "id": "P2_BOUNDARY_WIDTH_FRACTION",
+            "threshold": 0.25
+          },
+          {
+            "id": "P2_EDGE_HIT_RATE",
+            "threshold": 0.2
+          },
+          {
+            "id": "P2_DEGENERACY_RATE",
+            "threshold": 0.1
+          },
+          {
+            "id": "P2_HARD_FAILURE_RATE",
+            "threshold": 0.1
+          },
+          {
+            "id": "P2_FULL_REFIT_CERTIFIED",
+            "threshold": "certified"
+          }
+        ]
+      },
+      "registry": {
+        "registry_version": "registry_v1",
+        "artifact_scope": "prototype_exercised_subset",
+        "authoritative_core_family_ids": [
+          "constant_v1",
+          "poly1_v1",
+          "poly2_v1",
+          "poly3_v1",
+          "exp_affine_v1",
+          "log_shift_v1",
+          "reciprocal_shift_pos_v1",
+          "logistic_v1"
+        ],
+        "included_family_ids": [
+          "constant_v1",
+          "poly1_v1"
+        ],
+        "unexercised_family_ids": [
+          "poly2_v1",
+          "poly3_v1",
+          "exp_affine_v1",
+          "log_shift_v1",
+          "reciprocal_shift_pos_v1",
+          "logistic_v1"
+        ],
+        "maximum_polynomial_degree": 3,
+        "families": {
+          "constant_v1": {
+            "canonical_ast": {
+              "ast_id": "registry_v1:constant_v1",
+              "root": "parameter",
+              "prefix": [
+                "parameter:a"
+              ],
+              "node_count": 1
+            },
+            "degree": 0,
+            "role": "core"
+          },
+          "poly1_v1": {
+            "canonical_ast": {
+              "ast_id": "registry_v1:poly1_v1",
+              "root": "add",
+              "prefix": [
+                "add",
+                "parameter:a",
+                "multiply",
+                "parameter:b",
+                "variable:t"
+              ],
+              "node_count": 5
+            },
+            "degree": 1,
+            "role": "core"
+          }
+        },
+        "incubator_excluded": true
+      },
+      "source_manifest": {
+        "manifest_version": "prototype-source-manifest-v1",
+        "files": [
+          {
+            "path": "docs/prototypes/report-layout/audit_prototype.py",
+            "sha256": "e73ed086667ee75209e098fd0a7d548643a71b09b386079c19135e1af090c462"
+          },
+          {
+            "path": "docs/prototypes/report-layout/build.py",
+            "sha256": "dd20584abefa33c4b83f6808ca633e51337e0518f17eabdf6daae441da73ece7"
+          },
+          {
+            "path": "docs/prototypes/report-layout/fixtures/matrix.json",
+            "sha256": "ee5a003042db12ef5b10a2b85476a97028d242d11e1b7b8ea75578c84b736856"
+          },
+          {
+            "path": "docs/specification/report.schema.json",
+            "sha256": "fb7e44761581f767077a6b82b282f5e29a0687ac77d75261c41834ca3ca2408d"
+          }
+        ]
+      },
+      "dependency_manifest": {
+        "manifest_version": "prototype-stdlib-dependency-manifest-v1",
+        "python_implementation": "CPython",
+        "python_version": "3.12.11",
+        "third_party_runtime_dependencies": []
+      },
+      "input": {
+        "logical_adapter_version": "prototype-synthetic-input-v1",
+        "x_unit": "s",
+        "y_unit": "mV",
+        "rows": [
+          {
+            "row_id": "row-01",
+            "source_row_id": "2",
+            "x": 0.0,
+            "y": 1.1
+          },
+          {
+            "row_id": "row-02",
+            "source_row_id": "3",
+            "x": 1.0,
+            "y": 1.4
+          },
+          {
+            "row_id": "row-03",
+            "source_row_id": "4",
+            "x": 2.0,
+            "y": 1.9
+          },
+          {
+            "row_id": "row-04",
+            "source_row_id": "5",
+            "x": 3.0,
+            "y": 2.3
+          },
+          {
+            "row_id": "row-05",
+            "source_row_id": "6",
+            "x": 4.0,
+            "y": 2.9
+          },
+          {
+            "row_id": "row-06",
+            "source_row_id": "7",
+            "x": 5.0,
+            "y": 3.1
+          }
+        ],
+        "excluded": []
+      },
+      "request_metadata": {
+        "request_schema_version": "prototype-synthetic-request-v1",
+        "logical_adapter_version": "prototype-synthetic-input-v1",
+        "result_bearing_scenario": {
+          "decision_reason": "DESCRIPTIVE_ONLY",
+          "profile": "small",
+          "recommendation": null
+        }
+      }
+    }
+  },
+  "visualization": {
+    "geometry": {
+      "view_box": [
+        0,
+        0,
+        640,
+        400
+      ],
+      "plot_rect": [
+        70,
+        40,
+        520,
+        280
+      ],
+      "xlim": [
+        0.0,
+        5.0
+      ],
+      "ylim": [
+        0.6000000000000001,
+        3.6
+      ],
+      "x_ticks": 6,
+      "y_ticks": 5
+    },
+    "palette": {
+      "model": "#005A9C",
+      "boundary": "#B00020",
+      "point": "#4B5563",
+      "text": "#111827",
+      "grid": "#D1D5DB"
+    }
+  },
+  "observations": [
+    {
+      "row_id": "row-01",
+      "source_row_id": "2",
+      "x": 0.0,
+      "y": 1.1,
+      "x_group_id": "x:0x0.0p+0",
+      "input_status": "USED",
+      "flags": [],
+      "action": "review_only",
+      "pred_null_oof": null,
+      "pred_one_oof": null,
+      "resid_one_oof": null,
+      "pred_two_oof": null,
+      "resid_two_oof": null,
+      "p2_oof_fallback_code": null,
+      "pred_one_refit": 1.25,
+      "pred_two_refit": null,
+      "segment_refit": null,
+      "scale_one_oof": null,
+      "scale_one_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_one_oof": null,
+      "scale_two_oof": null,
+      "scale_two_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_two_oof": null
+    },
+    {
+      "row_id": "row-02",
+      "source_row_id": "3",
+      "x": 1.0,
+      "y": 1.4,
+      "x_group_id": "x:0x1.0000000000000p+0",
+      "input_status": "USED",
+      "flags": [],
+      "action": "review_only",
+      "pred_null_oof": null,
+      "pred_one_oof": null,
+      "resid_one_oof": null,
+      "pred_two_oof": null,
+      "resid_two_oof": null,
+      "p2_oof_fallback_code": null,
+      "pred_one_refit": 1.8900000000000001,
+      "pred_two_refit": null,
+      "segment_refit": null,
+      "scale_one_oof": null,
+      "scale_one_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_one_oof": null,
+      "scale_two_oof": null,
+      "scale_two_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_two_oof": null
+    },
+    {
+      "row_id": "row-03",
+      "source_row_id": "4",
+      "x": 2.0,
+      "y": 1.9,
+      "x_group_id": "x:0x1.0000000000000p+1",
+      "input_status": "USED",
+      "flags": [],
+      "action": "review_only",
+      "pred_null_oof": null,
+      "pred_one_oof": null,
+      "resid_one_oof": null,
+      "pred_two_oof": null,
+      "resid_two_oof": null,
+      "p2_oof_fallback_code": null,
+      "pred_one_refit": 2.5300000000000002,
+      "pred_two_refit": null,
+      "segment_refit": null,
+      "scale_one_oof": null,
+      "scale_one_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_one_oof": null,
+      "scale_two_oof": null,
+      "scale_two_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_two_oof": null
+    },
+    {
+      "row_id": "row-04",
+      "source_row_id": "5",
+      "x": 3.0,
+      "y": 2.3,
+      "x_group_id": "x:0x1.8000000000000p+1",
+      "input_status": "USED",
+      "flags": [],
+      "action": "review_only",
+      "pred_null_oof": null,
+      "pred_one_oof": null,
+      "resid_one_oof": null,
+      "pred_two_oof": null,
+      "resid_two_oof": null,
+      "p2_oof_fallback_code": null,
+      "pred_one_refit": 3.17,
+      "pred_two_refit": null,
+      "segment_refit": null,
+      "scale_one_oof": null,
+      "scale_one_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_one_oof": null,
+      "scale_two_oof": null,
+      "scale_two_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_two_oof": null
+    },
+    {
+      "row_id": "row-05",
+      "source_row_id": "6",
+      "x": 4.0,
+      "y": 2.9,
+      "x_group_id": "x:0x1.0000000000000p+2",
+      "input_status": "USED",
+      "flags": [],
+      "action": "review_only",
+      "pred_null_oof": null,
+      "pred_one_oof": null,
+      "resid_one_oof": null,
+      "pred_two_oof": null,
+      "resid_two_oof": null,
+      "p2_oof_fallback_code": null,
+      "pred_one_refit": 3.81,
+      "pred_two_refit": null,
+      "segment_refit": null,
+      "scale_one_oof": null,
+      "scale_one_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_one_oof": null,
+      "scale_two_oof": null,
+      "scale_two_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_two_oof": null
+    },
+    {
+      "row_id": "row-06",
+      "source_row_id": "7",
+      "x": 5.0,
+      "y": 3.1,
+      "x_group_id": "x:0x1.4000000000000p+2",
+      "input_status": "USED",
+      "flags": [],
+      "action": "review_only",
+      "pred_null_oof": null,
+      "pred_one_oof": null,
+      "resid_one_oof": null,
+      "pred_two_oof": null,
+      "resid_two_oof": null,
+      "p2_oof_fallback_code": null,
+      "pred_one_refit": 4.45,
+      "pred_two_refit": null,
+      "segment_refit": null,
+      "scale_one_oof": null,
+      "scale_one_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_one_oof": null,
+      "scale_two_oof": null,
+      "scale_two_reason": "OOF_DIAGNOSTICS_UNAVAILABLE",
+      "z_two_oof": null
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "bootstrap-resamples.csv",
+      "media_type": "text/csv",
+      "size": 9847,
+      "sha256": "db889c0bb23cef230feaae9a399830ac03a85b4f84d13bed81b6e607bda8b8c5"
+    },
+    {
+      "path": "bootstrap-resamples.csv-metadata.json",
+      "media_type": "application/json",
+      "size": 647,
+      "sha256": "da82fe7d63d9a17f1304952b423b88182a153b998c00660933e54dc869b5d895"
+    },
+    {
+      "path": "diagnostic-appearances.csv",
+      "media_type": "text/csv",
+      "size": 178,
+      "sha256": "0ba5f78581800288b6e521ef175cafa78c9e2041b6d5f8349023576d7753a600"
+    },
+    {
+      "path": "diagnostic-appearances.csv-metadata.json",
+      "media_type": "application/json",
+      "size": 1217,
+      "sha256": "2e92f06282acfe855f9ce560951e6bf9b1d07b0aaf2226e95cc6e5d0592ffd5c"
+    },
+    {
+      "path": "diagnostic-scale-trace.csv",
+      "media_type": "text/csv",
+      "size": 224,
+      "sha256": "079b22e3d09baf328bfadfb40be6efd0275b40f6bb350647b6fb28b4c1d18758"
+    },
+    {
+      "path": "diagnostic-scale-trace.csv-metadata.json",
+      "media_type": "application/json",
+      "size": 1302,
+      "sha256": "d5fc592806c56da2b5b35d7afae99fc812dd625760d443d13e7547e61b05592f"
+    },
+    {
+      "path": "figures/one-function.svg",
+      "media_type": "image/svg+xml",
+      "size": 5650,
+      "sha256": "5de6649df24a1d6c39c77fb062093425f0237b213634eb33618778d14ac8573a"
+    },
+    {
+      "path": "figures/residuals.svg",
+      "media_type": "image/svg+xml",
+      "size": 4861,
+      "sha256": "f8e8503ca8d3c62eec1cfb16808e41da1575a9c7afc37e7e0b988d6a84486f8c"
+    },
+    {
+      "path": "figures/two-segment.svg",
+      "media_type": "image/svg+xml",
+      "size": 4194,
+      "sha256": "d9b42ed0f5942479648ea14a2252379c37cf6257eba90a8d64c24afead17657c"
+    },
+    {
+      "path": "influence-grid.csv",
+      "media_type": "text/csv",
+      "size": 108,
+      "sha256": "217de7ff7eb799d5bf18d3047435f2c1d97e10994a2efbb4359e9844ac94c8ea"
+    },
+    {
+      "path": "influence-grid.csv-metadata.json",
+      "media_type": "application/json",
+      "size": 887,
+      "sha256": "725f8754161879302bf9ad8bb7cfaa4e896995eb252f709423b01a21190f54f9"
+    },
+    {
+      "path": "input-exclusions.jsonl",
+      "media_type": "application/x-ndjson",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "models/one-model.json",
+      "media_type": "application/json",
+      "size": 3151,
+      "sha256": "7ac5b66e405bff7740287b6fc2ad45c1d95170c497d1719af64040ed7fb1534d"
+    },
+    {
+      "path": "observations.csv",
+      "media_type": "text/csv",
+      "size": 1056,
+      "sha256": "58d58082ddbb2fae403aeb1f7432eb42bae1be7147e246e386a9babf4b7cefc9"
+    },
+    {
+      "path": "observations.csv-metadata.json",
+      "media_type": "application/json",
+      "size": 1778,
+      "sha256": "dea3c4454b76b142bbede77bc991ed593dde94160de64170136bed00e2068d3c"
+    },
+    {
+      "path": "oof-appearances.csv",
+      "media_type": "text/csv",
+      "size": 207,
+      "sha256": "ba733d734abe55823b3912d67b995c8c56539a806d78e5396fbf0a1ebc53dbcd"
+    },
+    {
+      "path": "oof-appearances.csv-metadata.json",
+      "media_type": "application/json",
+      "size": 1253,
+      "sha256": "9e3e2f6954f6290b6361554e4a47bca7fce51c0e50e319fddd858e25d6481154"
+    },
+    {
+      "path": "p2-stability-outer-fits.csv",
+      "media_type": "text/csv",
+      "size": 155,
+      "sha256": "d65155a31611d618dd0a8cfb4ed7c0245544f63e82c7ffee1d964e014067b07a"
+    },
+    {
+      "path": "p2-stability-outer-fits.csv-metadata.json",
+      "media_type": "application/json",
+      "size": 1072,
+      "sha256": "541dcfd2d0d785a2f57f10ab5220462e5c0e3e380c4ff3132da84729f31aff29"
+    },
+    {
+      "path": "plot-data.csv",
+      "media_type": "text/csv",
+      "size": 3809,
+      "sha256": "7545bc45b1857ba5121829c34763a72fa06c90a10e408e7fcb5371027ee6d2b1"
+    },
+    {
+      "path": "plot-data.csv-metadata.json",
+      "media_type": "application/json",
+      "size": 652,
+      "sha256": "c56e59fce5cf59f47c7b84e47681b7c76ebd77c682d586cd5f6cf81d4c3d1a5c"
+    },
+    {
+      "path": "provenance/dependency-manifest.json",
+      "media_type": "application/json",
+      "size": 179,
+      "sha256": "7a578c83a3d3ce8a996c9a30222237a4f2a038c4c20a6ea325539c26e47c693b"
+    },
+    {
+      "path": "provenance/environment.json",
+      "media_type": "application/json",
+      "size": 201,
+      "sha256": "88e8a01a1d0ebdb6e03b4350b6767959f4d96fef5008f0b80fa48cc870ed0d54"
+    },
+    {
+      "path": "provenance/registry.json",
+      "media_type": "application/json",
+      "size": 1182,
+      "sha256": "0a1071199dcab8f63e1243f59570e6bbbff2c0541e50f39de23590f120ad7739"
+    },
+    {
+      "path": "provenance/request-metadata.json",
+      "media_type": "application/json",
+      "size": 256,
+      "sha256": "5eb1756c2a78e17a77f62f3d300f4227db02ea6ab8c9a4fbcd09c49464645463"
+    },
+    {
+      "path": "provenance/resolved-policy.json",
+      "media_type": "application/json",
+      "size": 1190,
+      "sha256": "ae09810d5cc3b93f68cee91cfdeb208f3a2563f5fc39770afec2f5c6f27c469d"
+    },
+    {
+      "path": "provenance/source-manifest.json",
+      "media_type": "application/json",
+      "size": 703,
+      "sha256": "b0bfa03bdb7a648d4c4ecd0c618442cd8b17d346a1fb2f8f0483680b2b7e4bce"
+    },
+    {
+      "path": "provenance.json",
+      "media_type": "application/json",
+      "size": 7076,
+      "sha256": "fb737a11793ab18282ec3b000ce537adb4cf36442b5a420d07ca3fc00bfc735f"
+    },
+    {
+      "path": "report.schema.json",
+      "media_type": "application/json",
+      "size": 189862,
+      "sha256": "fb7e44761581f767077a6b82b282f5e29a0687ac77d75261c41834ca3ca2408d"
+    },
+    {
+      "path": "trace/fit-attempts.jsonl.gz",
+      "media_type": "application/gzip",
+      "size": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    }
+  ]
+}

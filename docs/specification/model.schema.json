@@ -1,0 +1,493 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:model:v1",
+  "title": "Monotone calibration typed model artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registry_version",
+    "role",
+    "analysis_id",
+    "decision_state",
+    "recommendation_status",
+    "model_structure_hash",
+    "model_instance_hash",
+    "direction",
+    "domain",
+    "units",
+    "segments",
+    "p2",
+    "formula_display",
+    "warning_codes"
+  ],
+  "properties": {
+    "schema_version": {"const": "model-v1"},
+    "registry_version": {"const": "registry-v1"},
+    "role": {"enum": ["candidate_one", "candidate_two", "recommended"]},
+    "analysis_id": {"$ref": "#/$defs/hash"},
+    "decision_state": {
+      "enum": [
+        "CLEAR_PRACTICAL_UPLIFT",
+        "NO_UPLIFT_OR_HARM",
+        "STATISTICAL_ONLY_SMALL",
+        "PRACTICALLY_PROMISING_UNCERTAIN",
+        "UNSTABLE_SELECTION",
+        "NO_VALID_TWO_SEGMENT",
+        "DESCRIPTIVE_ONLY"
+      ]
+    },
+    "recommendation_status": {"enum": ["ONE_RECOMMENDED", "TWO_RECOMMENDED", "NO_VALIDATED_RECOMMENDATION"]},
+    "model_structure_hash": {"$ref": "#/$defs/hash"},
+    "model_instance_hash": {"$ref": "#/$defs/hash"},
+    "direction": {"enum": ["increasing", "decreasing", "flat"]},
+    "domain": {"$ref": "#/$defs/domain"},
+    "units": {"$ref": "#/$defs/units"},
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {"$ref": "#/$defs/segment"}
+    },
+    "p2": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/p2"}]},
+    "formula_display": {"type": "string", "minLength": 1, "maxLength": 8192},
+    "warning_codes": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"decision_state": {"const": "DESCRIPTIVE_ONLY"}}},
+      "then": {
+        "properties": {
+          "recommendation_status": {"const": "NO_VALIDATED_RECOMMENDATION"},
+          "role": {"enum": ["candidate_one", "candidate_two"]}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"recommendation_status": {"const": "NO_VALIDATED_RECOMMENDATION"}}},
+      "then": {
+        "properties": {
+          "decision_state": {"const": "DESCRIPTIVE_ONLY"},
+          "role": {"enum": ["candidate_one", "candidate_two"]}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"recommendation_status": {"const": "ONE_RECOMMENDED"}}},
+      "then": {
+        "properties": {
+          "decision_state": {
+            "enum": [
+              "NO_UPLIFT_OR_HARM",
+              "STATISTICAL_ONLY_SMALL",
+              "PRACTICALLY_PROMISING_UNCERTAIN",
+              "UNSTABLE_SELECTION",
+              "NO_VALID_TWO_SEGMENT"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"recommendation_status": {"const": "TWO_RECOMMENDED"}}},
+      "then": {
+        "properties": {
+          "decision_state": {"const": "CLEAR_PRACTICAL_UPLIFT"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"segments": {"minItems": 1, "maxItems": 1}}},
+      "then": {
+        "properties": {
+          "role": {"enum": ["candidate_one", "recommended"]},
+          "p2": {"type": "null"},
+          "segments": {
+            "prefixItems": [
+              {
+                "allOf": [
+                  {"$ref": "#/$defs/segment"},
+                  {
+                    "properties": {
+                      "segment_id": {"const": "single"},
+                      "interval": {
+                        "properties": {
+                          "left_closed": {"const": true},
+                          "right_closed": {"const": true}
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "segments": {
+            "minItems": 1,
+            "maxItems": 1,
+            "prefixItems": [
+              {
+                "properties": {"family_id": {"const": "constant_v1"}},
+                "required": ["family_id"]
+              }
+            ]
+          }
+        },
+        "required": ["segments"]
+      },
+      "then": {"properties": {"direction": {"const": "flat"}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "direction": {"const": "flat"},
+          "segments": {"minItems": 1, "maxItems": 1}
+        },
+        "required": ["direction", "segments"]
+      },
+      "then": {
+        "properties": {
+          "segments": {
+            "prefixItems": [
+              {
+                "properties": {"family_id": {"const": "constant_v1"}},
+                "required": ["family_id"]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"segments": {"minItems": 2}}},
+      "then": {
+        "properties": {
+          "role": {"enum": ["candidate_two", "recommended"]},
+          "p2": {"$ref": "#/$defs/p2"},
+          "direction": {"enum": ["increasing", "decreasing"]},
+          "segments": {
+            "prefixItems": [
+              {
+                "allOf": [
+                  {"$ref": "#/$defs/segment"},
+                  {
+                    "properties": {
+                      "segment_id": {"const": "left"},
+                      "interval": {
+                        "properties": {
+                          "left_closed": {"const": true},
+                          "right_closed": {"const": true}
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {"$ref": "#/$defs/segment"},
+                  {
+                    "properties": {
+                      "segment_id": {"const": "right"},
+                      "interval": {
+                        "properties": {
+                          "left_closed": {"const": false},
+                          "right_closed": {"const": true}
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "not": {
+        "properties": {
+          "segments": {
+            "type": "array",
+            "minItems": 2,
+            "prefixItems": [
+              {"properties": {"family_id": {"const": "constant_v1"}}, "required": ["family_id"]},
+              {"properties": {"family_id": {"const": "constant_v1"}}, "required": ["family_id"]}
+            ]
+          }
+        },
+        "required": ["segments"]
+      }
+    },
+    {
+      "if": {"properties": {"direction": {"const": "increasing"}}, "required": ["direction"]},
+      "then": {"properties": {"segments": {"items": {"properties": {"certificate": {"properties": {"direction": {"const": "increasing"}}}}}}}}
+    },
+    {
+      "if": {"properties": {"direction": {"const": "decreasing"}}, "required": ["direction"]},
+      "then": {"properties": {"segments": {"items": {"properties": {"certificate": {"properties": {"direction": {"const": "decreasing"}}}}}}}}
+    },
+    {
+      "if": {"properties": {"direction": {"const": "flat"}}, "required": ["direction"]},
+      "then": {"properties": {"segments": {"items": {"properties": {"certificate": {"properties": {"direction": {"const": "flat"}}}}}}}}
+    },
+    {
+      "if": {"properties": {"role": {"const": "recommended"}}},
+      "then": {
+        "oneOf": [
+          {
+            "properties": {
+              "recommendation_status": {"const": "ONE_RECOMMENDED"},
+              "segments": {"minItems": 1, "maxItems": 1}
+            }
+          },
+          {
+            "properties": {
+              "recommendation_status": {"const": "TWO_RECOMMENDED"},
+              "decision_state": {"const": "CLEAR_PRACTICAL_UPLIFT"},
+              "segments": {"minItems": 2, "maxItems": 2}
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "finite": {"type": "number"},
+    "domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper", "lower_closed", "upper_closed", "extrapolation"],
+      "properties": {
+        "lower": {"$ref": "#/$defs/finite"},
+        "upper": {"$ref": "#/$defs/finite"},
+        "lower_closed": {"const": true},
+        "upper_closed": {"const": true},
+        "extrapolation": {"const": false}
+      }
+    },
+    "units": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": {"type": "string", "minLength": 1, "maxLength": 256},
+        "y": {"type": "string", "minLength": 1, "maxLength": 256}
+      }
+    },
+    "interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper", "left_closed", "right_closed"],
+      "properties": {
+        "lower": {"$ref": "#/$defs/finite"},
+        "upper": {"$ref": "#/$defs/finite"},
+        "left_closed": {"type": "boolean"},
+        "right_closed": {"type": "boolean"}
+      }
+    },
+    "transforms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x_offset", "x_scale", "y_offset", "y_scale"],
+      "properties": {
+        "x_offset": {"$ref": "#/$defs/finite"},
+        "x_scale": {"type": "number", "exclusiveMinimum": 0},
+        "y_offset": {"$ref": "#/$defs/finite"},
+        "y_scale": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "registry_version",
+        "family_id",
+        "ast_sha256",
+        "direction",
+        "interval",
+        "domain_finite",
+        "derivative_finite",
+        "signed_derivative_margin",
+        "critical_points",
+        "reason_codes"
+      ],
+      "properties": {
+        "status": {"const": "CERTIFIED"},
+        "registry_version": {"const": "registry-v1"},
+        "family_id": {"$ref": "#/$defs/family"},
+        "ast_sha256": {"$ref": "#/$defs/hash"},
+        "direction": {"enum": ["increasing", "decreasing", "flat"]},
+        "interval": {"$ref": "#/$defs/interval"},
+        "domain_finite": {"const": true},
+        "derivative_finite": {"const": true},
+        "signed_derivative_margin": {"$ref": "#/$defs/finite"},
+        "critical_points": {"type": "array", "items": {"$ref": "#/$defs/finite"}},
+        "reason_codes": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "family": {
+      "enum": [
+        "constant_v1",
+        "poly1_v1",
+        "poly2_v1",
+        "poly3_v1",
+        "exp_affine_v1",
+        "log_shift_v1",
+        "reciprocal_shift_pos_v1",
+        "logistic_v1"
+      ]
+    },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "segment_id",
+        "interval",
+        "family_id",
+        "canonical_ast_id",
+        "canonical_ast",
+        "ast_sha256",
+        "parameters",
+        "transforms",
+        "certificate",
+        "formula_display"
+      ],
+      "properties": {
+        "segment_id": {"enum": ["single", "left", "right"]},
+        "interval": {"$ref": "#/$defs/interval"},
+        "family_id": {"$ref": "#/$defs/family"},
+        "canonical_ast_id": {"type": "string", "pattern": "^[a-z0-9_.-]+$"},
+        "canonical_ast": {"type": "object", "minProperties": 1},
+        "ast_sha256": {"$ref": "#/$defs/hash"},
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/finite"}
+        },
+        "transforms": {"$ref": "#/$defs/transforms"},
+        "certificate": {"$ref": "#/$defs/certificate"},
+        "formula_display": {"type": "string", "minLength": 1, "maxLength": 4096}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "family_id": {"const": "constant_v1"},
+              "segment_id": {"const": "single"}
+            },
+            "required": ["family_id", "segment_id"]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["a"],
+                "properties": {"a": {"$ref": "#/$defs/finite"}}
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "family_id": {"const": "constant_v1"},
+              "segment_id": {"enum": ["left", "right"]}
+            },
+            "required": ["family_id", "segment_id"]
+          },
+          "then": {
+            "properties": {
+              "parameters": {"type": "object", "maxProperties": 0}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"family_id": {"const": "constant_v1"}}, "required": ["family_id"]},
+          "then": {"properties": {"certificate": {"properties": {"family_id": {"const": "constant_v1"}}}}}
+        },
+        {
+          "if": {"properties": {"family_id": {"const": "poly1_v1"}}, "required": ["family_id"]},
+          "then": {"properties": {"certificate": {"properties": {"family_id": {"const": "poly1_v1"}}}}}
+        },
+        {
+          "if": {"properties": {"family_id": {"const": "poly2_v1"}}, "required": ["family_id"]},
+          "then": {"properties": {"certificate": {"properties": {"family_id": {"const": "poly2_v1"}}}}}
+        },
+        {
+          "if": {"properties": {"family_id": {"const": "poly3_v1"}}, "required": ["family_id"]},
+          "then": {"properties": {"certificate": {"properties": {"family_id": {"const": "poly3_v1"}}}}}
+        },
+        {
+          "if": {"properties": {"family_id": {"const": "exp_affine_v1"}}, "required": ["family_id"]},
+          "then": {"properties": {"certificate": {"properties": {"family_id": {"const": "exp_affine_v1"}}}}}
+        },
+        {
+          "if": {"properties": {"family_id": {"const": "log_shift_v1"}}, "required": ["family_id"]},
+          "then": {"properties": {"certificate": {"properties": {"family_id": {"const": "log_shift_v1"}}}}}
+        },
+        {
+          "if": {"properties": {"family_id": {"const": "reciprocal_shift_pos_v1"}}, "required": ["family_id"]},
+          "then": {"properties": {"certificate": {"properties": {"family_id": {"const": "reciprocal_shift_pos_v1"}}}}}
+        },
+        {
+          "if": {"properties": {"family_id": {"const": "logistic_v1"}}, "required": ["family_id"]},
+          "then": {"properties": {"certificate": {"properties": {"family_id": {"const": "logistic_v1"}}}}}
+        }
+      ],
+      "$comment": "The schema pins segment/certificate family and root/certificate direction. The semantic verifier additionally requires certificate interval/AST/hash equality, breakpoint-to-cell/segment/domain equality, evaluator-backed continuity, and canonical collapse of functionally indistinguishable P2 branches."
+    },
+    "p2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "breakpoint",
+        "membership_convention",
+        "membership_cell_id",
+        "cell_lower_x",
+        "cell_upper_x",
+        "shared_mu",
+        "continuity"
+      ],
+      "properties": {
+        "breakpoint": {"$ref": "#/$defs/finite"},
+        "membership_convention": {"const": "x<=c:left;x>c:right"},
+        "membership_cell_id": {"type": "string", "pattern": "^[A-Za-z0-9._~-]+$"},
+        "cell_lower_x": {"$ref": "#/$defs/finite"},
+        "cell_upper_x": {"$ref": "#/$defs/finite"},
+        "shared_mu": {"$ref": "#/$defs/finite"},
+        "continuity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "left_at_c", "right_at_c", "absolute_residual", "tolerance"],
+          "properties": {
+            "status": {"const": "CERTIFIED"},
+            "left_at_c": {"$ref": "#/$defs/finite"},
+            "right_at_c": {"$ref": "#/$defs/finite"},
+            "absolute_residual": {"type": "number", "minimum": 0},
+            "tolerance": {"type": "number", "exclusiveMinimum": 0}
+          }
+        }
+      },
+      "$comment": "The semantic verifier MUST enforce cell_lower_x <= breakpoint < cell_upper_x, left.interval.upper == breakpoint == right.interval.lower, outer segment endpoints == model domain, left_at_c == right_at_c == shared_mu under independent evaluation, absolute_residual == abs(left_at_c-right_at_c), and the declared tolerance."
+    }
+  }
+}

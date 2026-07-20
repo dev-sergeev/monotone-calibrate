@@ -1,0 +1,320 @@
+{
+  "analysis_id": "878f91286f9dcbc3622800bcbaa7f0aa262ebafc4e1a4fa79343d7bbd96a14cf",
+  "execution_environment_id": "47cbfd161d7904f4d3156040d517b9eac3d94b5ecc3a9b8fa3afd2f974b10978",
+  "policy_version": "prototype-policy-v1",
+  "registry_version": "registry_v1",
+  "input_sha256": "b89fd925df5d13e1241dd58ab09459c63055f2388457bfda4586dc5f5ce954ce",
+  "request_sha256": "550923a2b14077b7bcf3a1e8a3a05d01a6bd2dc4291e776b890a3d59e7c84789",
+  "policy_sha256": "6d28a5bf154d83319c5f7946baf5ab0e4cec8a48fd8390c270999f02e03f5e2e",
+  "registry_sha256": "3d80cd7086509d51b1ecd89c2e1d1d6752fb5a299b6f841c7f3f89e63b3ac347",
+  "source_sha256": "2f84705169c0b240607c4149f56b48512ae4b9f35be1cd2893b5c6635d8c908d",
+  "dependency_lock_sha256": "7890f7d54f6c5c6083a18002c34c4fb852947dd5abee81e34488e78933320474",
+  "solver_backend": "synthetic_reference_closed_form_and_profile_cells",
+  "environment": {
+    "status": "prototype_static_not_runtime_benchmark",
+    "python_implementation": "CPython",
+    "python_version": "3.12.11",
+    "platform": "darwin",
+    "thread_policy": "single_process_single_thread"
+  },
+  "thread_policy": "single_process_single_thread",
+  "base_seed": 20260716,
+  "numerical_tolerances": {
+    "absolute_reconciliation": 1e-12,
+    "continuity": 1e-12,
+    "derivative": 1e-12
+  },
+  "work_counts": {
+    "validation_appearances": 120,
+    "outer_fit_count": 50,
+    "bootstrap_requested": 200,
+    "bootstrap_successful": 190,
+    "bootstrap_failed": 10,
+    "influence_groups": 12,
+    "influence_grid_evaluations": 511,
+    "optimizer_attempts": 6,
+    "optimizer_evaluations": 78
+  },
+  "fallback_failure_counts": {
+    "p2_fallback_appearances": 0,
+    "p2_fallback_outer_fits": 0,
+    "reported_failures": 0
+  },
+  "certificate_versions": {
+    "derivative": "prototype-analytic-certificate-v1",
+    "continuity": "prototype-continuity-certificate-v1"
+  },
+  "timezone": "Europe/Moscow",
+  "hash_payloads": {
+    "policy": {
+      "policy_version": "prototype-policy-v1",
+      "r2_warning_boundary": 0.6,
+      "segment_share_bounds": [
+        0.4,
+        0.6
+      ],
+      "decision_gates": [
+        {
+          "id": "PRACTICAL_REL_MSE_UPLIFT",
+          "threshold": 0.1
+        },
+        {
+          "id": "POSITIVE_REPETITION_SHARE",
+          "threshold": 0.9
+        },
+        {
+          "id": "SPLIT_SENSITIVITY_P10",
+          "threshold": 0.0
+        },
+        {
+          "id": "BOOTSTRAP_STABILITY_LOWER",
+          "threshold": 0.05
+        },
+        {
+          "id": "DELTA_RMSE_POSITIVE",
+          "threshold": 0.0
+        },
+        {
+          "id": "MAE_NO_HARM_RATIO",
+          "threshold": 1.02
+        },
+        {
+          "id": "P2_VALID_FIT_RATE",
+          "threshold": 0.9
+        },
+        {
+          "id": "P2_DIRECTION_FREQUENCY",
+          "threshold": 0.8
+        },
+        {
+          "id": "P2_DOMINANT_PAIR_FREQUENCY",
+          "threshold": 0.6
+        },
+        {
+          "id": "P2_BOUNDARY_WIDTH_FRACTION",
+          "threshold": 0.25
+        },
+        {
+          "id": "P2_EDGE_HIT_RATE",
+          "threshold": 0.2
+        },
+        {
+          "id": "P2_DEGENERACY_RATE",
+          "threshold": 0.1
+        },
+        {
+          "id": "P2_HARD_FAILURE_RATE",
+          "threshold": 0.1
+        },
+        {
+          "id": "P2_FULL_REFIT_CERTIFIED",
+          "threshold": "certified"
+        }
+      ]
+    },
+    "registry": {
+      "registry_version": "registry_v1",
+      "artifact_scope": "prototype_exercised_subset",
+      "authoritative_core_family_ids": [
+        "constant_v1",
+        "poly1_v1",
+        "poly2_v1",
+        "poly3_v1",
+        "exp_affine_v1",
+        "log_shift_v1",
+        "reciprocal_shift_pos_v1",
+        "logistic_v1"
+      ],
+      "included_family_ids": [
+        "constant_v1",
+        "poly1_v1"
+      ],
+      "unexercised_family_ids": [
+        "poly2_v1",
+        "poly3_v1",
+        "exp_affine_v1",
+        "log_shift_v1",
+        "reciprocal_shift_pos_v1",
+        "logistic_v1"
+      ],
+      "maximum_polynomial_degree": 3,
+      "families": {
+        "constant_v1": {
+          "canonical_ast": {
+            "ast_id": "registry_v1:constant_v1",
+            "root": "parameter",
+            "prefix": [
+              "parameter:a"
+            ],
+            "node_count": 1
+          },
+          "degree": 0,
+          "role": "core"
+        },
+        "poly1_v1": {
+          "canonical_ast": {
+            "ast_id": "registry_v1:poly1_v1",
+            "root": "add",
+            "prefix": [
+              "add",
+              "parameter:a",
+              "multiply",
+              "parameter:b",
+              "variable:t"
+            ],
+            "node_count": 5
+          },
+          "degree": 1,
+          "role": "core"
+        }
+      },
+      "incubator_excluded": true
+    },
+    "source_manifest": {
+      "manifest_version": "prototype-source-manifest-v1",
+      "files": [
+        {
+          "path": "docs/prototypes/report-layout/audit_prototype.py",
+          "sha256": "e73ed086667ee75209e098fd0a7d548643a71b09b386079c19135e1af090c462"
+        },
+        {
+          "path": "docs/prototypes/report-layout/build.py",
+          "sha256": "dd20584abefa33c4b83f6808ca633e51337e0518f17eabdf6daae441da73ece7"
+        },
+        {
+          "path": "docs/prototypes/report-layout/fixtures/matrix.json",
+          "sha256": "ee5a003042db12ef5b10a2b85476a97028d242d11e1b7b8ea75578c84b736856"
+        },
+        {
+          "path": "docs/specification/report.schema.json",
+          "sha256": "fb7e44761581f767077a6b82b282f5e29a0687ac77d75261c41834ca3ca2408d"
+        }
+      ]
+    },
+    "dependency_manifest": {
+      "manifest_version": "prototype-stdlib-dependency-manifest-v1",
+      "python_implementation": "CPython",
+      "python_version": "3.12.11",
+      "third_party_runtime_dependencies": []
+    },
+    "input": {
+      "logical_adapter_version": "prototype-synthetic-input-v1",
+      "x_unit": "s",
+      "y_unit": "mV",
+      "rows": [
+        {
+          "row_id": "row-01",
+          "source_row_id": "2",
+          "x": 0.0,
+          "y": 1.3
+        },
+        {
+          "row_id": "row-02",
+          "source_row_id": "3",
+          "x": 1.0,
+          "y": 1.78
+        },
+        {
+          "row_id": "row-03",
+          "source_row_id": "4",
+          "x": 2.0,
+          "y": 2.41
+        },
+        {
+          "row_id": "row-04",
+          "source_row_id": "5",
+          "x": 3.0,
+          "y": 3.19
+        },
+        {
+          "row_id": "row-05",
+          "source_row_id": "6",
+          "x": 4.0,
+          "y": 3.67
+        },
+        {
+          "row_id": "row-06",
+          "source_row_id": "7",
+          "x": 5.0,
+          "y": 4.3
+        },
+        {
+          "row_id": "row-07",
+          "source_row_id": "8",
+          "x": 6.0,
+          "y": 5.08
+        },
+        {
+          "row_id": "row-08",
+          "source_row_id": "9",
+          "x": 7.0,
+          "y": 5.5600000000000005
+        },
+        {
+          "row_id": "row-09",
+          "source_row_id": "10",
+          "x": 8.0,
+          "y": 6.19
+        },
+        {
+          "row_id": "row-10",
+          "source_row_id": "11",
+          "x": 9.0,
+          "y": 6.97
+        },
+        {
+          "row_id": "row-11",
+          "source_row_id": "12",
+          "x": 10.0,
+          "y": 7.45
+        },
+        {
+          "row_id": "row-12",
+          "source_row_id": "13",
+          "x": 11.0,
+          "y": 8.079999999999998
+        }
+      ],
+      "excluded": []
+    },
+    "request_metadata": {
+      "request_schema_version": "prototype-synthetic-request-v1",
+      "logical_adapter_version": "prototype-synthetic-input-v1",
+      "result_bearing_scenario": {
+        "decision_reason": "NO_UPLIFT_OR_HARM",
+        "p1_oof_predictions": [
+          1.25,
+          1.89,
+          2.53,
+          3.17,
+          3.81,
+          4.45,
+          5.09,
+          5.73,
+          6.37,
+          7.01,
+          7.65,
+          8.29
+        ],
+        "p2_oof_predictions": [
+          1.25,
+          1.89,
+          2.53,
+          3.17,
+          3.81,
+          4.45,
+          5.09,
+          5.73,
+          6.37,
+          7.01,
+          7.65,
+          8.29
+        ],
+        "profile": "one",
+        "r2_one": 0.996723467202118,
+        "r2_two": 0.996723467202118,
+        "recommendation": "one"
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "manifest_version": "prototype-source-manifest-v1",
+  "files": [
+    {
+      "path": "docs/prototypes/report-layout/audit_prototype.py",
+      "sha256": "e73ed086667ee75209e098fd0a7d548643a71b09b386079c19135e1af090c462"
+    },
+    {
+      "path": "docs/prototypes/report-layout/build.py",
+      "sha256": "dd20584abefa33c4b83f6808ca633e51337e0518f17eabdf6daae441da73ece7"
+    },
+    {
+      "path": "docs/prototypes/report-layout/fixtures/matrix.json",
+      "sha256": "ee5a003042db12ef5b10a2b85476a97028d242d11e1b7b8ea75578c84b736856"
+    },
+    {
+      "path": "docs/specification/report.schema.json",
+      "sha256": "fb7e44761581f767077a6b82b282f5e29a0687ac77d75261c41834ca3ca2408d"
+    }
+  ]
+}

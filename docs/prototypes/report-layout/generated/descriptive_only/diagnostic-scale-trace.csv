@@ -1,0 +1,1 @@
+trace_id,row_id,procedure,training_row_id,training_x_group_id,sample_residual,center_median,estimator,bin_count,target_bin_id,in_target_bin,raw_local_scale,local_floor,computed_scale,zero_tolerance,scale_status,scale_reason

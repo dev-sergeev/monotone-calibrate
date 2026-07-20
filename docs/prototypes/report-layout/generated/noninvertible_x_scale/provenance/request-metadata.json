@@ -1,0 +1,10 @@
+{
+  "request_schema_version": "prototype-synthetic-request-v1",
+  "logical_adapter_version": "prototype-synthetic-input-v1",
+  "result_bearing_scenario": {
+    "decision_reason": "PIPELINE_FAILURE",
+    "pipeline_failure": "NONINVERTIBLE_X_SCALE",
+    "profile": "one",
+    "recommendation": null
+  }
+}

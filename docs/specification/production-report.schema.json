@@ -1,0 +1,3436 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:production-report:1",
+  "title": "Monotone calibration production report v1",
+  "description": "Canonical machine state for one complete production calibration report bundle.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "generated_at",
+    "status",
+    "decision",
+    "recommendation",
+    "input",
+    "preprocessing",
+    "validation",
+    "refit",
+    "diagnostics",
+    "warnings",
+    "failures",
+    "artifacts",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "report-v1"
+    },
+    "report_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]{1,9})?Z$"
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "decision": {
+      "$ref": "#/$defs/decision"
+    },
+    "recommendation": {
+      "$ref": "#/$defs/recommendation"
+    },
+    "input": {
+      "$ref": "#/$defs/input"
+    },
+    "preprocessing": {
+      "$ref": "#/$defs/preprocessing"
+    },
+    "validation": {
+      "$ref": "#/$defs/validation"
+    },
+    "refit": {
+      "$ref": "#/$defs/refit"
+    },
+    "diagnostics": {
+      "$ref": "#/$defs/diagnostics"
+    },
+    "warnings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/message"
+      }
+    },
+    "failures": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/message"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "path": {"const": "figures/one-function.svg"},
+              "role": {"const": "figure"},
+              "media_type": {"const": "image/svg+xml"}
+            },
+            "required": ["path", "role", "media_type"]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "path": {"const": "figures/two-segment.svg"},
+              "role": {"const": "figure"},
+              "media_type": {"const": "image/svg+xml"}
+            },
+            "required": ["path", "role", "media_type"]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ],
+      "$comment": "Both mandatory calibration panels exist even when a typed failure prevents drawing a fitted line. Path uniqueness and lexicographic order are cross-entry invariants enforced by the production verifier."
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {
+                "const": "NO_VALIDATED_RECOMMENDATION"
+              }
+            },
+            "required": [
+              "recommendation_status"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "analysis_status": {
+                "enum": [
+                  "NO_RECOMMENDATION",
+                  "FAILED"
+                ]
+              }
+            }
+          },
+          "decision": {
+            "properties": {
+              "code": {
+                "enum": [
+                  "DESCRIPTIVE_ONLY",
+                  "PIPELINE_FAILURE"
+                ]
+              },
+              "recommended_procedure": {
+                "type": "null"
+              }
+            }
+          },
+          "recommendation": {
+            "$ref": "#/$defs/null_recommendation"
+          },
+          "artifacts": {
+            "not": {
+              "contains": {
+                "properties": {
+                  "role": {
+                    "const": "model_recommended"
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "validation": {
+            "properties": {"status": {"const": "available"}},
+            "required": ["status"]
+          }
+        },
+        "required": ["validation"]
+      },
+      "then": {
+        "properties": {
+          "validation": {
+            "properties": {
+              "reason": {"type": "null"},
+              "outer_folds": {"enum": [4, 5]},
+              "repetitions": {"enum": [10, 20]},
+              "procedures": {
+                "properties": {
+                  "p1": {
+                    "properties": {
+                      "status": {"const": "valid"},
+                      "reason": {"type": "null"},
+                      "r2_oos": {"$ref": "#/$defs/computed_metric"},
+                      "rmse_oof": {"properties": {"value": {"type": "number"}, "status": {"const": "defined"}, "reason": {"type": "null"}}},
+                      "mae_oof": {"properties": {"value": {"type": "number"}, "status": {"const": "defined"}, "reason": {"type": "null"}}},
+                      "appearance_count": {"type": "integer", "minimum": 1},
+                      "repetitions": {"enum": [10, 20]},
+                      "full_data_refit_status": {"const": "certified"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"validation": {"properties": {"status": {"const": "available"}, "outer_folds": {"const": 5}}, "required": ["status", "outer_folds"]}}, "required": ["validation"]},
+      "then": {"properties": {"validation": {"properties": {"repetitions": {"const": 10}, "procedures": {"properties": {"p1": {"properties": {"repetitions": {"const": 10}}}, "p2": {"properties": {"repetitions": {"const": 10}}}}}}}}}
+    },
+    {
+      "if": {"properties": {"validation": {"properties": {"status": {"const": "available"}, "outer_folds": {"const": 4}}, "required": ["status", "outer_folds"]}}, "required": ["validation"]},
+      "then": {"properties": {"validation": {"properties": {"repetitions": {"const": 20}, "procedures": {"properties": {"p1": {"properties": {"repetitions": {"const": 20}}}, "p2": {"properties": {"repetitions": {"const": 20}}}}}}}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "properties": {
+              "analysis_status": {
+                "const": "SUCCEEDED"
+              }
+            },
+            "required": ["analysis_status"]
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {
+                "enum": ["ONE_RECOMMENDED", "TWO_RECOMMENDED"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "properties": {
+              "analysis_status": {
+                "const": "NO_RECOMMENDATION"
+              }
+            },
+            "required": ["analysis_status"]
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {"const": "NO_VALIDATED_RECOMMENDATION"}
+            }
+          },
+          "decision": {
+            "properties": {
+              "code": {"const": "DESCRIPTIVE_ONLY"},
+              "recommended_procedure": {"type": "null"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "properties": {
+              "analysis_status": {
+                "const": "FAILED"
+              }
+            },
+            "required": ["analysis_status"]
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {"const": "NO_VALIDATED_RECOMMENDATION"}
+            }
+          },
+          "decision": {
+            "properties": {
+              "code": {"const": "PIPELINE_FAILURE"},
+              "recommended_procedure": {"type": "null"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {
+                "const": "ONE_RECOMMENDED"
+              }
+            },
+            "required": [
+              "recommendation_status"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "analysis_status": {
+                "const": "SUCCEEDED"
+              }
+            }
+          },
+          "decision": {
+            "properties": {
+              "code": {
+                "enum": [
+                  "NO_UPLIFT_OR_HARM",
+                  "STATISTICAL_ONLY_SMALL",
+                  "PRACTICALLY_PROMISING_UNCERTAIN",
+                  "UNSTABLE_SELECTION",
+                  "NO_VALID_TWO_SEGMENT"
+                ]
+              },
+              "recommended_procedure": {
+                "const": "one"
+              }
+            }
+          },
+          "recommendation": {
+            "allOf": [
+              {"$ref": "#/$defs/one_recommendation"},
+              {
+                "properties": {
+                  "global_primary_r2_oos": {"$ref": "#/$defs/computed_metric"},
+                  "global_primary_rmse_oof": {"$ref": "#/$defs/defined_metric"},
+                  "global_primary_mae_oof": {"$ref": "#/$defs/defined_metric"}
+                }
+              }
+            ]
+          },
+          "refit": {
+            "properties": {
+              "p1": {
+                "properties": {
+                  "status": {
+                    "const": "certified"
+                  },
+                  "certificate": {
+                    "properties": {
+                      "status": {
+                        "const": "PASS"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "artifacts": {
+            "allOf": [
+              {
+                "contains": {"properties": {"path": {"const": "models/one-model.json"}, "role": {"const": "model_candidate"}}, "required": ["path", "role"]},
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {"properties": {"path": {"const": "models/recommended-model.json"}, "role": {"const": "model_recommended"}}, "required": ["path", "role"]},
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {"properties": {"path": {"const": "plot-data.csv"}, "role": {"const": "plot_data"}, "media_type": {"const": "text/csv"}}, "required": ["path", "role", "media_type"]},
+                "minContains": 1,
+                "maxContains": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {
+                "const": "TWO_RECOMMENDED"
+              }
+            },
+            "required": [
+              "recommendation_status"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "analysis_status": {
+                "const": "SUCCEEDED"
+              }
+            }
+          },
+          "decision": {
+            "properties": {
+              "code": {
+                "const": "CLEAR_PRACTICAL_UPLIFT"
+              },
+              "recommended_procedure": {
+                "const": "two"
+              }
+            }
+          },
+          "recommendation": {
+            "allOf": [
+              {"$ref": "#/$defs/two_recommendation"},
+              {
+                "properties": {
+                  "global_primary_r2_oos": {"$ref": "#/$defs/defined_metric"},
+                  "global_primary_rmse_oof": {"$ref": "#/$defs/defined_metric"},
+                  "global_primary_mae_oof": {"$ref": "#/$defs/defined_metric"}
+                }
+              }
+            ]
+          },
+          "validation": {
+            "$ref": "#/$defs/clear_p2_validation"
+          },
+          "refit": {
+            "properties": {
+              "p1": {
+                "properties": {
+                  "status": {"const": "certified"},
+                  "certificate": {"properties": {"status": {"const": "PASS"}}}
+                }
+              },
+              "p2": {
+                "properties": {
+                  "status": {
+                    "const": "certified"
+                  },
+                  "certificate": {
+                    "properties": {
+                      "status": {
+                        "const": "PASS"
+                      }
+                    }
+                  },
+                  "segments": {
+                    "$ref": "#/$defs/two_segments"
+                  }
+                }
+              }
+            }
+          },
+          "artifacts": {
+            "allOf": [
+              {
+                "contains": {"properties": {"path": {"const": "models/one-model.json"}, "role": {"const": "model_candidate"}}, "required": ["path", "role"]},
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {"properties": {"path": {"const": "models/two-segment-model.json"}, "role": {"const": "model_candidate"}}, "required": ["path", "role"]},
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {"properties": {"path": {"const": "models/recommended-model.json"}, "role": {"const": "model_recommended"}}, "required": ["path", "role"]},
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {"properties": {"path": {"const": "plot-data.csv"}, "role": {"const": "plot_data"}, "media_type": {"const": "text/csv"}}, "required": ["path", "role", "media_type"]},
+                "minContains": 1,
+                "maxContains": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "properties": {
+              "code": {
+                "const": "PIPELINE_FAILURE"
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "analysis_status": {
+                "const": "FAILED"
+              },
+              "recommendation_status": {
+                "const": "NO_VALIDATED_RECOMMENDATION"
+              }
+            }
+          },
+          "decision": {
+            "properties": {
+              "recommended_procedure": {
+                "type": "null"
+              }
+            }
+          },
+          "recommendation": {
+            "$ref": "#/$defs/null_recommendation"
+          },
+          "refit": {
+            "properties": {
+              "p1": {
+                "$ref": "#/$defs/no_model_p1"
+              },
+              "p2": {
+                "$ref": "#/$defs/no_model_p2"
+              }
+            }
+          },
+          "artifacts": {
+            "not": {
+              "contains": {
+                "properties": {
+                  "role": {
+                    "enum": [
+                      "model_candidate",
+                      "model_recommended"
+                    ]
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"properties": {"code": {"const": "CLEAR_PRACTICAL_UPLIFT"}}, "required": ["code"]}}, "required": ["decision"]},
+      "then": {"properties": {"status": {"properties": {"decision_reason": {"const": "CLEAR_PRACTICAL_UPLIFT"}}}, "validation": {"properties": {"status": {"const": "available"}}}}}
+    },
+    {
+      "if": {"properties": {"decision": {"properties": {"code": {"const": "NO_UPLIFT_OR_HARM"}}, "required": ["code"]}}, "required": ["decision"]},
+      "then": {
+        "properties": {
+          "status": {"properties": {"decision_reason": {"const": "NO_UPLIFT_OR_HARM"}}},
+          "validation": {"properties": {"status": {"const": "available"}}}
+        },
+        "allOf": [
+          {"$ref": "#/$defs/tested_p2_report_state"},
+          {
+            "properties": {
+              "status": {"properties": {"decision_reason": {"const": "NO_UPLIFT_OR_HARM"}}},
+              "validation": {
+                "properties": {
+                  "status": {"const": "available"},
+                  "uplift": {
+                    "properties": {
+                      "relative_mse_uplift": {"$ref": "#/$defs/nonpositive_or_undefined_uplift_metric"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"properties": {"code": {"const": "STATISTICAL_ONLY_SMALL"}}, "required": ["code"]}}, "required": ["decision"]},
+      "then": {
+        "properties": {
+          "status": {"properties": {"decision_reason": {"const": "STATISTICAL_ONLY_SMALL"}}},
+          "validation": {"properties": {"status": {"const": "available"}}}
+        },
+        "allOf": [
+          {"$ref": "#/$defs/tested_p2_report_state"},
+          {
+            "properties": {
+              "status": {"properties": {"decision_reason": {"const": "STATISTICAL_ONLY_SMALL"}}},
+              "validation": {
+                "properties": {
+                  "status": {"const": "available"},
+                  "uplift": {
+                    "properties": {
+                      "relative_mse_uplift": {"$ref": "#/$defs/small_positive_uplift_metric"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"properties": {"code": {"const": "PRACTICALLY_PROMISING_UNCERTAIN"}}, "required": ["code"]}}, "required": ["decision"]},
+      "then": {
+        "properties": {
+          "status": {"properties": {"decision_reason": {"const": "PRACTICALLY_PROMISING_UNCERTAIN"}}},
+          "validation": {"properties": {"status": {"const": "available"}}}
+        },
+        "allOf": [
+          {"$ref": "#/$defs/tested_p2_report_state"},
+          {
+            "properties": {
+              "status": {"properties": {"decision_reason": {"const": "PRACTICALLY_PROMISING_UNCERTAIN"}}},
+              "validation": {
+                "properties": {
+                  "status": {"const": "available"},
+                  "uplift": {
+                    "properties": {
+                      "relative_mse_uplift": {"$ref": "#/$defs/practical_uplift_metric"}
+                    }
+                  },
+                  "bootstrap_stability": {"$ref": "#/$defs/nonclear_bootstrap_stability"}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"properties": {"code": {"const": "UNSTABLE_SELECTION"}}, "required": ["code"]}}, "required": ["decision"]},
+      "then": {
+        "properties": {
+          "status": {"properties": {"decision_reason": {"const": "UNSTABLE_SELECTION"}}},
+          "validation": {"properties": {"status": {"const": "available"}}}
+        },
+        "allOf": [
+          {"$ref": "#/$defs/tested_p2_report_state"},
+          {
+            "properties": {
+              "status": {"properties": {"decision_reason": {"const": "UNSTABLE_SELECTION"}}},
+              "validation": {
+                "properties": {
+                  "status": {"const": "available"},
+                  "uplift": {
+                    "properties": {
+                      "relative_mse_uplift": {"$ref": "#/$defs/practical_uplift_metric"}
+                    }
+                  }
+                },
+                "anyOf": [
+                  {
+                    "properties": {
+                      "p2_stability": {"$ref": "#/$defs/nonclear_p2_stability"}
+                    }
+                  },
+                  {
+                    "properties": {
+                      "uplift": {
+                        "properties": {
+                          "gates": {
+                            "contains": {
+                              "properties": {"status": {"const": "fail"}},
+                              "required": ["status"]
+                            },
+                            "minContains": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"properties": {"code": {"const": "NO_VALID_TWO_SEGMENT"}}, "required": ["code"]}}, "required": ["decision"]},
+      "then": {
+        "properties": {
+          "status": {"properties": {"decision_reason": {"const": "NO_VALID_TWO_SEGMENT"}}},
+          "validation": {"properties": {"status": {"const": "available"}}},
+          "refit": {"properties": {"p2": {"$ref": "#/$defs/nondeployable_p2_refit"}}},
+          "artifacts": {
+            "not": {
+              "contains": {
+                "properties": {
+                  "path": {"const": "models/two-segment-model.json"},
+                  "role": {"const": "model_candidate"}
+                },
+                "required": ["path", "role"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"properties": {"code": {"const": "DESCRIPTIVE_ONLY"}}, "required": ["code"]}}, "required": ["decision"]},
+      "then": {
+        "properties": {
+          "status": {"properties": {"decision_reason": {"const": "DESCRIPTIVE_ONLY"}}},
+          "validation": {
+            "properties": {"status": {"const": "descriptive_only"}},
+            "allOf": [{"$ref": "#/$defs/no_quality_validation"}]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"decision": {"properties": {"code": {"const": "PIPELINE_FAILURE"}}, "required": ["code"]}}, "required": ["decision"]},
+      "then": {
+        "properties": {
+          "status": {"properties": {"decision_reason": {"const": "PIPELINE_FAILURE"}}},
+          "validation": {
+            "properties": {"status": {"const": "failed"}},
+            "allOf": [{"$ref": "#/$defs/no_quality_validation"}]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "provenance": {
+            "properties": {
+              "llm_advisor": {
+                "properties": {"mode": {"const": "start_advisor"}},
+                "required": ["mode"]
+              }
+            },
+            "required": ["llm_advisor"]
+          }
+        },
+        "required": ["provenance"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "contains": {
+              "properties": {
+                "path": {"const": "trace/llm-advisor.jsonl.gz"},
+                "role": {"const": "trace"}
+              },
+              "required": ["path", "role"]
+            },
+            "minContains": 1,
+            "maxContains": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "artifacts": {
+            "not": {
+              "contains": {
+                "properties": {"path": {"const": "trace/llm-advisor.jsonl.gz"}},
+                "required": ["path"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "json_pointer": {
+      "type": "string",
+      "pattern": "^(?:/(?:[^~/]|~0|~1)*)*$"
+    },
+    "domain": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "minItems": 2,
+      "maxItems": 2,
+      "$comment": "The verifier enforces domain[0] < domain[1]."
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "status",
+        "reason",
+        "scope",
+        "definition",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "defined",
+            "undefined",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "oof",
+            "in_sample",
+            "split_sensitivity",
+            "bootstrap",
+            "diagnostic"
+          ]
+        },
+        "definition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "value"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "undefined",
+                  "unavailable"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "value"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "defined"
+              },
+              "reason": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "computed_metric": {
+      "allOf": [
+        {"$ref": "#/$defs/metric"},
+        {
+          "properties": {
+            "status": {"enum": ["defined", "undefined"]}
+          }
+        }
+      ]
+    },
+    "defined_metric": {
+      "allOf": [
+        {"$ref": "#/$defs/metric"},
+        {
+          "properties": {
+            "value": {"type": "number"},
+            "status": {"const": "defined"},
+            "reason": {"type": "null"}
+          }
+        }
+      ]
+    },
+    "unavailable_metric": {
+      "allOf": [
+        {"$ref": "#/$defs/metric"},
+        {
+          "properties": {
+            "value": {"type": "null"},
+            "status": {"const": "unavailable"},
+            "reason": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "nonpositive_or_undefined_uplift_metric": {
+      "oneOf": [
+        {
+          "allOf": [
+            {"$ref": "#/$defs/defined_metric"},
+            {"properties": {"value": {"maximum": 0}}}
+          ]
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/metric"},
+            {
+              "properties": {
+                "value": {"type": "null"},
+                "status": {"const": "undefined"},
+                "reason": {"type": "string", "minLength": 1}
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "small_positive_uplift_metric": {
+      "allOf": [
+        {"$ref": "#/$defs/defined_metric"},
+        {
+          "properties": {
+            "value": {"exclusiveMinimum": 0, "exclusiveMaximum": 0.1}
+          }
+        }
+      ]
+    },
+    "positive_defined_metric": {
+      "allOf": [
+        {"$ref": "#/$defs/defined_metric"},
+        {"properties": {"value": {"exclusiveMinimum": 0}}}
+      ]
+    },
+    "practical_uplift_metric": {
+      "allOf": [
+        {"$ref": "#/$defs/defined_metric"},
+        {"properties": {"value": {"minimum": 0.1}}}
+      ]
+    },
+    "bootstrap_lower_metric": {
+      "allOf": [
+        {"$ref": "#/$defs/defined_metric"},
+        {"properties": {"value": {"minimum": 0.05}}}
+      ]
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "scope",
+        "stage",
+        "severity",
+        "reason",
+        "recommendation_effect",
+        "related_json_pointers"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error",
+            "critical"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recommendation_effect": {
+          "enum": [
+            "none",
+            "warning_only",
+            "p2_forbidden",
+            "recommendation_forbidden",
+            "pipeline_failed"
+          ]
+        },
+        "related_json_pointers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/json_pointer"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_status",
+        "analysis_status",
+        "recommendation_status",
+        "decision_reason"
+      ],
+      "properties": {
+        "bundle_status": {
+          "const": "COMPLETE"
+        },
+        "analysis_status": {
+          "enum": [
+            "SUCCEEDED",
+            "NO_RECOMMENDATION",
+            "FAILED"
+          ]
+        },
+        "recommendation_status": {
+          "enum": [
+            "ONE_RECOMMENDED",
+            "TWO_RECOMMENDED",
+            "NO_VALIDATED_RECOMMENDATION"
+          ]
+        },
+        "decision_reason": {
+          "enum": [
+            "CLEAR_PRACTICAL_UPLIFT",
+            "NO_UPLIFT_OR_HARM",
+            "STATISTICAL_ONLY_SMALL",
+            "PRACTICALLY_PROMISING_UNCERTAIN",
+            "UNSTABLE_SELECTION",
+            "NO_VALID_TWO_SEGMENT",
+            "DESCRIPTIVE_ONLY",
+            "PIPELINE_FAILURE"
+          ]
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "reason",
+        "recommended_procedure",
+        "related_reason_codes"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "CLEAR_PRACTICAL_UPLIFT",
+            "NO_UPLIFT_OR_HARM",
+            "STATISTICAL_ONLY_SMALL",
+            "PRACTICALLY_PROMISING_UNCERTAIN",
+            "UNSTABLE_SELECTION",
+            "NO_VALID_TWO_SEGMENT",
+            "DESCRIPTIVE_ONLY",
+            "PIPELINE_FAILURE"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recommended_procedure": {
+          "enum": [
+            "one",
+            "two",
+            null
+          ]
+        },
+        "related_reason_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          }
+        }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "model_path",
+        "formula_display",
+        "domain",
+        "global_primary_r2_oos",
+        "global_primary_rmse_oof",
+        "global_primary_mae_oof",
+        "extrapolation"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "one",
+            "two",
+            null
+          ]
+        },
+        "model_path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "const": "models/recommended-model.json"
+            }
+          ]
+        },
+        "formula_display": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "domain": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/domain"
+            }
+          ]
+        },
+        "global_primary_r2_oos": {
+          "$ref": "#/$defs/metric"
+        },
+        "global_primary_rmse_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "global_primary_mae_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "extrapolation": {
+          "enum": [
+            "forbidden",
+            null
+          ]
+        }
+      }
+    },
+    "null_recommendation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/recommendation"
+        },
+        {
+          "properties": {
+            "role": {
+              "type": "null"
+            },
+            "model_path": {
+              "type": "null"
+            },
+            "formula_display": {
+              "type": "null"
+            },
+        "domain": {
+          "type": "null"
+        },
+        "global_primary_r2_oos": {
+          "allOf": [
+            {"$ref": "#/$defs/metric"},
+            {"properties": {"value": {"type": "null"}, "status": {"const": "unavailable"}}}
+          ]
+        },
+        "global_primary_rmse_oof": {
+          "allOf": [
+            {"$ref": "#/$defs/metric"},
+            {"properties": {"value": {"type": "null"}, "status": {"const": "unavailable"}}}
+          ]
+        },
+        "global_primary_mae_oof": {
+          "allOf": [
+            {"$ref": "#/$defs/metric"},
+            {"properties": {"value": {"type": "null"}, "status": {"const": "unavailable"}}}
+          ]
+        },
+        "extrapolation": {
+          "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "one_recommendation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/recommendation"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "one"
+            },
+            "model_path": {
+              "const": "models/recommended-model.json"
+            },
+            "formula_display": {
+              "type": "string",
+              "minLength": 1
+            },
+            "domain": {
+              "$ref": "#/$defs/domain"
+            },
+            "extrapolation": {
+              "const": "forbidden"
+            }
+          }
+        }
+      ]
+    },
+    "two_recommendation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/recommendation"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "two"
+            },
+            "model_path": {
+              "const": "models/recommended-model.json"
+            },
+            "formula_display": {
+              "type": "string",
+              "minLength": 1
+            },
+            "domain": {
+              "$ref": "#/$defs/domain"
+            },
+            "extrapolation": {
+              "const": "forbidden"
+            }
+          }
+        }
+      ]
+    },
+    "exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row_id",
+        "source_row_id",
+        "codes"
+      ],
+      "properties": {
+        "row_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_row_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          }
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "media_type",
+        "input_sha256",
+        "n_input",
+        "n_used",
+        "n_excluded",
+        "n_unique_x",
+        "repeated_x_groups",
+        "exact_duplicate_records",
+        "x_unit",
+        "y_unit",
+        "domain",
+        "exclusions"
+      ],
+      "properties": {
+        "filename": {
+          "type": "string",
+          "minLength": 1
+        },
+        "media_type": {
+          "const": "text/csv"
+        },
+        "input_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "n_input": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_excluded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_unique_x": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repeated_x_groups": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exact_duplicate_records": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "x_unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "y_unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/domain"
+            }
+          ]
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/exclusion"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "n_used": {
+                "const": 0
+              }
+            },
+            "required": [
+              "n_used"
+            ]
+          },
+          "then": {
+            "properties": {
+              "n_unique_x": {
+                "const": 0
+              },
+              "domain": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "domain": {
+                "$ref": "#/$defs/domain"
+              }
+            }
+          }
+        }
+      ],
+      "$comment": "The verifier enforces n_input = n_used + n_excluded and exclusion cardinality/row identity reconciliation."
+    },
+    "affine_transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "offset",
+        "scale",
+        "invertible",
+        "scope"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "identity",
+            "affine"
+          ]
+        },
+        "offset": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "scale": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "invertible": {
+          "type": "boolean"
+        },
+        "scope": {
+          "enum": [
+            "full_data",
+            "training_scope",
+            "unavailable"
+          ]
+        }
+      }
+    },
+    "preprocessing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sorting",
+        "row_id_policy",
+        "weights",
+        "invalid_rows",
+        "automatic_outlier_removal",
+        "ties_atomic_for_validation_and_segmentation",
+        "x_transform",
+        "y_transform",
+        "x_resolution_ratio",
+        "normalized_x_collision"
+      ],
+      "properties": {
+        "sorting": {
+          "const": "canonical_x_y_row_id"
+        },
+        "row_id_policy": {
+          "const": "stable_logical_row_id"
+        },
+        "weights": {
+          "const": "equal_per_valid_row"
+        },
+        "invalid_rows": {
+          "const": "skip_with_warning_and_audit"
+        },
+        "automatic_outlier_removal": {
+          "const": false
+        },
+        "ties_atomic_for_validation_and_segmentation": {
+          "const": true
+        },
+        "x_transform": {
+          "$ref": "#/$defs/affine_transform"
+        },
+        "y_transform": {
+          "$ref": "#/$defs/affine_transform"
+        },
+        "x_resolution_ratio": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "normalized_x_collision": {
+          "type": "boolean"
+        }
+      }
+    },
+    "procedure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "r2_oos",
+        "rmse_oof",
+        "mae_oof",
+        "appearance_count",
+        "repetitions",
+        "fallback_count",
+        "failure_codes",
+        "full_data_refit_status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "valid",
+            "fallback",
+            "unavailable",
+            "failed"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "r2_oos": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "appearance_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repetitions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fallback_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failure_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          }
+        },
+        "full_data_refit_status": {
+          "enum": [
+            "certified",
+            "failed",
+            "unavailable"
+          ]
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "observed",
+        "operator",
+        "threshold",
+        "reason",
+        "policy_version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "unavailable"
+          ]
+        },
+        "observed": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "operator": {
+          "enum": [
+            ">=",
+            ">",
+            "<=",
+            "<",
+            "==",
+            "available"
+          ]
+        },
+        "threshold": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "policy_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "uplift": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delta_mse",
+        "delta_rmse",
+        "delta_mae",
+        "delta_r2",
+        "relative_mse_uplift",
+        "gates"
+      ],
+      "properties": {
+        "delta_mse": {
+          "$ref": "#/$defs/metric"
+        },
+        "delta_rmse": {
+          "$ref": "#/$defs/metric"
+        },
+        "delta_mae": {
+          "$ref": "#/$defs/metric"
+        },
+        "delta_r2": {
+          "$ref": "#/$defs/metric"
+        },
+        "relative_mse_uplift": {
+          "$ref": "#/$defs/metric"
+        },
+        "gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/gate"
+          }
+        }
+      }
+    },
+    "split_sensitivity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "method",
+        "effects"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "available",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "method": {
+          "const": "repetition_level_paired_relative_mse_uplift"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "bootstrap_stability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "method",
+        "level",
+        "requested_resamples",
+        "defined_resamples",
+        "undefined_resamples",
+        "lower",
+        "upper"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "available",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "method": {
+          "const": "paired_fixed_oof_group_bootstrap_stability_interval"
+        },
+        "level": {
+          "const": 0.9
+        },
+        "requested_resamples": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "defined_resamples": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "undefined_resamples": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lower": {
+          "$ref": "#/$defs/metric"
+        },
+        "upper": {
+          "$ref": "#/$defs/metric"
+        }
+      },
+      "$comment": "The verifier reconciles defined + undefined = requested and lower <= upper when available."
+    },
+    "p2_stability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "valid_rate",
+        "fallback_rate",
+        "direction_agreement",
+        "dominant_pair_frequency",
+        "breakpoint_width_fraction",
+        "edge_hit_rate",
+        "instability_rate",
+        "hard_failure_rate"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "available",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "valid_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "fallback_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "direction_agreement": {
+          "$ref": "#/$defs/metric"
+        },
+        "dominant_pair_frequency": {
+          "$ref": "#/$defs/metric"
+        },
+        "breakpoint_width_fraction": {
+          "$ref": "#/$defs/metric"
+        },
+        "edge_hit_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "instability_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "hard_failure_rate": {
+          "$ref": "#/$defs/metric"
+        }
+      }
+    },
+    "passing_gate": {
+      "allOf": [
+        {"$ref": "#/$defs/gate"},
+        {
+          "properties": {
+            "status": {"const": "pass"},
+            "observed": {"type": "number"},
+            "reason": {"type": "null"}
+          }
+        }
+      ]
+    },
+    "validated_p1_for_p2": {
+      "allOf": [
+        {"$ref": "#/$defs/procedure"},
+        {
+          "properties": {
+            "status": {"const": "valid"},
+            "reason": {"type": "null"},
+            "r2_oos": {"$ref": "#/$defs/defined_metric"},
+            "rmse_oof": {"$ref": "#/$defs/defined_metric"},
+            "mae_oof": {"$ref": "#/$defs/defined_metric"},
+            "appearance_count": {"type": "integer", "minimum": 1},
+            "repetitions": {"enum": [10, 20]},
+            "fallback_count": {"const": 0},
+            "failure_codes": {"maxItems": 0},
+            "full_data_refit_status": {"const": "certified"}
+          }
+        }
+      ]
+    },
+    "validated_p2_for_recommendation": {
+      "allOf": [
+        {"$ref": "#/$defs/procedure"},
+        {
+          "properties": {
+            "status": {"enum": ["valid", "fallback"]},
+            "r2_oos": {"$ref": "#/$defs/defined_metric"},
+            "rmse_oof": {"$ref": "#/$defs/defined_metric"},
+            "mae_oof": {"$ref": "#/$defs/defined_metric"},
+            "appearance_count": {"type": "integer", "minimum": 1},
+            "repetitions": {"enum": [10, 20]},
+            "full_data_refit_status": {"const": "certified"}
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "valid"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "reason": {"type": "null"},
+              "fallback_count": {"const": 0},
+              "failure_codes": {"maxItems": 0}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "fallback"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "reason": {"type": "string", "minLength": 1},
+              "fallback_count": {"type": "integer", "minimum": 1},
+              "failure_codes": {"minItems": 1}
+            }
+          }
+        }
+      ]
+    },
+    "clear_uplift": {
+      "allOf": [
+        {"$ref": "#/$defs/uplift"},
+        {
+          "properties": {
+            "delta_mse": {"$ref": "#/$defs/positive_defined_metric"},
+            "delta_rmse": {"$ref": "#/$defs/positive_defined_metric"},
+            "delta_mae": {"$ref": "#/$defs/defined_metric"},
+            "delta_r2": {"$ref": "#/$defs/positive_defined_metric"},
+            "relative_mse_uplift": {"$ref": "#/$defs/practical_uplift_metric"},
+            "gates": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/passing_gate"}
+            }
+          }
+        }
+      ],
+      "$comment": "The semantic verifier additionally checks the exact frozen gate inventory, operator/threshold evaluation, paired metric equations, positive-repetition share >=0.90, and repetition p10 >=0."
+    },
+    "clear_split_sensitivity": {
+      "allOf": [
+        {"$ref": "#/$defs/split_sensitivity"},
+        {
+          "properties": {
+            "status": {"const": "available"},
+            "reason": {"type": "null"},
+            "effects": {"minItems": 10, "maxItems": 20}
+          }
+        }
+      ],
+      "$comment": "The semantic verifier requires effects length to equal validation.repetitions and recomputes the positive share and p10 from the frozen ledger."
+    },
+    "clear_bootstrap_stability": {
+      "allOf": [
+        {"$ref": "#/$defs/bootstrap_stability"},
+        {
+          "properties": {
+            "status": {"const": "available"},
+            "reason": {"type": "null"},
+            "requested_resamples": {"const": 200},
+            "defined_resamples": {"type": "integer", "minimum": 160, "maximum": 200},
+            "undefined_resamples": {"type": "integer", "minimum": 0, "maximum": 40},
+            "lower": {"$ref": "#/$defs/bootstrap_lower_metric"},
+            "upper": {"$ref": "#/$defs/defined_metric"}
+          }
+        }
+      ],
+      "$comment": "The semantic verifier enforces defined_resamples + undefined_resamples == 200, lower <= upper, and recomputes both endpoints from the retained resamples."
+    },
+    "clear_p2_stability": {
+      "allOf": [
+        {"$ref": "#/$defs/p2_stability"},
+        {
+          "properties": {
+            "status": {"const": "available"},
+            "reason": {"type": "null"},
+            "valid_rate": {
+              "allOf": [
+                {"$ref": "#/$defs/defined_metric"},
+                {"properties": {"value": {"minimum": 0.9, "maximum": 1}}}
+              ]
+            },
+            "fallback_rate": {
+              "allOf": [
+                {"$ref": "#/$defs/defined_metric"},
+                {"properties": {"value": {"minimum": 0, "maximum": 0.1}}}
+              ]
+            },
+            "direction_agreement": {
+              "allOf": [
+                {"$ref": "#/$defs/defined_metric"},
+                {"properties": {"value": {"minimum": 0.8, "maximum": 1}}}
+              ]
+            },
+            "dominant_pair_frequency": {
+              "allOf": [
+                {"$ref": "#/$defs/defined_metric"},
+                {"properties": {"value": {"minimum": 0.6, "maximum": 1}}}
+              ]
+            },
+            "breakpoint_width_fraction": {
+              "allOf": [
+                {"$ref": "#/$defs/defined_metric"},
+                {"properties": {"value": {"minimum": 0, "maximum": 0.25}}}
+              ]
+            },
+            "edge_hit_rate": {
+              "allOf": [
+                {"$ref": "#/$defs/defined_metric"},
+                {"properties": {"value": {"minimum": 0, "maximum": 0.2}}}
+              ]
+            },
+            "instability_rate": {
+              "allOf": [
+                {"$ref": "#/$defs/defined_metric"},
+                {"properties": {"value": {"minimum": 0, "maximum": 0.1}}}
+              ]
+            },
+            "hard_failure_rate": {
+              "allOf": [
+                {"$ref": "#/$defs/defined_metric"},
+                {"properties": {"value": {"minimum": 0, "maximum": 0.1}}}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "clear_p2_validation": {
+      "allOf": [
+        {"$ref": "#/$defs/validation"},
+        {
+          "properties": {
+            "status": {"const": "available"},
+            "reason": {"type": "null"},
+            "procedures": {
+              "properties": {
+                "p1": {"$ref": "#/$defs/validated_p1_for_p2"},
+                "p2": {"$ref": "#/$defs/validated_p2_for_recommendation"}
+              }
+            },
+            "uplift": {"$ref": "#/$defs/clear_uplift"},
+            "split_sensitivity": {"$ref": "#/$defs/clear_split_sensitivity"},
+            "bootstrap_stability": {"$ref": "#/$defs/clear_bootstrap_stability"},
+            "p2_stability": {"$ref": "#/$defs/clear_p2_stability"}
+          }
+        }
+      ]
+    },
+    "tested_p2_validation": {
+      "allOf": [
+        {"$ref": "#/$defs/validation"},
+        {
+          "properties": {
+            "status": {"const": "available"},
+            "reason": {"type": "null"},
+            "procedures": {
+              "properties": {
+                "p2": {"$ref": "#/$defs/validated_p2_for_recommendation"}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nonclear_bootstrap_stability": {
+      "allOf": [
+        {"$ref": "#/$defs/bootstrap_stability"},
+        {"not": {"$ref": "#/$defs/clear_bootstrap_stability"}}
+      ]
+    },
+    "nonclear_p2_stability": {
+      "allOf": [
+        {"$ref": "#/$defs/p2_stability"},
+        {"not": {"$ref": "#/$defs/clear_p2_stability"}}
+      ]
+    },
+    "no_quality_procedure": {
+      "allOf": [
+        {"$ref": "#/$defs/procedure"},
+        {
+          "properties": {
+            "status": {"enum": ["unavailable", "failed"]},
+            "reason": {"type": "string", "minLength": 1},
+            "r2_oos": {"$ref": "#/$defs/unavailable_metric"},
+            "rmse_oof": {"$ref": "#/$defs/unavailable_metric"},
+            "mae_oof": {"$ref": "#/$defs/unavailable_metric"},
+            "appearance_count": {"const": 0},
+            "repetitions": {"const": 0},
+            "fallback_count": {"const": 0}
+          }
+        }
+      ]
+    },
+    "no_quality_uplift": {
+      "allOf": [
+        {"$ref": "#/$defs/uplift"},
+        {
+          "properties": {
+            "delta_mse": {"$ref": "#/$defs/unavailable_metric"},
+            "delta_rmse": {"$ref": "#/$defs/unavailable_metric"},
+            "delta_mae": {"$ref": "#/$defs/unavailable_metric"},
+            "delta_r2": {"$ref": "#/$defs/unavailable_metric"},
+            "relative_mse_uplift": {"$ref": "#/$defs/unavailable_metric"},
+            "gates": {
+              "items": {
+                "allOf": [
+                  {"$ref": "#/$defs/gate"},
+                  {
+                    "properties": {
+                      "status": {"const": "unavailable"},
+                      "observed": {"type": "null"},
+                      "reason": {"type": "string", "minLength": 1}
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_quality_split_sensitivity": {
+      "allOf": [
+        {"$ref": "#/$defs/split_sensitivity"},
+        {
+          "properties": {
+            "status": {"const": "unavailable"},
+            "reason": {"type": "string", "minLength": 1},
+            "effects": {"maxItems": 0}
+          }
+        }
+      ]
+    },
+    "no_quality_bootstrap_stability": {
+      "allOf": [
+        {"$ref": "#/$defs/bootstrap_stability"},
+        {
+          "properties": {
+            "status": {"const": "unavailable"},
+            "reason": {"type": "string", "minLength": 1},
+            "requested_resamples": {"const": 200},
+            "defined_resamples": {"const": 0},
+            "undefined_resamples": {"const": 200},
+            "lower": {"$ref": "#/$defs/unavailable_metric"},
+            "upper": {"$ref": "#/$defs/unavailable_metric"}
+          }
+        }
+      ]
+    },
+    "no_quality_p2_stability": {
+      "allOf": [
+        {"$ref": "#/$defs/p2_stability"},
+        {
+          "properties": {
+            "status": {"const": "unavailable"},
+            "reason": {"type": "string", "minLength": 1},
+            "valid_rate": {"$ref": "#/$defs/unavailable_metric"},
+            "fallback_rate": {"$ref": "#/$defs/unavailable_metric"},
+            "direction_agreement": {"$ref": "#/$defs/unavailable_metric"},
+            "dominant_pair_frequency": {"$ref": "#/$defs/unavailable_metric"},
+            "breakpoint_width_fraction": {"$ref": "#/$defs/unavailable_metric"},
+            "edge_hit_rate": {"$ref": "#/$defs/unavailable_metric"},
+            "instability_rate": {"$ref": "#/$defs/unavailable_metric"},
+            "hard_failure_rate": {"$ref": "#/$defs/unavailable_metric"}
+          }
+        }
+      ]
+    },
+    "no_quality_validation": {
+      "allOf": [
+        {"$ref": "#/$defs/validation"},
+        {
+          "properties": {
+            "reason": {"type": "string", "minLength": 1},
+            "outer_folds": {"const": 0},
+            "repetitions": {"const": 0},
+            "procedures": {
+              "properties": {
+                "p1": {"$ref": "#/$defs/no_quality_procedure"},
+                "p2": {"$ref": "#/$defs/no_quality_procedure"}
+              }
+            },
+            "uplift": {"$ref": "#/$defs/no_quality_uplift"},
+            "split_sensitivity": {"$ref": "#/$defs/no_quality_split_sensitivity"},
+            "bootstrap_stability": {"$ref": "#/$defs/no_quality_bootstrap_stability"},
+            "p2_stability": {"$ref": "#/$defs/no_quality_p2_stability"}
+          }
+        }
+      ]
+    },
+    "nondeployable_p2_refit": {
+      "allOf": [
+        {"$ref": "#/$defs/p2_refit"},
+        {
+          "properties": {
+            "status": {"enum": ["failed", "unavailable", "collapsed"]},
+            "model_path": {"type": "null"},
+            "formula_display": {"type": "null"},
+            "domain": {"type": "null"},
+            "direction": {"type": "null"},
+            "boundary": {"type": "null"},
+            "shared_value": {"type": "null"},
+            "segments": {"type": "array", "maxItems": 0},
+            "model_structure_hash": {"type": "null"},
+            "model_instance_hash": {"type": "null"},
+            "r2_fit_all": {"$ref": "#/$defs/unavailable_metric"},
+            "rmse_fit_all": {"$ref": "#/$defs/unavailable_metric"},
+            "mae_fit_all": {"$ref": "#/$defs/unavailable_metric"}
+          }
+        }
+      ]
+    },
+    "tested_p2_report_state": {
+      "properties": {
+        "validation": {"$ref": "#/$defs/tested_p2_validation"},
+        "refit": {
+          "properties": {
+            "p2": {"properties": {"status": {"const": "certified"}}}
+          }
+        },
+        "artifacts": {
+          "contains": {
+            "properties": {
+              "path": {"const": "models/two-segment-model.json"},
+              "role": {"const": "model_candidate"}
+            },
+            "required": ["path", "role"]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "estimand",
+        "group_key",
+        "outer_folds",
+        "inner_fit_scopes",
+        "repetitions",
+        "procedures",
+        "uplift",
+        "split_sensitivity",
+        "bootstrap_stability",
+        "p2_stability"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "available",
+            "descriptive_only",
+            "failed"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "estimand": {
+          "const": "new_x_level_within_observed_domain"
+        },
+        "group_key": {
+          "const": "canonical_binary64_x"
+        },
+        "outer_folds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inner_fit_scopes": {
+          "const": 0
+        },
+        "repetitions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "procedures": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "p1",
+            "p2"
+          ],
+          "properties": {
+            "p1": {
+              "$ref": "#/$defs/procedure"
+            },
+            "p2": {
+              "$ref": "#/$defs/procedure"
+            }
+          }
+        },
+        "uplift": {
+          "$ref": "#/$defs/uplift"
+        },
+        "split_sensitivity": {
+          "$ref": "#/$defs/split_sensitivity"
+        },
+        "bootstrap_stability": {
+          "$ref": "#/$defs/bootstrap_stability"
+        },
+        "p2_stability": {
+          "$ref": "#/$defs/p2_stability"
+        }
+      }
+    },
+    "certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "domain_valid",
+        "monotonicity_valid",
+        "finite",
+        "continuity_valid",
+        "certificate_version"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "INDETERMINATE",
+            "NOT_RUN"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "domain_valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "monotonicity_valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "finite": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "continuity_valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "certificate_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "domain_valid": {
+                "const": true
+              },
+              "monotonicity_valid": {
+                "const": true
+              },
+              "finite": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "parameters": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "segment_id",
+        "interval",
+        "lower_closed",
+        "upper_closed",
+        "family_id",
+        "formula_display",
+        "parameters",
+        "direction",
+        "certificate",
+        "n",
+        "share",
+        "n_unique_x",
+        "r2_fit",
+        "rmse_fit",
+        "mae_fit"
+      ],
+      "properties": {
+        "segment_id": {
+          "enum": [
+            "left",
+            "right"
+          ]
+        },
+        "interval": {
+          "$ref": "#/$defs/domain"
+        },
+        "lower_closed": {
+          "type": "boolean"
+        },
+        "upper_closed": {
+          "type": "boolean"
+        },
+        "family_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*_v[0-9]+$"
+        },
+        "formula_display": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "$ref": "#/$defs/parameters"
+        },
+        "direction": {
+          "enum": [
+            "nondecreasing",
+            "nonincreasing",
+            "flat"
+          ]
+        },
+        "certificate": {
+          "$ref": "#/$defs/certificate"
+        },
+        "n": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "share": {
+          "type": "number",
+          "minimum": 0.4,
+          "maximum": 0.6
+        },
+        "n_unique_x": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "r2_fit": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_fit": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_fit": {
+          "$ref": "#/$defs/metric"
+        }
+      }
+    },
+    "two_segments": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/segment"
+            },
+            {
+              "properties": {
+                "segment_id": {
+                  "const": "left"
+                },
+                "lower_closed": {
+                  "const": true
+                },
+                "upper_closed": {
+                  "const": true
+                },
+                "certificate": {
+                  "properties": {
+                    "status": {
+                      "const": "PASS"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/segment"
+            },
+            {
+              "properties": {
+                "segment_id": {
+                  "const": "right"
+                },
+                "lower_closed": {
+                  "const": false
+                },
+                "upper_closed": {
+                  "const": true
+                },
+                "certificate": {
+                  "properties": {
+                    "status": {
+                      "const": "PASS"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "minItems": 2,
+      "maxItems": 2,
+      "allOf": [
+        {
+          "not": {
+            "type": "array",
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "properties": {"family_id": {"const": "constant_v1"}},
+                "required": ["family_id"]
+              },
+              {
+                "properties": {"family_id": {"const": "constant_v1"}},
+                "required": ["family_id"]
+              }
+            ]
+          }
+        }
+      ],
+      "$comment": "Two constant branches are a collapsed P1, never a P2 report. The verifier enforces shared boundary, exact count reconciliation, shares summing to one, continuity at c, and collapse of other functionally indistinguishable branches."
+    },
+    "p1_refit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "model_path",
+        "family_id",
+        "formula_display",
+        "parameters",
+        "domain",
+        "direction",
+        "certificate",
+        "model_structure_hash",
+        "model_instance_hash",
+        "r2_fit_all",
+        "rmse_fit_all",
+        "mae_fit_all"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "certified",
+            "failed",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "const": "models/one-model.json"
+            }
+          ]
+        },
+        "family_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "formula_display": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parameters": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/parameters"
+            }
+          ]
+        },
+        "domain": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/domain"
+            }
+          ]
+        },
+        "direction": {
+          "enum": [
+            "nondecreasing",
+            "nonincreasing",
+            "flat",
+            null
+          ]
+        },
+        "certificate": {
+          "$ref": "#/$defs/certificate"
+        },
+        "model_structure_hash": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/sha256"
+            }
+          ]
+        },
+        "model_instance_hash": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/sha256"
+            }
+          ]
+        },
+        "r2_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_fit_all": {
+          "$ref": "#/$defs/metric"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "certified"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "model_path": {
+                "const": "models/one-model.json"
+              },
+              "family_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "formula_display": {
+                "type": "string",
+                "minLength": 1
+              },
+              "parameters": {
+                "$ref": "#/$defs/parameters"
+              },
+              "domain": {
+                "$ref": "#/$defs/domain"
+              },
+              "direction": {
+                "enum": [
+                  "nondecreasing",
+                  "nonincreasing",
+                  "flat"
+                ]
+              },
+              "certificate": {
+                "properties": {
+                  "status": {
+                    "const": "PASS"
+                  }
+                }
+              },
+              "model_structure_hash": {
+                "$ref": "#/$defs/sha256"
+              },
+              "model_instance_hash": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "p2_refit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "model_path",
+        "formula_display",
+        "domain",
+        "direction",
+        "boundary",
+        "shared_value",
+        "certificate",
+        "segments",
+        "model_structure_hash",
+        "model_instance_hash",
+        "r2_fit_all",
+        "rmse_fit_all",
+        "mae_fit_all"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "certified",
+            "failed",
+            "unavailable",
+            "collapsed"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_path": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "const": "models/two-segment-model.json"
+            }
+          ]
+        },
+        "formula_display": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "domain": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/domain"
+            }
+          ]
+        },
+        "direction": {
+          "enum": [
+            "nondecreasing",
+            "nonincreasing",
+            "flat",
+            null
+          ]
+        },
+        "boundary": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "shared_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "certificate": {
+          "$ref": "#/$defs/certificate"
+        },
+        "segments": {
+          "oneOf": [
+            {
+              "type": "array",
+              "maxItems": 0
+            },
+            {
+              "$ref": "#/$defs/two_segments"
+            }
+          ]
+        },
+        "model_structure_hash": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/sha256"
+            }
+          ]
+        },
+        "model_instance_hash": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/sha256"
+            }
+          ]
+        },
+        "r2_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_fit_all": {
+          "$ref": "#/$defs/metric"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "certified"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "model_path": {
+                "const": "models/two-segment-model.json"
+              },
+              "formula_display": {
+                "type": "string",
+                "minLength": 1
+              },
+              "domain": {
+                "$ref": "#/$defs/domain"
+              },
+              "direction": {
+                "enum": [
+                  "nondecreasing",
+                  "nonincreasing"
+                ]
+              },
+              "boundary": {
+                "type": "number"
+              },
+              "shared_value": {
+                "type": "number"
+              },
+              "certificate": {
+                "properties": {
+                  "status": {
+                    "const": "PASS"
+                  },
+                  "continuity_valid": {
+                    "const": true
+                  }
+                }
+              },
+              "segments": {
+                "allOf": [
+                  {"$ref": "#/$defs/two_segments"},
+                  {
+                    "items": {
+                      "properties": {
+                        "r2_fit": {"$ref": "#/$defs/computed_metric"},
+                        "rmse_fit": {"$ref": "#/$defs/defined_metric"},
+                        "mae_fit": {"$ref": "#/$defs/defined_metric"}
+                      }
+                    }
+                  }
+                ]
+              },
+              "model_structure_hash": {
+                "$ref": "#/$defs/sha256"
+              },
+              "model_instance_hash": {
+                "$ref": "#/$defs/sha256"
+              },
+              "r2_fit_all": {"$ref": "#/$defs/computed_metric"},
+              "rmse_fit_all": {"$ref": "#/$defs/defined_metric"},
+              "mae_fit_all": {"$ref": "#/$defs/defined_metric"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"direction": {"const": "nondecreasing"}},
+            "required": ["direction"]
+          },
+          "then": {
+            "properties": {
+              "segments": {
+                "items": {
+                  "properties": {"direction": {"const": "nondecreasing"}}
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"direction": {"const": "nonincreasing"}},
+            "required": ["direction"]
+          },
+          "then": {
+            "properties": {
+              "segments": {
+                "items": {
+                  "properties": {"direction": {"const": "nonincreasing"}}
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "no_model_p1": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/p1_refit"
+        },
+        {
+          "properties": {
+            "status": {
+              "enum": [
+                "failed",
+                "unavailable"
+              ]
+            },
+            "model_path": {
+              "type": "null"
+            },
+            "family_id": {
+              "type": "null"
+            },
+            "formula_display": {
+              "type": "null"
+            },
+            "parameters": {
+              "type": "null"
+            },
+            "domain": {
+              "type": "null"
+            },
+            "direction": {
+              "type": "null"
+            },
+            "model_structure_hash": {
+              "type": "null"
+            },
+            "model_instance_hash": {
+              "type": "null"
+            },
+            "r2_fit_all": {
+              "$ref": "#/$defs/unavailable_metric"
+            },
+            "rmse_fit_all": {
+              "$ref": "#/$defs/unavailable_metric"
+            },
+            "mae_fit_all": {
+              "$ref": "#/$defs/unavailable_metric"
+            }
+          }
+        }
+      ]
+    },
+    "no_model_p2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/p2_refit"
+        },
+        {
+          "properties": {
+            "status": {
+              "enum": [
+                "failed",
+                "unavailable"
+              ]
+            },
+            "model_path": {
+              "type": "null"
+            },
+            "formula_display": {
+              "type": "null"
+            },
+            "domain": {
+              "type": "null"
+            },
+            "direction": {
+              "type": "null"
+            },
+            "boundary": {
+              "type": "null"
+            },
+            "shared_value": {
+              "type": "null"
+            },
+            "segments": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "model_structure_hash": {
+              "type": "null"
+            },
+            "model_instance_hash": {
+              "type": "null"
+            },
+            "r2_fit_all": {
+              "$ref": "#/$defs/unavailable_metric"
+            },
+            "rmse_fit_all": {
+              "$ref": "#/$defs/unavailable_metric"
+            },
+            "mae_fit_all": {
+              "$ref": "#/$defs/unavailable_metric"
+            }
+          }
+        }
+      ]
+    },
+    "refit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "p1",
+        "p2"
+      ],
+      "properties": {
+        "p1": {
+          "$ref": "#/$defs/p1_refit"
+        },
+        "p2": {
+          "$ref": "#/$defs/p2_refit"
+        }
+      }
+    },
+    "diagnostic_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "method",
+        "row_count",
+        "flagged_count"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "available",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "flagged_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oof_residuals",
+        "patterns",
+        "influence",
+        "action"
+      ],
+      "properties": {
+        "oof_residuals": {
+          "$ref": "#/$defs/diagnostic_summary"
+        },
+        "patterns": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/message"
+          }
+        },
+        "influence": {
+          "$ref": "#/$defs/diagnostic_summary"
+        },
+        "action": {
+          "const": "review_only"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "media_type",
+        "size",
+        "sha256",
+        "role"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*$"
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "role": {
+          "enum": [
+            "human_report",
+            "machine_report",
+            "schema",
+            "model_candidate",
+            "model_recommended",
+            "observations",
+            "oof_appearances",
+            "diagnostics",
+            "plot_data",
+            "figure",
+            "trace",
+            "provenance",
+            "metadata"
+          ]
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_environment_id",
+        "python_implementation",
+        "python_version",
+        "platform",
+        "architecture",
+        "numerical_backend",
+        "thread_policy",
+        "packages"
+      ],
+      "properties": {
+        "execution_environment_id": {
+          "$ref": "#/$defs/sha256"
+        },
+        "python_implementation": {
+          "const": "CPython"
+        },
+        "python_version": {
+          "type": "string",
+          "pattern": "^3\\.12(?:\\.[0-9]+)?$"
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 1
+        },
+        "architecture": {
+          "type": "string",
+          "minLength": 1
+        },
+        "numerical_backend": {
+          "type": "string",
+          "minLength": 1
+        },
+        "thread_policy": {
+          "const": "single_process_single_thread"
+        },
+        "packages": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "llm_advisor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "status",
+        "provider_model",
+        "endpoint_origin_sha256",
+        "normalized_endpoint_sha256",
+        "prompt_version",
+        "output_schema_version",
+        "calls_requested",
+        "calls_accepted",
+        "calls_fallback",
+        "ledger_sha256",
+        "training_summary_disclosed"
+      ],
+      "properties": {
+        "mode": {"enum": ["off", "start_advisor"]},
+        "status": {"enum": ["disabled", "frozen", "partial_fallback", "unavailable"]},
+        "provider_model": {"type": ["string", "null"]},
+        "endpoint_origin_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sha256"}]},
+        "normalized_endpoint_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sha256"}]},
+        "prompt_version": {"type": ["string", "null"]},
+        "output_schema_version": {"type": ["string", "null"]},
+        "calls_requested": {"type": "integer", "minimum": 0},
+        "calls_accepted": {"type": "integer", "minimum": 0},
+        "calls_fallback": {"type": "integer", "minimum": 0},
+        "ledger_sha256": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sha256"}]},
+        "training_summary_disclosed": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "off"}}, "required": ["mode"]},
+          "then": {
+            "properties": {
+              "status": {"const": "disabled"},
+              "provider_model": {"type": "null"},
+              "endpoint_origin_sha256": {"type": "null"},
+              "normalized_endpoint_sha256": {"type": "null"},
+              "prompt_version": {"type": "null"},
+              "output_schema_version": {"type": "null"},
+              "calls_requested": {"const": 0},
+              "calls_accepted": {"const": 0},
+              "calls_fallback": {"const": 0},
+              "ledger_sha256": {"type": "null"},
+              "training_summary_disclosed": {"const": false}
+            }
+          },
+          "else": {
+            "properties": {
+              "status": {"enum": ["frozen", "partial_fallback", "unavailable"]},
+              "provider_model": {"type": "string", "minLength": 1},
+              "endpoint_origin_sha256": {"$ref": "#/$defs/sha256"},
+              "normalized_endpoint_sha256": {"$ref": "#/$defs/sha256"},
+              "prompt_version": {"type": "string", "minLength": 1},
+              "output_schema_version": {"type": "string", "minLength": 1},
+              "calls_requested": {"type": "integer", "minimum": 1},
+              "ledger_sha256": {"$ref": "#/$defs/sha256"},
+              "training_summary_disclosed": {"const": true}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "frozen"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "mode": {"const": "start_advisor"},
+              "calls_accepted": {"type": "integer", "minimum": 1},
+              "calls_fallback": {"const": 0}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "partial_fallback"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "mode": {"const": "start_advisor"},
+              "calls_accepted": {"type": "integer", "minimum": 1},
+              "calls_fallback": {"type": "integer", "minimum": 1}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"status": {"const": "unavailable"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "mode": {"const": "start_advisor"},
+              "calls_accepted": {"const": 0},
+              "calls_fallback": {"type": "integer", "minimum": 1}
+            }
+          }
+        }
+      ],
+      "$comment": "The verifier additionally enforces calls_accepted+calls_fallback=calls_requested and no secret/raw URL fields."
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_id",
+        "input_sha256",
+        "request_sha256",
+        "policy_version",
+        "policy_sha256",
+        "registry_version",
+        "registry_sha256",
+        "source_sha256",
+        "dependency_lock_sha256",
+        "base_seed",
+        "thread_policy",
+        "llm_advisor",
+        "environment"
+      ],
+      "properties": {
+        "analysis_id": {
+          "$ref": "#/$defs/sha256"
+        },
+        "input_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "request_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "policy_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "registry_version": {
+          "const": "registry-v1"
+        },
+        "registry_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "dependency_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "base_seed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "thread_policy": {
+          "const": "single_process_single_thread"
+        },
+        "llm_advisor": {
+          "$ref": "#/$defs/llm_advisor"
+        },
+        "environment": {
+          "$ref": "#/$defs/environment"
+        }
+      }
+    }
+  }
+}

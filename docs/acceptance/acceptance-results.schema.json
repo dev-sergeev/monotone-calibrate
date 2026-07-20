@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:acceptance-results:1",
+  "title": "Monotone calibration final implementation acceptance results v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "acceptance_id",
+    "overall_status",
+    "release_snapshot_digest",
+    "verifier_runtime_lock_sha256",
+    "design_manifest",
+    "source_manifest",
+    "source_archive",
+    "dependency_lock",
+    "policy",
+    "registry",
+    "required_platforms",
+    "gates",
+    "reviewed_evidence_digest",
+    "reviewers",
+    "independence_attestation"
+  ],
+  "properties": {
+    "schema_version": {"const": "acceptance-results-v1"},
+    "acceptance_id": {"const": "monotone-calibrate-acceptance-v1"},
+    "overall_status": {"const": "PASS"},
+    "release_snapshot_digest": {"$ref": "#/$defs/hash"},
+    "verifier_runtime_lock_sha256": {"$ref": "#/$defs/hash"},
+    "design_manifest": {
+      "allOf": [
+        {"$ref": "#/$defs/file_ref"},
+        {"properties": {
+          "path": {"const": "docs/acceptance/acceptance-manifest-v1.json"},
+          "sha256": {"const": "4202b73297b0c92dde3a7f5a2490343d7b9db7e824485df09ca65902ecb1feb9"}
+        }}
+      ]
+    },
+    "source_manifest": {
+      "allOf": [
+        {"$ref": "#/$defs/file_ref"},
+        {"properties": {"path": {"const": "evidence/acceptance/source-manifest.json"}}}
+      ]
+    },
+    "source_archive": {
+      "allOf": [
+        {"$ref": "#/$defs/file_ref"},
+        {"properties": {"path": {"const": "evidence/acceptance/source-snapshot.zip"}}}
+      ]
+    },
+    "dependency_lock": {
+      "allOf": [
+        {"$ref": "#/$defs/file_ref"},
+        {"properties": {"path": {"const": "uv.lock"}}}
+      ]
+    },
+    "policy": {
+      "allOf": [
+        {"$ref": "#/$defs/file_ref"},
+        {"properties": {"path": {"const": "policies/resolved-policy.json"}}}
+      ]
+    },
+    "registry": {
+      "allOf": [
+        {"$ref": "#/$defs/file_ref"},
+        {"properties": {"path": {"const": "policies/registry-v1.json"}}}
+      ]
+    },
+    "required_platforms": {
+      "type": "array",
+      "prefixItems": [
+        {"const": "macOS 14 or newer, arm64, CPython 3.12"},
+        {"const": "Ubuntu 24.04 LTS, x86_64, CPython 3.12"}
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "gates": {
+      "type": "array",
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "DATA-CONTRACT-001"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "e7de360177c0668b4116fad3c6b91e1cbae5d8bb4ca56cc5449e26f9015b4304"}, "evidence_path": {"const": "evidence/acceptance/DATA-CONTRACT-001.json"}, "declared_executor": {"const": "pytest tests/acceptance/test_data_contract.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "MODEL-CONTRACT-002"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "b3c7b175aae27dcc1c7917475a5e71e640e199a445e7879e06ff8421b70f69d9"}, "evidence_path": {"const": "evidence/acceptance/MODEL-CONTRACT-002.json"}, "declared_executor": {"const": "pytest tests/acceptance/test_model_registry.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "STAT-CALIBRATION-003"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "0b43cc6dc6b6f6c35e434d2e53b7353fe275023e8adfe18274be075f6a197814"}, "evidence_path": {"const": "evidence/acceptance/STAT-CALIBRATION-003.json"}, "declared_executor": {"const": "python tools/run_acceptance.py --suite statistical-calibration"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "CLI-E2E-004"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "f5d8234503d136d6887f49efecfa68f393b243129460706f36a296d2a561c795"}, "evidence_path": {"const": "evidence/acceptance/CLI-E2E-004.json"}, "declared_executor": {"const": "run demo; verify report; predict demo x; verify predictions"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "OPS-NET-005"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "81cc4369979897d0cba435484371daec1ffaf790b8922869767af275c9283d8c"}, "evidence_path": {"const": "evidence/acceptance/OPS-NET-005.json"}, "declared_executor": {"const": "OS-level network deny/trace around advisor-off run/predict/verify and endpoint allowlist trace for advisor-enabled run"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "INPUT-SNAPSHOT-006"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "505f2c90478950fb3d47e3a1fbb954b4c160e700255631f4e35fe6f8672fd0c4"}, "evidence_path": {"const": "evidence/acceptance/INPUT-SNAPSHOT-006.json"}, "declared_executor": {"const": "pytest tests/security/test_input_snapshot.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "ADMISSION-007"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "77652cc5c480f636d0c6f914a13ddcf1987e6791f52d0c00858959132a7eaeff"}, "evidence_path": {"const": "evidence/acceptance/ADMISSION-007.json"}, "declared_executor": {"const": "pytest tests/acceptance/test_admission.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "PUBLICATION-008"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "3a2524142b189901ac162a00d5387f6f2b3c178b838c2c812d03e51f5666ca74"}, "evidence_path": {"const": "evidence/acceptance/PUBLICATION-008.json"}, "declared_executor": {"const": "pytest tests/security/test_atomic_publication.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "CHECKPOINT-009"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "a18fbe026de26553bb8b19d2c4316e5f1e0df458e9a52a3cea9768b6a2d1ed0b"}, "evidence_path": {"const": "evidence/acceptance/CHECKPOINT-009.json"}, "declared_executor": {"const": "pytest tests/acceptance/test_checkpoint_resume.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "FAILURE-EXIT-010"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "4c640a0ccfa4b63546d6a35c1866b949c5a2592842e272b6005ced31bddff91c"}, "evidence_path": {"const": "evidence/acceptance/FAILURE-EXIT-010.json"}, "declared_executor": {"const": "pytest tests/acceptance/test_exit_matrix.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "VERIFY-011"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "8b82ddb5d1aa0f6b9001f05d02a7ea51adb65118749477918e4b0f6174f8fc52"}, "evidence_path": {"const": "evidence/acceptance/VERIFY-011.json"}, "declared_executor": {"const": "pytest tests/security/test_verify_fail_closed.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "PREDICT-012"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "52568bc5f2f4616fe8217b2357e6c0f11ac1746e8d27396b36dd97c5a18daf09"}, "evidence_path": {"const": "evidence/acceptance/PREDICT-012.json"}, "declared_executor": {"const": "pytest tests/acceptance/test_predict_contract.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "REPORT-SEC-013"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "32c8fd5eb6d027791f38850c93c5bc1b8722db1591a36e062723eaf44a160a6b"}, "evidence_path": {"const": "evidence/acceptance/REPORT-SEC-013.json"}, "declared_executor": {"const": "static safety audit plus file:// browser/network observation on both browser targets"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "PRIVACY-014"}, "priority": {"const": "P0"}, "design_gate_sha256": {"const": "b3e649da1396eda24ba3919030e43275da75849bd6589ce281130c3667fd2847"}, "evidence_path": {"const": "evidence/acceptance/PRIVACY-014.json"}, "declared_executor": {"const": "pytest tests/security/test_sensitive_boundaries.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "IDENTITY-015"}, "priority": {"const": "P1"}, "design_gate_sha256": {"const": "d0be9fe28041c8bc3cb144577db5c2203341f02576079abf03ef8908241affa7"}, "evidence_path": {"const": "evidence/acceptance/IDENTITY-015.json"}, "declared_executor": {"const": "pytest tests/contracts/test_identity_goldens.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "REPLAY-016"}, "priority": {"const": "P1"}, "design_gate_sha256": {"const": "7b719ac947b08174a542251908bcae51473a548327bd80211d883d6e72edb113"}, "evidence_path": {"const": "evidence/acceptance/REPLAY-016.json"}, "declared_executor": {"const": "two clean, resumed and operational-environment-perturbed same-platform runs"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "XPLAT-017"}, "priority": {"const": "P1"}, "design_gate_sha256": {"const": "b0aa4e28a558228b6decd0d57f0f13abc0714d31a077a365b0ea3b207e599034"}, "evidence_path": {"const": "evidence/acceptance/XPLAT-017.json"}, "declared_executor": {"const": "macOS arm64 and Ubuntu x86_64 replay from one source/lock/policy/input"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "CSVW-018"}, "priority": {"const": "P1"}, "design_gate_sha256": {"const": "b18f3364b28a8d0bb17feded9b169436240b6d2c1fce2535cd28194016517301"}, "evidence_path": {"const": "evidence/acceptance/CSVW-018.json"}, "declared_executor": {"const": "pytest tests/acceptance/test_csvw_contract.py"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "BENCHMARK-019"}, "priority": {"const": "P1"}, "design_gate_sha256": {"const": "61704200c99b0c050c276b6cb1c4de8f93ab9311dc110b5245ec2b4113885f0d"}, "evidence_path": {"const": "evidence/acceptance/BENCHMARK-019.json"}, "declared_executor": {"const": "python tools/benchmark.py --full --evidence evidence/acceptance/BENCHMARK-019.json"}}}]},
+        {"allOf": [{"$ref": "#/$defs/gate_result"}, {"properties": {"gate_id": {"const": "LLM-ADVISOR-020"}, "priority": {"const": "P1"}, "design_gate_sha256": {"const": "a6c90d814942fffb4bf45501b09840f9e05536587d15f43b0e42d7c3000534b5"}, "evidence_path": {"const": "evidence/acceptance/LLM-ADVISOR-020.json"}, "declared_executor": {"const": "pytest tests/acceptance/test_llm_advisor.py tests/security/test_llm_secrets_network.py"}}}]}
+      ],
+      "items": false,
+      "minItems": 20,
+      "maxItems": 20
+    },
+    "reviewed_evidence_digest": {"$ref": "#/$defs/hash"},
+    "reviewers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statistical_model", "security_operations"],
+      "properties": {
+        "statistical_model": {"$ref": "#/$defs/reviewer"},
+        "security_operations": {"$ref": "#/$defs/reviewer"}
+      }
+    },
+    "independence_attestation": {"const": "distinct-external-ed25519-trust-roots-on-one-evidence-digest-v1"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "safe_path": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*$", "maxLength": 512},
+    "file_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/safe_path"},
+        "sha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "gate_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "priority", "status", "design_gate_sha256", "evidence_path", "evidence_sha256", "declared_executor"],
+      "properties": {
+        "gate_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+-[0-9]{3}$"},
+        "priority": {"enum": ["P0", "P1"]},
+        "status": {"const": "PASS"},
+        "design_gate_sha256": {"$ref": "#/$defs/hash"},
+        "evidence_path": {"$ref": "#/$defs/safe_path"},
+        "evidence_sha256": {"$ref": "#/$defs/hash"},
+        "declared_executor": {"type": "string", "minLength": 1}
+      }
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewer_id", "verdict", "evidence_digest", "release_snapshot_digest", "verifier_runtime_lock_sha256", "public_key_sha256", "review_evidence"],
+      "properties": {
+        "reviewer_id": {"type": "string", "minLength": 1},
+        "verdict": {"const": "GO"},
+        "evidence_digest": {"$ref": "#/$defs/hash"},
+        "release_snapshot_digest": {"$ref": "#/$defs/hash"},
+        "verifier_runtime_lock_sha256": {"$ref": "#/$defs/hash"},
+        "public_key_sha256": {"$ref": "#/$defs/hash"},
+        "review_evidence": {"$ref": "#/$defs/file_ref"}
+      }
+    }
+  },
+  "$comment": "All JSON is decoded by strict-json-v1. The mandatory verifier requires two caller-selected out-of-band --reviewer-public-key AXIS=PATH arguments, validates distinct Ed25519 keys and signatures, exact source-tree inventory, semantic policy/registry schemas, design gate/fixture/oracle/test bindings and bounded file hashes. Results-declared keys and self-declared reviewer IDs never select a trust root. Custodian independence and hardlink identity remain caller trust responsibilities. The frozen design manifest remains NOT_RUN forever."
+}

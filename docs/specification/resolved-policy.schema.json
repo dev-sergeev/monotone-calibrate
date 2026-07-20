@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:resolved-policy:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_id", "registry_version", "data", "model", "validation", "diagnostics", "report", "operations", "llm"],
+  "properties": {
+    "schema_version": {"const": "resolved-policy-v1"},
+    "policy_id": {"const": "monotone-calibrate-production-v1"},
+    "registry_version": {"const": "registry-v1"},
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x_field", "y_field", "invalid_row_policy", "duplicate_x_policy", "row_weight", "p1_min_rows", "p1_min_unique_x", "p2_segment_min_rows", "p2_segment_min_unique_x"],
+      "properties": {
+        "x_field": {"const": "x"},
+        "y_field": {"const": "y"},
+        "invalid_row_policy": {"const": "skip_with_warning_and_audit"},
+        "duplicate_x_policy": {"const": "separate_observations_atomic_x_group"},
+        "row_weight": {"const": 1},
+        "p1_min_rows": {"const": 4},
+        "p1_min_unique_x": {"const": 3},
+        "p2_segment_min_rows": {"const": 3},
+        "p2_segment_min_unique_x": {"const": 2}
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["segments_max", "polynomial_degree_max", "directions", "p2_min_row_share", "p2_continuity", "breakpoint_membership", "extrapolation", "collapse_prediction_tolerance", "collapse_derivative_tolerance"],
+      "properties": {
+        "segments_max": {"const": 2},
+        "polynomial_degree_max": {"const": 3},
+        "directions": {"const": ["increasing", "decreasing"]},
+        "p2_min_row_share": {"const": 0.4},
+        "p2_continuity": {"const": "exact_centered_shared_mu"},
+        "breakpoint_membership": {"const": "x<=c:left;x>c:right"},
+        "extrapolation": {"const": false},
+        "collapse_prediction_tolerance": {"const": 0.000001},
+        "collapse_derivative_tolerance": {"const": 0.000001}
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["group_key", "outer_fold_policy", "p2_fallback", "r2_warning_threshold", "practical_relative_mse_uplift_min", "selection_tie_relative_mse", "bootstrap_resamples", "bootstrap_level", "bootstrap_defined_min"],
+      "properties": {
+        "group_key": {"const": "canonical_binary64_x"},
+        "outer_fold_policy": {"const": "G>=10:5_folds_x_10_repetitions;8<=G<10:4_folds_x_20_repetitions;G<8:descriptive_only"},
+        "p2_fallback": {"const": "same_scope_p1_prediction"},
+        "r2_warning_threshold": {"const": 0.6},
+        "practical_relative_mse_uplift_min": {"const": 0.1},
+        "selection_tie_relative_mse": {"const": 0.01},
+        "bootstrap_resamples": {"const": 200},
+        "bootstrap_level": {"const": 0.9},
+        "bootstrap_defined_min": {"const": 160}
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "large_residual_score", "persistent_flag_rate", "extreme_residual_score", "systematic_bin_mean_scale", "heteroscedastic_ratio", "heteroscedastic_outer_share", "breakpoint_window_span_share", "breakpoint_min_appearances", "breakpoint_same_sign_share"],
+      "properties": {
+        "action": {"const": "review_only"},
+        "large_residual_score": {"const": 3.5},
+        "persistent_flag_rate": {"const": 0.5},
+        "extreme_residual_score": {"const": 5.25},
+        "systematic_bin_mean_scale": {"const": 0.5},
+        "heteroscedastic_ratio": {"const": 2.0},
+        "heteroscedastic_outer_share": {"const": 0.8},
+        "breakpoint_window_span_share": {"const": 0.1},
+        "breakpoint_min_appearances": {"const": 5},
+        "breakpoint_same_sign_share": {"const": 0.8}
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["human_format", "machine_format", "scatterplots_required", "p2_boundary_color", "show_p1_and_p2", "below_r2_warning_required"],
+      "properties": {
+        "human_format": {"const": "static_html_svg"},
+        "machine_format": {"const": "report-v1_json_csvw"},
+        "scatterplots_required": {"const": 2},
+        "p2_boundary_color": {"const": "red"},
+        "show_p1_and_p2": {"const": true},
+        "below_r2_warning_required": {"const": true}
+      }
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offline_default", "parallel_jobs", "work_policy_path", "work_policy_sha256", "identity_policy_path", "identity_policy_sha256", "split_policy_path", "split_policy_sha256", "start_slot_policy_path", "start_slot_policy_sha256"],
+      "properties": {
+        "offline_default": {"const": true},
+        "parallel_jobs": {"const": 1},
+        "work_policy_path": {"const": "docs/acceptance/work-policy-v1.json"},
+        "work_policy_sha256": {"const": "6b2f6a545b9b2310897e19d6b918a82e1a38072e3cd0ba372e6a90c571d90005"},
+        "identity_policy_path": {"const": "docs/acceptance/identity-policy-v1.json"},
+        "identity_policy_sha256": {"const": "e4638c2d83ab910b7716ac3a7f2d74fe5fad899f08cb1ab63dc603a028545525"},
+        "split_policy_path": {"const": "docs/acceptance/split-policy-v1.json"},
+        "split_policy_sha256": {"const": "6466c9aeb9a78804831998ef7cd0bcfad0693feedf7a2e5c8f4c940568677b2e"},
+        "start_slot_policy_path": {"const": "docs/acceptance/start-slot-policy-v1.json"},
+        "start_slot_policy_sha256": {"const": "2e9c4f12755d2576b5a7bb7d5a9de688a7a3421411ed181c7dd9e9ab00cbe28b"}
+      }
+    },
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_mode", "adapter", "role", "temperature", "environment_variables"],
+      "properties": {
+        "default_mode": {"const": "off"},
+        "adapter": {"const": "langchain_openai.ChatOpenAI"},
+        "role": {"const": "replace_predeclared_start_slots_only"},
+        "temperature": {"const": 0},
+        "environment_variables": {
+          "const": [
+            "MONOTONE_CALIBRATE_LLM_ENABLED",
+            "MONOTONE_CALIBRATE_LLM_MODEL",
+            "MONOTONE_CALIBRATE_LLM_BASE_URL",
+            "MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN",
+            "MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS",
+            "MONOTONE_CALIBRATE_LLM_MAX_RETRIES",
+            "MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP"
+          ]
+        }
+      }
+    }
+  }
+}

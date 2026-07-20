@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:registry:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_version", "polynomial_degree_max", "families"],
+  "properties": {
+    "schema_version": {"const": "registry-v1"},
+    "registry_version": {"const": "registry-v1"},
+    "polynomial_degree_max": {"const": 3},
+    "families": {
+      "type": "array",
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/family"}, {"properties": {"family_id": {"const": "constant_v1"}, "canonical_ast_id": {"const": "constant.a.v1"}, "kind": {"const": "constant"}, "parameter_names": {"const": ["a"]}, "supports_p2": {"const": true}, "formula": {"const": "a"}}}]},
+        {"allOf": [{"$ref": "#/$defs/family"}, {"properties": {"family_id": {"const": "poly1_v1"}, "canonical_ast_id": {"const": "poly1.a_plus_b_t.v1"}, "kind": {"const": "polynomial"}, "parameter_names": {"const": ["a", "b"]}, "supports_p2": {"const": true}, "formula": {"const": "a+b*t"}}}]},
+        {"allOf": [{"$ref": "#/$defs/family"}, {"properties": {"family_id": {"const": "poly2_v1"}, "canonical_ast_id": {"const": "poly2.a_plus_b_t_plus_c_t2.v1"}, "kind": {"const": "polynomial"}, "parameter_names": {"const": ["a", "b", "c"]}, "supports_p2": {"const": true}, "formula": {"const": "a+b*t+c*t^2"}}}]},
+        {"allOf": [{"$ref": "#/$defs/family"}, {"properties": {"family_id": {"const": "poly3_v1"}, "canonical_ast_id": {"const": "poly3.a_plus_b_t_plus_c_t2_plus_d_t3.v1"}, "kind": {"const": "polynomial"}, "parameter_names": {"const": ["a", "b", "c", "d"]}, "supports_p2": {"const": true}, "formula": {"const": "a+b*t+c*t^2+d*t^3"}}}]},
+        {"allOf": [{"$ref": "#/$defs/family"}, {"properties": {"family_id": {"const": "exp_affine_v1"}, "canonical_ast_id": {"const": "exp_affine.a_plus_b_exp_k_t.v1"}, "kind": {"const": "elementary"}, "parameter_names": {"const": ["a", "b", "k"]}, "supports_p2": {"const": true}, "formula": {"const": "a+b*exp(k*t)"}}}]},
+        {"allOf": [{"$ref": "#/$defs/family"}, {"properties": {"family_id": {"const": "log_shift_v1"}, "canonical_ast_id": {"const": "log_shift.a_plus_b_log_t_plus_d.v1"}, "kind": {"const": "elementary"}, "parameter_names": {"const": ["a", "b", "d"]}, "supports_p2": {"const": true}, "formula": {"const": "a+b*log(t+d)"}}}]},
+        {"allOf": [{"$ref": "#/$defs/family"}, {"properties": {"family_id": {"const": "reciprocal_shift_pos_v1"}, "canonical_ast_id": {"const": "reciprocal_shift_pos.a_plus_b_over_t_plus_d.v1"}, "kind": {"const": "elementary"}, "parameter_names": {"const": ["a", "b", "d"]}, "supports_p2": {"const": true}, "formula": {"const": "a+b/(t+d)"}}}]},
+        {"allOf": [{"$ref": "#/$defs/family"}, {"properties": {"family_id": {"const": "logistic_v1"}, "canonical_ast_id": {"const": "logistic.a_plus_b_sigma_k_t_minus_m.v1"}, "kind": {"const": "elementary"}, "parameter_names": {"const": ["a", "b", "k", "m"]}, "supports_p2": {"const": true}, "formula": {"const": "a+b/(1+exp(-k*(t-m)))"}}}]}
+      ],
+      "items": false,
+      "minItems": 8,
+      "maxItems": 8
+    }
+  },
+  "$defs": {
+    "family_id": {"enum": ["constant_v1", "poly1_v1", "poly2_v1", "poly3_v1", "exp_affine_v1", "log_shift_v1", "reciprocal_shift_pos_v1", "logistic_v1"]},
+    "family": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family_id", "canonical_ast_id", "kind", "parameter_names", "supports_p2", "formula"],
+      "properties": {
+        "family_id": {"$ref": "#/$defs/family_id"},
+        "canonical_ast_id": {"type": "string", "pattern": "^[a-z0-9_.-]+$"},
+        "kind": {"enum": ["constant", "polynomial", "elementary"]},
+        "parameter_names": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}},
+        "supports_p2": {"type": "boolean"},
+        "formula": {"type": "string", "minLength": 1, "maxLength": 1024}
+      }
+    }
+  }
+}

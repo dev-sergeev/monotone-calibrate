@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:llm-start-advice:1",
+  "title": "Monotone calibration LLM start advice v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "suggestions"],
+  "properties": {
+    "schema_version": {"const": "llm-start-advice-v1"},
+    "suggestions": {
+      "type": "array",
+      "maxItems": 4096,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/suggestion"}
+    }
+  },
+  "$defs": {
+    "suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slot_id", "parameter_vector"],
+      "properties": {
+        "slot_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:~-]*$"
+        },
+        "parameter_vector": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {"type": "number"}
+        }
+      }
+    }
+  },
+  "$comment": "The verifier additionally requires unique slot_id values, exact vector length for that predeclared slot, binary64 finiteness and registry bounds."
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:source-manifest:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "inventory_policy_sha256", "source_tree_sha256", "source_archive_sha256", "files"],
+  "properties": {
+    "schema_version": {"const": "source-manifest-v1"},
+    "inventory_policy_sha256": {"$ref": "#/$defs/hash"},
+    "source_tree_sha256": {"$ref": "#/$defs/hash"},
+    "source_archive_sha256": {"$ref": "#/$defs/hash"},
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {"$ref": "#/$defs/file"}
+    }
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "maxLength": 512},
+        "bytes": {"type": "integer", "minimum": 0, "maximum": 67108864},
+        "sha256": {"$ref": "#/$defs/hash"}
+      }
+    }
+  }
+}

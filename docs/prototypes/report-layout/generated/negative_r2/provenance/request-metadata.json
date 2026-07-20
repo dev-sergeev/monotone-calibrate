@@ -1,0 +1,11 @@
+{
+  "request_schema_version": "prototype-synthetic-request-v1",
+  "logical_adapter_version": "prototype-synthetic-input-v1",
+  "result_bearing_scenario": {
+    "decision_reason": "STATISTICAL_ONLY_SMALL",
+    "profile": "negative",
+    "r2_one": -0.2,
+    "r2_two": -0.18,
+    "recommendation": "one"
+  }
+}

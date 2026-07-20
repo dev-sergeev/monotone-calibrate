@@ -1,0 +1,19 @@
+{
+  "request_schema_version": "prototype-synthetic-request-v1",
+  "logical_adapter_version": "prototype-synthetic-input-v1",
+  "result_bearing_scenario": {
+    "decision_reason": "STATISTICAL_ONLY_SMALL",
+    "extra_warning_reason": "</div><script>alert(3)</script> url(https://evil.invalid/reason)",
+    "input_filename": "../../<img src=x onerror=alert(1)> javascript:.csv",
+    "invalid_raw": "=cmd|' /C calc'!A0,<script>alert(2)</script>",
+    "invalid_row": true,
+    "invalid_source_row_id": "../=2+3",
+    "malicious_fields": true,
+    "profile": "one",
+    "r2_one": 0.72,
+    "r2_two": 0.725,
+    "recommendation": "one",
+    "x_unit": "</style><script>alert(1)</script>",
+    "y_unit": "mV url(https://evil.invalid/x)"
+  }
+}

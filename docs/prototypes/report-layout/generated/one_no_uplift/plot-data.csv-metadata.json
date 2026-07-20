@@ -1,0 +1,38 @@
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "plot-data.csv",
+  "dc:title": "PROTOTYPE synthetic deterministic plot grid",
+  "dialect": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "lineTerminators": [
+      "\n"
+    ],
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "header": true,
+    "null": [
+      ""
+    ]
+  },
+  "tableSchema": {
+    "columns": [
+      {
+        "name": "series"
+      },
+      {
+        "name": "x"
+      },
+      {
+        "name": "y"
+      },
+      {
+        "name": "domain_start"
+      },
+      {
+        "name": "domain_end"
+      }
+    ]
+  },
+  "identifierEncoding": "id: + UTF-8 percent encoding"
+}

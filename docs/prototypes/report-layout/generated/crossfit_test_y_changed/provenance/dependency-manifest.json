@@ -1,0 +1,6 @@
+{
+  "manifest_version": "prototype-stdlib-dependency-manifest-v1",
+  "python_implementation": "CPython",
+  "python_version": "3.12.11",
+  "third_party_runtime_dependencies": []
+}

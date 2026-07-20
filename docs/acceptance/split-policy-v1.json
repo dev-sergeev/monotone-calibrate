@@ -1,0 +1,59 @@
+{
+  "$schema": "urn:monotone-calibrate:split-policy:v1",
+  "policy_id": "repeated-grouped-outer-split-v1",
+  "base_seed": 20260716,
+  "integer_encoding": "all hash-preimage integers below are unsigned fixed-width big-endian; uint64 for base_seed/x bits and uint32 for repetition/stratum/fold",
+  "group_identity": {
+    "negative_zero": "normalize -0 to +0 before grouping",
+    "x_bits": "16 lowercase hexadecimal digits of normalized finite binary64 big-endian bits, prefixed f64:",
+    "x_group_id": "literal xg: followed by x_bits, for example xg:f64:3ff0000000000000",
+    "canonical_group_order": "ascending numerical finite x; distinct finite binary64 values have an unambiguous total order after -0 normalization",
+    "canonical_row_order_inside_group": "ascending exact logical row_id UTF-8 bytes; canonical row_id uniqueness is guaranteed by the data adapter"
+  },
+  "outer_split": {
+    "fold_count": "K is fixed by validation policy before assignment",
+    "strata": "partition canonical group indices into consecutive chunks [s*K,min((s+1)*K,G)); s starts at zero",
+    "group_rank_preimage": "UTF8 outer-group-rank-v1 followed by one NUL byte, uint64(base_seed), uint32(repetition), uint32(stratum), uint64(normalized x bits)",
+    "group_order_in_stratum": "ascending lexicographic 32-byte SHA-256 digest of group_rank_preimage, then ascending normalized x bits",
+    "fold_priority_preimage": "UTF8 outer-fold-priority-v1 followed by one NUL byte, uint64(base_seed), uint32(repetition), uint32(stratum), uint32(fold)",
+    "fold_priority": "ascending lexicographic 32-byte SHA-256 digest of fold_priority_preimage, then ascending fold integer",
+    "assignment": "initialize K cumulative row loads to zero; visit strata and ranked groups in order; within each stratum each fold is eligible at most once; assign the group to the eligible fold minimizing (current cumulative row load, fold-priority rank, fold integer), then add the entire atomic group size",
+    "y_firewall": "neither y values nor a hash/order derived from y occurs in ranking, load balancing, membership or IDs"
+  },
+  "membership_ledger": {
+    "entry": {"x_bits": "tagged x bits", "row_ids": "array in canonical row order"},
+    "entry_fields": ["x_bits", "row_ids"],
+    "entry_order": "canonical group order",
+    "bytes": "canonical-hash-json-v1 compact UTF-8 JSON array, no trailing line feed",
+    "membership_sha256": "SHA-256 of exact membership ledger bytes"
+  },
+  "training_scope_id": {
+    "fields": ["version", "kind", "base_seed", "repetition", "fold", "membership_sha256"],
+    "version": "training-scope-v1",
+    "full": {"kind": "full", "repetition": null, "fold": null},
+    "outer_train": {"kind": "outer_train", "repetition": "zero-based integer", "fold": "zero-based integer"},
+    "bytes": "canonical-hash-json-v1 compact UTF-8 JSON object, no trailing line feed",
+    "scope_id": "lowercase SHA-256 of exact training-scope payload bytes; this non-circular ID is computed before LLM calls and is the scope_id used by start-slot-policy-v1"
+  },
+  "split_id": {
+    "fields": ["version", "kind", "repetition", "fold", "groups"],
+    "constants": {"version": "outer-split-v1", "kind": "outer_test"},
+    "groups": "test membership-ledger entries in canonical group order",
+    "bytes": "canonical-hash-json-v1 compact UTF-8 JSON object, no trailing line feed",
+    "split_id": "lowercase SHA-256 of exact payload bytes"
+  },
+  "golden": {
+    "repetition": 0,
+    "folds": 5,
+    "x_values": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+    "group_sizes": [2, 1, 3, 1, 2, 1, 1, 2, 1, 1],
+    "row_id_rule": "group i has exact IDs g{i}-r{j}, j=0..group_sizes[i]-1",
+    "fold_group_indices": [[4, 8], [2, 6], [1, 9], [0, 7], [3, 5]],
+    "fold_row_loads": [3, 4, 2, 4, 2],
+    "full_membership_sha256": "2fdf38d8a677314effdbbc972dc980a8c14629c8975de2f4d60fcb0a9378d96a",
+    "full_scope_id": "9a88126baee4c34245626fe76a47e637f2b0c531eb2d5f020a9f1662b291c4c9",
+    "fold0_outer_train_membership_sha256": "0d863b7666b53f9040cafef2dd1e7a7f777b363661c2005cccbfc4e0a506465b",
+    "fold0_outer_train_scope_id": "e2c04c0a7ddcc94c30a56ed515ebc3dfc00d2d2fb4fc0e591f4f17f9fb7e4459",
+    "fold0_split_id": "45f69b8bc98e1a4cfb55b9c077ba4d5f6a6c3af247ca50f6033f5c8b64a8caa5"
+  }
+}

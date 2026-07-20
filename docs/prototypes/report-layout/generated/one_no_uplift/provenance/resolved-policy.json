@@ -1,0 +1,66 @@
+{
+  "policy_version": "prototype-policy-v1",
+  "r2_warning_boundary": 0.6,
+  "segment_share_bounds": [
+    0.4,
+    0.6
+  ],
+  "decision_gates": [
+    {
+      "id": "PRACTICAL_REL_MSE_UPLIFT",
+      "threshold": 0.1
+    },
+    {
+      "id": "POSITIVE_REPETITION_SHARE",
+      "threshold": 0.9
+    },
+    {
+      "id": "SPLIT_SENSITIVITY_P10",
+      "threshold": 0.0
+    },
+    {
+      "id": "BOOTSTRAP_STABILITY_LOWER",
+      "threshold": 0.05
+    },
+    {
+      "id": "DELTA_RMSE_POSITIVE",
+      "threshold": 0.0
+    },
+    {
+      "id": "MAE_NO_HARM_RATIO",
+      "threshold": 1.02
+    },
+    {
+      "id": "P2_VALID_FIT_RATE",
+      "threshold": 0.9
+    },
+    {
+      "id": "P2_DIRECTION_FREQUENCY",
+      "threshold": 0.8
+    },
+    {
+      "id": "P2_DOMINANT_PAIR_FREQUENCY",
+      "threshold": 0.6
+    },
+    {
+      "id": "P2_BOUNDARY_WIDTH_FRACTION",
+      "threshold": 0.25
+    },
+    {
+      "id": "P2_EDGE_HIT_RATE",
+      "threshold": 0.2
+    },
+    {
+      "id": "P2_DEGENERACY_RATE",
+      "threshold": 0.1
+    },
+    {
+      "id": "P2_HARD_FAILURE_RATE",
+      "threshold": 0.1
+    },
+    {
+      "id": "P2_FULL_REFIT_CERTIFIED",
+      "threshold": "certified"
+    }
+  ]
+}

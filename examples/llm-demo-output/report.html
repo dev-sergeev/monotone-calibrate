@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'">
+  <title>Отчёт о монотонной калибровке</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; line-height: 1.45; }
+    body { margin: 0 auto; max-width: 1120px; padding: 24px; color: #17212b; }
+    .decision { border-left: 7px solid #1565c0; background: #eef5ff; padding: 16px 20px; }
+    .warning { border-left-color: #c62828; background: #fff0f0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 12px; }
+    .card { border: 1px solid #ccd4dc; border-radius: 8px; padding: 14px; }
+    img { width: 100%; height: auto; border: 1px solid #d6dde3; }
+    code { overflow-wrap: anywhere; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #d6dde3; text-align: left; padding: 7px; }
+  </style>
+</head>
+<body>
+<h1>Отчёт о монотонной калибровке</h1>
+<section class="decision warning">
+  <h2>Рекомендация: P2</h2>
+  <p>Состояние решения: <code>CLEAR_PRACTICAL_UPLIFT</code>.</p>
+  <p><strong>Предупреждения:</strong> INVALID_ROWS_SKIPPED</p>
+  
+  
+</section>
+<h2>Вход</h2>
+<p>Использовано 30 из 32 строк; пропущено 2.
+Уникальных x: 30.</p>
+<div class="grid">
+  <section class="card"><h3>P1 — одна функция</h3>
+    <p>Refit R²: 0.9973529642417309</p>
+    <p>OOF R²: 0.996226226915626</p>
+    <p><code>f(x)=1.6117710529418532+26.434419033107094/(1+exp(-6.1385152379747776*(((x-0)/29)-0.71719682635999615)))</code></p>
+  </section>
+  <section class="card"><h3>P2 — две функции</h3>
+  
+    <p>Refit global R²: 0.9999864925910592</p>
+    <p>OOF R²: 0.9996276809996968</p>
+    <p><code>f(x)=2.0094308243135979+1.6753355030476578*((x-0)/11.5)+0.060244318192943513*((x-0)/11.5)^2+-0.016958969031181326*((x-0)/11.5)^3 for x&lt;=11.5; 3.7280516765230169+20.968640441001021*((x-11.5)/17.5)+0.081767287341953931*((x-11.5)/17.5)^2+-0.059995399469407573*((x-11.5)/17.5)^3 for x&gt;11.5</code></p>
+    <table><caption>Локальные refit-метрики P2</caption><thead><tr><th scope="col">Интервал</th><th scope="col">n</th><th scope="col">доля</th><th scope="col">R²</th></tr></thead><tbody>
+    <tr><td>left</td><td>12</td><td>0.4</td><td>0.9971398169829123</td></tr><tr><td>right</td><td>18</td><td>0.6</td><td>0.999980400702592</td></tr>
+    </tbody></table>
+  
+  </section>
+</div>
+<h2>Графики</h2>
+<h3>P1</h3><img src="plot-one.svg" alt="Scatterplot и односегментная аппроксимация">
+<h3>P2</h3><img src="plot-two.svg" alt="Scatterplot; две интервальные функции и красная граница либо явное состояние недоступности">
+<h2>Проверочный uplift</h2>
+
+<p>Relative MSE uplift: 0.9013403848141128;
+bootstrap 90% interval:
+
+[0.8418852068256688, 0.9498913253584014].
+</p>
+
+<h2>Наблюдения для проверки</h2>
+
+<p>Флаги основаны на grouped OOF-остатках рекомендуемой процедуры; они ничего не удаляют.</p>
+<p>Больших OOF-остатков по текущему robust rule не обнаружено.</p>
+
+</body></html>

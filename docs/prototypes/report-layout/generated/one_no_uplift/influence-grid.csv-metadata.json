@@ -1,0 +1,50 @@
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "influence-grid.csv",
+  "dc:title": "PROTOTYPE synthetic full-versus-without-group influence grid",
+  "dialect": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "lineTerminators": [
+      "\n"
+    ],
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "header": true,
+    "null": [
+      ""
+    ]
+  },
+  "tableSchema": {
+    "columns": [
+      {
+        "name": "x_group_id"
+      },
+      {
+        "name": "grid_index"
+      },
+      {
+        "name": "x"
+      },
+      {
+        "name": "full_prediction"
+      },
+      {
+        "name": "without_group_prediction"
+      },
+      {
+        "name": "s_ref"
+      },
+      {
+        "name": "s_ref_status"
+      },
+      {
+        "name": "normalized_delta"
+      },
+      {
+        "name": "status"
+      }
+    ]
+  },
+  "identifierEncoding": "id: + UTF-8 percent encoding"
+}

@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:acceptance-evidence:2",
+  "title": "Monotone calibration retained gate evidence v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "gate_id",
+    "status",
+    "release_snapshot_digest",
+    "verifier_runtime_lock_sha256",
+    "design_manifest_sha256",
+    "design_gate_sha256",
+    "source_manifest_sha256",
+    "source_archive_sha256",
+    "dependency_lock_sha256",
+    "policy_sha256",
+    "registry_sha256",
+    "declared_executor",
+    "fixture_ids",
+    "fixture_ledger_sha256",
+    "platform_runs",
+    "oracle_results",
+    "artifact_hashes"
+  ],
+  "properties": {
+    "schema_version": {"const": "acceptance-evidence-v2"},
+    "gate_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+-[0-9]{3}$"},
+    "status": {"const": "PASS"},
+    "release_snapshot_digest": {"$ref": "#/$defs/hash"},
+    "verifier_runtime_lock_sha256": {"$ref": "#/$defs/hash"},
+    "design_manifest_sha256": {"$ref": "#/$defs/hash"},
+    "design_gate_sha256": {"$ref": "#/$defs/hash"},
+    "source_manifest_sha256": {"$ref": "#/$defs/hash"},
+    "source_archive_sha256": {"$ref": "#/$defs/hash"},
+    "dependency_lock_sha256": {"$ref": "#/$defs/hash"},
+    "policy_sha256": {"$ref": "#/$defs/hash"},
+    "registry_sha256": {"$ref": "#/$defs/hash"},
+    "declared_executor": {"type": "string", "minLength": 1},
+    "fixture_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_-]+$"}
+    },
+    "fixture_ledger_sha256": {"$ref": "#/$defs/hash"},
+    "platform_runs": {
+      "type": "array",
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/platform_run"}, {"properties": {"platform": {"const": "macOS 14 or newer, arm64, CPython 3.12"}}}]},
+        {"allOf": [{"$ref": "#/$defs/platform_run"}, {"properties": {"platform": {"const": "Ubuntu 24.04 LTS, x86_64, CPython 3.12"}}}]}
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "oracle_results": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {"$ref": "#/$defs/oracle_result"}
+    },
+    "artifact_hashes": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 2048,
+      "items": {"$ref": "#/$defs/file_ref"}
+    }
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "safe_path": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*$", "maxLength": 512},
+    "file_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/safe_path"},
+        "sha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "test_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executed", "passed", "failed", "skipped", "xfailed"],
+      "properties": {
+        "executed": {"const": 1},
+        "passed": {"const": 1},
+        "failed": {"const": 0},
+        "skipped": {"const": 0},
+        "xfailed": {"const": 0}
+      }
+    },
+    "platform_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "environment_id", "declared_executor", "execution_context", "argv", "source_targets", "test_ids", "test_counts", "exit_status", "environment", "raw_result", "log"],
+      "properties": {
+        "platform": {"type": "string", "minLength": 1},
+        "environment_id": {"$ref": "#/$defs/hash"},
+        "declared_executor": {"type": "string", "minLength": 1},
+        "execution_context": {"type": "object"},
+        "argv": {"type": "array", "minItems": 3, "maxItems": 64, "items": {"type": "string", "minLength": 1}},
+        "source_targets": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "test_ids": {"type": "array", "minItems": 1, "maxItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "test_counts": {"$ref": "#/$defs/test_counts"},
+        "exit_status": {"const": 0},
+        "environment": {"$ref": "#/$defs/file_ref"},
+        "raw_result": {"$ref": "#/$defs/file_ref"},
+        "log": {"$ref": "#/$defs/file_ref"}
+      }
+    },
+    "oracle_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["oracle_id", "oracle_text_sha256", "fixture_ledger_sha256", "tolerance_policy", "status", "raw_result"],
+      "properties": {
+        "oracle_id": {"type": "string", "minLength": 1},
+        "oracle_text_sha256": {"$ref": "#/$defs/hash"},
+        "fixture_ledger_sha256": {"$ref": "#/$defs/hash"},
+        "tolerance_policy": {"type": ["string", "null"]},
+        "status": {"const": "PASS"},
+        "raw_result": {"$ref": "#/$defs/file_ref"}
+      }
+    }
+  },
+  "$comment": "Exact test_id is <gate_id>::contract-v1 and exact oracle_id is <gate_id>::oracle-v1. The mandatory verifier binds both platform records, the gate fixture ledger, raw run/oracle JSON and every referenced artifact before external reviewer signatures authorize PASS."
+}

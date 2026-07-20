@@ -1,0 +1,7 @@
+row_id,source_row_id,x,y,x_group_id,input_status,input_reason,pred_null_oof,pred_one_oof,resid_one_oof,pred_two_oof,resid_two_oof,p2_oof_fallback_code,pred_one_refit,pred_two_refit,segment_refit,residual_flags,influence_flags,robust_scale,z_median,score_median_abs_z,flag_rate,appearance_count,refit_residual,influence_dmax,influence_drms,influence_delta_c,action
+id:row-01,id:2,0.0,1.1,id:x%3A0x0.0p%2B0,USED,,,,,,,,1.25,,,,,,,,,0,-0.1499999999999999,,,,review_only
+id:row-02,id:3,1.0,1.4,id:x%3A0x1.0000000000000p%2B0,USED,,,,,,,,1.8900000000000001,,,,,,,,,0,-0.4900000000000002,,,,review_only
+id:row-03,id:4,2.0,1.9,id:x%3A0x1.0000000000000p%2B1,USED,,,,,,,,2.5300000000000002,,,,,,,,,0,-0.6300000000000003,,,,review_only
+id:row-04,id:5,3.0,2.3,id:x%3A0x1.8000000000000p%2B1,USED,,,,,,,,3.17,,,,,,,,,0,-0.8700000000000001,,,,review_only
+id:row-05,id:6,4.0,2.9,id:x%3A0x1.0000000000000p%2B2,USED,,,,,,,,3.81,,,,,,,,,0,-0.9100000000000001,,,,review_only
+id:row-06,id:7,5.0,3.1,id:x%3A0x1.4000000000000p%2B2,USED,,,,,,,,4.45,,,,,,,,,0,-1.35,,,,review_only

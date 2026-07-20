@@ -1,0 +1,74 @@
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "oof-appearances.csv",
+  "dc:title": "PROTOTYPE synthetic long OOF appearance export",
+  "dialect": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "lineTerminators": [
+      "\n"
+    ],
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "header": true,
+    "null": [
+      ""
+    ]
+  },
+  "tableSchema": {
+    "columns": [
+      {
+        "name": "appearance_id"
+      },
+      {
+        "name": "repetition"
+      },
+      {
+        "name": "outer_fold_id"
+      },
+      {
+        "name": "row_id"
+      },
+      {
+        "name": "x_group_id"
+      },
+      {
+        "name": "y"
+      },
+      {
+        "name": "pred_null_oof"
+      },
+      {
+        "name": "pred_one_oof"
+      },
+      {
+        "name": "resid_one_oof"
+      },
+      {
+        "name": "pred_two_oof"
+      },
+      {
+        "name": "resid_two_oof"
+      },
+      {
+        "name": "scale_one_oof"
+      },
+      {
+        "name": "z_one_oof"
+      },
+      {
+        "name": "scale_two_oof"
+      },
+      {
+        "name": "z_two_oof"
+      },
+      {
+        "name": "p2_attempt_status"
+      },
+      {
+        "name": "fallback_code"
+      }
+    ]
+  },
+  "identifierEncoding": "id: + UTF-8 percent encoding"
+}

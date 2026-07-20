@@ -1,0 +1,7798 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:prototype:monotone-calibration-report:1",
+  "title": "Synthetic prototype calibration report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_type",
+    "prototype_only",
+    "prototype_notice",
+    "report_id",
+    "generated_at",
+    "status",
+    "decision",
+    "recommendation",
+    "input",
+    "preprocessing",
+    "validation",
+    "refit",
+    "diagnostics",
+    "warnings",
+    "failures",
+    "provenance",
+    "visualization",
+    "observations",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "prototype-report-1.0.0"
+    },
+    "report_type": {
+      "const": "curve_calibration_regression"
+    },
+    "prototype_only": {
+      "const": true
+    },
+    "prototype_notice": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^prototype-[a-z0-9_]+$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "object",
+      "required": [
+        "bundle_status",
+        "analysis_status",
+        "recommendation_status",
+        "decision_reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "bundle_status": {
+          "const": "PROTOTYPE_NOT_PUBLISHED"
+        },
+        "analysis_status": {
+          "enum": [
+            "SUCCEEDED",
+            "NO_RECOMMENDATION",
+            "FAILED"
+          ]
+        },
+        "recommendation_status": {
+          "enum": [
+            "ONE_RECOMMENDED",
+            "TWO_RECOMMENDED",
+            "NO_VALIDATED_RECOMMENDATION"
+          ]
+        },
+        "decision_reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "code",
+        "reason",
+        "recommended_procedure",
+        "related_reason_codes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recommended_procedure": {
+          "enum": [
+            "one",
+            "two",
+            null
+          ]
+        },
+        "related_reason_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "required": [
+        "role",
+        "model_preview_path",
+        "formula_display",
+        "domain",
+        "global_primary_r2_oos",
+        "global_primary_rmse_oof",
+        "global_primary_mae_oof",
+        "extrapolation"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "one",
+            "two",
+            null
+          ]
+        },
+        "model_preview_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "formula_display": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "domain": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "global_primary_r2_oos": {
+          "$ref": "#/$defs/metric"
+        },
+        "global_primary_rmse_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "global_primary_mae_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "extrapolation": {
+          "enum": [
+            "forbidden",
+            null
+          ]
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "media_type",
+        "n_input",
+        "n_used",
+        "n_excluded",
+        "n_unique_x",
+        "repeated_x_groups",
+        "exact_duplicate_records",
+        "invalid_reason_counts",
+        "x_unit",
+        "y_unit",
+        "domain",
+        "input_sha256",
+        "exclusions"
+      ],
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "media_type": {
+          "const": "text/csv"
+        },
+        "n_input": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_excluded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_unique_x": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repeated_x_groups": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exact_duplicate_records": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalid_reason_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "x_unit": {
+          "type": "string"
+        },
+        "y_unit": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "input_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_row_id",
+              "code",
+              "raw_value"
+            ],
+            "properties": {
+              "source_row_id": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "raw_value": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "preprocessing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sorting",
+        "row_id_policy",
+        "weights",
+        "invalid_rows",
+        "automatic_outlier_removal",
+        "ties_atomic_for_validation_and_segmentation",
+        "affine_transforms"
+      ],
+      "properties": {
+        "sorting": {
+          "const": "stable_by_x_then_row_id"
+        },
+        "row_id_policy": {
+          "const": "preserve_stable_logical_row_id"
+        },
+        "weights": {
+          "const": "equal"
+        },
+        "invalid_rows": {
+          "const": "skipped_with_audit"
+        },
+        "automatic_outlier_removal": {
+          "const": false
+        },
+        "ties_atomic_for_validation_and_segmentation": {
+          "const": true
+        },
+        "affine_transforms": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason",
+            "x",
+            "y"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "available",
+                "unavailable"
+              ]
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "x": {
+              "$ref": "#/$defs/admission_transform"
+            },
+            "y": {
+              "$ref": "#/$defs/admission_transform"
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "$ref": "#/$defs/validation"
+    },
+    "refit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "p1",
+        "p2"
+      ],
+      "properties": {
+        "p1": {
+          "$ref": "#/$defs/refit_p1"
+        },
+        "p2": {
+          "$ref": "#/$defs/refit_p2"
+        }
+      }
+    },
+    "diagnostics": {
+      "$ref": "#/$defs/diagnostics"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/message"
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/message"
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_id",
+        "execution_environment_id",
+        "policy_version",
+        "registry_version",
+        "input_sha256",
+        "request_sha256",
+        "policy_sha256",
+        "registry_sha256",
+        "source_sha256",
+        "dependency_lock_sha256",
+        "solver_backend",
+        "environment",
+        "thread_policy",
+        "base_seed",
+        "numerical_tolerances",
+        "work_counts",
+        "fallback_failure_counts",
+        "certificate_versions",
+        "timezone",
+        "hash_payloads"
+      ],
+      "properties": {
+        "analysis_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "execution_environment_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "registry_version": {
+          "type": "string"
+        },
+        "input_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "request_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "policy_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "registry_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "dependency_lock_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "solver_backend": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "python_implementation",
+            "python_version",
+            "platform",
+            "thread_policy"
+          ],
+          "properties": {
+            "status": {
+              "const": "prototype_static_not_runtime_benchmark"
+            },
+            "python_implementation": {
+              "const": "CPython"
+            },
+            "python_version": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+"
+            },
+            "platform": {
+              "type": "string",
+              "minLength": 1
+            },
+            "thread_policy": {
+              "const": "single_process_single_thread"
+            }
+          }
+        },
+        "thread_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "base_seed": {
+          "type": "integer"
+        },
+        "numerical_tolerances": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "absolute_reconciliation",
+            "continuity",
+            "derivative"
+          ],
+          "properties": {
+            "absolute_reconciliation": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "continuity": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "derivative": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "work_counts": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "fallback_failure_counts": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "certificate_versions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "timezone": {
+          "const": "Europe/Moscow"
+        },
+        "hash_payloads": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy",
+            "registry",
+            "source_manifest",
+            "dependency_manifest",
+            "input",
+            "request_metadata"
+          ],
+          "properties": {
+            "policy": {
+              "type": "object"
+            },
+            "registry": {
+              "type": "object"
+            },
+            "source_manifest": {
+              "type": "object"
+            },
+            "dependency_manifest": {
+              "type": "object"
+            },
+            "input": {
+              "type": "object"
+            },
+            "request_metadata": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "visualization": {
+      "$ref": "#/$defs/visualization"
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "row_id",
+          "source_row_id",
+          "x",
+          "y",
+          "x_group_id",
+          "input_status",
+          "flags",
+          "action",
+          "pred_null_oof",
+          "pred_one_oof",
+          "resid_one_oof",
+          "pred_two_oof",
+          "resid_two_oof",
+          "p2_oof_fallback_code",
+          "pred_one_refit",
+          "pred_two_refit",
+          "segment_refit",
+          "scale_one_oof",
+          "scale_one_reason",
+          "z_one_oof",
+          "scale_two_oof",
+          "scale_two_reason",
+          "z_two_oof"
+        ],
+        "properties": {
+          "row_id": {
+            "type": "string"
+          },
+          "source_row_id": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "x_group_id": {
+            "type": "string"
+          },
+          "input_status": {
+            "const": "USED"
+          },
+          "flags": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "LARGE_OOF_RESIDUAL",
+                "HIGH_REFIT_INFLUENCE"
+              ]
+            }
+          },
+          "action": {
+            "const": "review_only"
+          },
+          "pred_null_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "pred_one_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "resid_one_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "pred_two_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "resid_two_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "p2_oof_fallback_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pred_one_refit": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "pred_two_refit": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "segment_refit": {
+            "enum": [
+              "left",
+              "right",
+              null
+            ]
+          },
+          "scale_one_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "scale_one_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "z_one_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "scale_two_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "scale_two_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "z_two_oof": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "status": {
+          "properties": {
+            "analysis_status": {
+              "const": "SUCCEEDED"
+            },
+            "recommendation_status": {
+              "const": "TWO_RECOMMENDED"
+            },
+            "decision_reason": {
+              "const": "CLEAR_PRACTICAL_UPLIFT"
+            }
+          }
+        },
+        "decision": {
+          "properties": {
+            "code": {
+              "const": "CLEAR_PRACTICAL_UPLIFT"
+            },
+            "recommended_procedure": {
+              "const": "two"
+            }
+          }
+        },
+        "recommendation": {
+          "properties": {
+            "role": {
+              "const": "two"
+            }
+          }
+        },
+        "validation": {
+          "properties": {
+            "uplift": {
+              "properties": {
+                "decision": {
+                  "const": "CLEAR_PRACTICAL_UPLIFT"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "properties": {
+            "analysis_status": {
+              "const": "SUCCEEDED"
+            },
+            "recommendation_status": {
+              "const": "ONE_RECOMMENDED"
+            },
+            "decision_reason": {
+              "const": "NO_UPLIFT_OR_HARM"
+            }
+          }
+        },
+        "decision": {
+          "properties": {
+            "code": {
+              "const": "NO_UPLIFT_OR_HARM"
+            },
+            "recommended_procedure": {
+              "const": "one"
+            }
+          }
+        },
+        "recommendation": {
+          "properties": {
+            "role": {
+              "const": "one"
+            }
+          }
+        },
+        "validation": {
+          "properties": {
+            "uplift": {
+              "properties": {
+                "decision": {
+                  "const": "NO_UPLIFT_OR_HARM"
+                }
+              }
+            },
+            "procedures": {
+              "properties": {
+                "p2": {
+                  "properties": {
+                    "full_data_refit_status": {
+                      "const": "certified"
+                    }
+                  }
+                }
+              }
+            },
+            "decision_gates": {
+              "prefixItems": [
+                {},
+                {},
+                {},
+                {},
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "fail"
+                    }
+                  }
+                },
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {}
+              ]
+            }
+          }
+        },
+        "refit": {
+          "properties": {
+            "p2": {
+              "properties": {
+                "status": {
+                  "const": "certified"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "properties": {
+            "analysis_status": {
+              "const": "SUCCEEDED"
+            },
+            "recommendation_status": {
+              "const": "ONE_RECOMMENDED"
+            },
+            "decision_reason": {
+              "const": "STATISTICAL_ONLY_SMALL"
+            }
+          }
+        },
+        "decision": {
+          "properties": {
+            "code": {
+              "const": "STATISTICAL_ONLY_SMALL"
+            },
+            "recommended_procedure": {
+              "const": "one"
+            }
+          }
+        },
+        "recommendation": {
+          "properties": {
+            "role": {
+              "const": "one"
+            }
+          }
+        },
+        "validation": {
+          "properties": {
+            "uplift": {
+              "properties": {
+                "decision": {
+                  "const": "STATISTICAL_ONLY_SMALL"
+                }
+              }
+            },
+            "procedures": {
+              "properties": {
+                "p2": {
+                  "properties": {
+                    "full_data_refit_status": {
+                      "const": "certified"
+                    }
+                  }
+                }
+              }
+            },
+            "decision_gates": {
+              "prefixItems": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "fail"
+                    }
+                  }
+                },
+                {},
+                {},
+                {},
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {}
+              ]
+            }
+          }
+        },
+        "refit": {
+          "properties": {
+            "p2": {
+              "properties": {
+                "status": {
+                  "const": "certified"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "properties": {
+            "analysis_status": {
+              "const": "SUCCEEDED"
+            },
+            "recommendation_status": {
+              "const": "ONE_RECOMMENDED"
+            },
+            "decision_reason": {
+              "const": "PRACTICALLY_PROMISING_UNCERTAIN"
+            }
+          }
+        },
+        "decision": {
+          "properties": {
+            "code": {
+              "const": "PRACTICALLY_PROMISING_UNCERTAIN"
+            },
+            "recommended_procedure": {
+              "const": "one"
+            }
+          }
+        },
+        "recommendation": {
+          "properties": {
+            "role": {
+              "const": "one"
+            }
+          }
+        },
+        "validation": {
+          "properties": {
+            "uplift": {
+              "properties": {
+                "decision": {
+                  "const": "PRACTICALLY_PROMISING_UNCERTAIN"
+                }
+              }
+            },
+            "procedures": {
+              "properties": {
+                "p2": {
+                  "properties": {
+                    "full_data_refit_status": {
+                      "const": "certified"
+                    }
+                  }
+                }
+              }
+            },
+            "decision_gates": {
+              "prefixItems": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "unavailable"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {}
+              ]
+            },
+            "bootstrap_stability": {
+              "properties": {
+                "status": {
+                  "const": "unavailable"
+                }
+              }
+            }
+          }
+        },
+        "refit": {
+          "properties": {
+            "p2": {
+              "properties": {
+                "status": {
+                  "const": "certified"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "properties": {
+            "analysis_status": {
+              "const": "SUCCEEDED"
+            },
+            "recommendation_status": {
+              "const": "ONE_RECOMMENDED"
+            },
+            "decision_reason": {
+              "const": "UNSTABLE_SELECTION"
+            }
+          }
+        },
+        "decision": {
+          "properties": {
+            "code": {
+              "const": "UNSTABLE_SELECTION"
+            },
+            "recommended_procedure": {
+              "const": "one"
+            }
+          }
+        },
+        "recommendation": {
+          "properties": {
+            "role": {
+              "const": "one"
+            }
+          }
+        },
+        "validation": {
+          "properties": {
+            "uplift": {
+              "properties": {
+                "decision": {
+                  "const": "UNSTABLE_SELECTION"
+                }
+              }
+            },
+            "procedures": {
+              "properties": {
+                "p2": {
+                  "properties": {
+                    "full_data_refit_status": {
+                      "const": "certified"
+                    }
+                  }
+                }
+              }
+            },
+            "decision_gates": {
+              "prefixItems": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "pass"
+                    }
+                  }
+                },
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {}
+              ],
+              "contains": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "enum": [
+                      "P2_VALID_FIT_RATE",
+                      "P2_DIRECTION_FREQUENCY",
+                      "P2_DOMINANT_PAIR_FREQUENCY",
+                      "P2_BOUNDARY_WIDTH_FRACTION",
+                      "P2_EDGE_HIT_RATE",
+                      "P2_DEGENERACY_RATE",
+                      "P2_HARD_FAILURE_RATE"
+                    ]
+                  },
+                  "status": {
+                    "enum": [
+                      "fail",
+                      "unavailable"
+                    ]
+                  }
+                }
+              },
+              "minContains": 1
+            }
+          }
+        },
+        "refit": {
+          "properties": {
+            "p2": {
+              "properties": {
+                "status": {
+                  "const": "certified"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "properties": {
+            "analysis_status": {
+              "const": "SUCCEEDED"
+            },
+            "recommendation_status": {
+              "const": "ONE_RECOMMENDED"
+            },
+            "decision_reason": {
+              "const": "NO_VALID_TWO_SEGMENT"
+            }
+          }
+        },
+        "decision": {
+          "properties": {
+            "code": {
+              "const": "NO_VALID_TWO_SEGMENT"
+            },
+            "recommended_procedure": {
+              "const": "one"
+            }
+          }
+        },
+        "recommendation": {
+          "properties": {
+            "role": {
+              "const": "one"
+            }
+          }
+        },
+        "validation": {
+          "properties": {
+            "uplift": {
+              "properties": {
+                "decision": {
+                  "const": "NO_VALID_TWO_SEGMENT"
+                }
+              }
+            },
+            "procedures": {
+              "properties": {
+                "p2": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "fallback",
+                        "unavailable",
+                        "failed"
+                      ]
+                    },
+                    "full_data_refit_status": {
+                      "const": "unavailable"
+                    }
+                  }
+                }
+              }
+            },
+            "decision_gates": {
+              "prefixItems": [
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "fail"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "refit": {
+          "properties": {
+            "p2": {
+              "properties": {
+                "status": {
+                  "const": "unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "properties": {
+            "analysis_status": {
+              "const": "NO_RECOMMENDATION"
+            },
+            "recommendation_status": {
+              "const": "NO_VALIDATED_RECOMMENDATION"
+            },
+            "decision_reason": {
+              "const": "DESCRIPTIVE_ONLY"
+            }
+          }
+        },
+        "decision": {
+          "properties": {
+            "code": {
+              "const": "DESCRIPTIVE_ONLY"
+            },
+            "recommended_procedure": {
+              "const": null
+            }
+          }
+        },
+        "recommendation": {
+          "properties": {
+            "role": {
+              "const": null
+            }
+          }
+        },
+        "validation": {
+          "properties": {
+            "uplift": {
+              "properties": {
+                "decision": {
+                  "const": "DESCRIPTIVE_ONLY"
+                }
+              }
+            },
+            "repetitions": {
+              "const": 0
+            },
+            "procedures": {
+              "properties": {
+                "p1": {
+                  "properties": {
+                    "status": {
+                      "const": "unavailable"
+                    }
+                  }
+                },
+                "p2": {
+                  "properties": {
+                    "status": {
+                      "const": "unavailable"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "properties": {
+            "analysis_status": {
+              "const": "FAILED"
+            },
+            "recommendation_status": {
+              "const": "NO_VALIDATED_RECOMMENDATION"
+            },
+            "decision_reason": {
+              "const": "PIPELINE_FAILURE"
+            }
+          }
+        },
+        "decision": {
+          "properties": {
+            "code": {
+              "const": "PIPELINE_FAILURE"
+            },
+            "recommended_procedure": {
+              "const": null
+            }
+          }
+        },
+        "recommendation": {
+          "properties": {
+            "role": {
+              "const": null
+            }
+          }
+        },
+        "validation": {
+          "properties": {
+            "uplift": {
+              "properties": {
+                "decision": {
+                  "const": "PIPELINE_FAILURE"
+                }
+              }
+            }
+          }
+        },
+        "failures": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "severity",
+              "recommendation_effect"
+            ],
+            "properties": {
+              "severity": {
+                "const": "error"
+              },
+              "recommendation_effect": {
+                "const": "no_recommendation"
+              }
+            }
+          },
+          "minContains": 1
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "required": [
+        "value",
+        "status",
+        "reason",
+        "scope",
+        "definition",
+        "unit"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "defined",
+            "undefined"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "oof",
+            "in_sample"
+          ]
+        },
+        "definition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "undefined"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value": {
+                "type": "number"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "defined"
+              },
+              "reason": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "media_type",
+        "size",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^[a-z0-9.+-]+/[a-z0-9.+-]+$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "admission_transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "offset",
+        "scale",
+        "target_interval",
+        "invertible"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "affine_unit_interval",
+            "affine_center_scale"
+          ]
+        },
+        "offset": {
+          "type": "number"
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "target_interval": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "invertible": {
+          "type": "boolean"
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "scope",
+        "stage",
+        "severity",
+        "reason",
+        "recommendation_effect",
+        "related_json_pointers"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "recommendation_effect": {
+          "type": "string"
+        },
+        "related_json_pointers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^/"
+          }
+        }
+      }
+    },
+    "plot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "status",
+        "line_present"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^figures/[a-z-]+\\.svg$"
+        },
+        "status": {
+          "type": "string"
+        },
+        "line_present": {
+          "type": "boolean"
+        },
+        "boundary_present": {
+          "type": "boolean"
+        }
+      }
+    },
+    "procedure_p1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "r2_oos",
+        "mse_oof",
+        "rmse_oof",
+        "mae_oof",
+        "oof_appearances",
+        "successful_appearances",
+        "direction_frequency",
+        "family_frequency",
+        "fallback_rate"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "valid",
+            "unavailable",
+            "failed"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "r2_oos": {
+          "$ref": "#/$defs/metric"
+        },
+        "mse_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "oof_appearances": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "successful_appearances": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "direction_frequency": {
+          "$ref": "#/$defs/metric"
+        },
+        "family_frequency": {
+          "$ref": "#/$defs/metric"
+        },
+        "fallback_rate": {
+          "$ref": "#/$defs/metric"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "valid"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "oof_appearances": {
+                "minimum": 1
+              },
+              "successful_appearances": {
+                "minimum": 1
+              },
+              "mse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "rmse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "mae_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "fallback_rate": {
+                "properties": {
+                  "value": {
+                    "const": 0.0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "unavailable",
+                  "failed"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "oof_appearances": {
+                "const": 0
+              },
+              "successful_appearances": {
+                "const": 0
+              },
+              "r2_oos": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "mse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "rmse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "mae_oof": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "fallback_rate": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "procedure_p2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "attempt_status",
+        "reason",
+        "full_data_refit_status",
+        "r2_oos",
+        "mse_oof",
+        "rmse_oof",
+        "mae_oof",
+        "oof_appearances",
+        "successful_appearances",
+        "fallback_appearances",
+        "fallback_outer_fit_ids",
+        "fallback_reason_counts",
+        "direction_frequency",
+        "family_frequency",
+        "fallback_rate"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "valid",
+            "fallback",
+            "unavailable",
+            "failed"
+          ]
+        },
+        "attempt_status": {
+          "enum": [
+            "succeeded",
+            "partial_p1_fallback",
+            "failed_with_p1_fallback",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "full_data_refit_status": {
+          "enum": [
+            "certified",
+            "unavailable"
+          ]
+        },
+        "r2_oos": {
+          "$ref": "#/$defs/metric"
+        },
+        "mse_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_oof": {
+          "$ref": "#/$defs/metric"
+        },
+        "oof_appearances": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "successful_appearances": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fallback_appearances": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fallback_outer_fit_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^outer-[0-9]{2}-fold-[1-9][0-9]*$"
+          }
+        },
+        "fallback_reason_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "direction_frequency": {
+          "$ref": "#/$defs/metric"
+        },
+        "family_frequency": {
+          "$ref": "#/$defs/metric"
+        },
+        "fallback_rate": {
+          "$ref": "#/$defs/metric"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "valid"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attempt_status": {
+                "const": "succeeded"
+              },
+              "reason": {
+                "type": "null"
+              },
+              "oof_appearances": {
+                "minimum": 1
+              },
+              "successful_appearances": {
+                "minimum": 1
+              },
+              "fallback_appearances": {
+                "const": 0
+              },
+              "fallback_outer_fit_ids": {
+                "maxItems": 0
+              },
+              "fallback_reason_counts": {
+                "maxProperties": 0
+              },
+              "mse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "rmse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "mae_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "fallback_rate": {
+                "properties": {
+                  "value": {
+                    "const": 0.0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "fallback"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attempt_status": {
+                "enum": [
+                  "partial_p1_fallback",
+                  "failed_with_p1_fallback"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "oof_appearances": {
+                "minimum": 1
+              },
+              "successful_appearances": {
+                "minimum": 1
+              },
+              "fallback_appearances": {
+                "minimum": 1
+              },
+              "fallback_outer_fit_ids": {
+                "minItems": 1
+              },
+              "fallback_reason_counts": {
+                "minProperties": 1
+              },
+              "mse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "rmse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "mae_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "fallback_rate": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "unavailable",
+                  "failed"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attempt_status": {
+                "const": "unavailable"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "full_data_refit_status": {
+                "const": "unavailable"
+              },
+              "oof_appearances": {
+                "const": 0
+              },
+              "successful_appearances": {
+                "const": 0
+              },
+              "fallback_appearances": {
+                "const": 0
+              },
+              "fallback_outer_fit_ids": {
+                "maxItems": 0
+              },
+              "fallback_reason_counts": {
+                "maxProperties": 0
+              },
+              "r2_oos": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "mse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "rmse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "mae_oof": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "fallback_rate": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "estimand",
+        "null_baseline",
+        "outer_inner_folds",
+        "outer_fold_policy",
+        "inner_fold_policy",
+        "group_key",
+        "split_id_hashes",
+        "repetitions",
+        "policy_sha256",
+        "appearance_export",
+        "pooled_null_sse",
+        "procedures",
+        "uplift",
+        "decision_gates",
+        "split_sensitivity",
+        "bootstrap_stability",
+        "p2_stability"
+      ],
+      "properties": {
+        "estimand": {
+          "type": "string"
+        },
+        "null_baseline": {
+          "type": "string"
+        },
+        "outer_inner_folds": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "outer_fold_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inner_fold_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "group_key": {
+          "const": "x_group_id"
+        },
+        "split_id_hashes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "repetition",
+              "sha256"
+            ],
+            "properties": {
+              "repetition": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        },
+        "repetitions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "appearance_export": {
+          "const": "oof-appearances.csv"
+        },
+        "pooled_null_sse": {
+          "$ref": "#/$defs/metric"
+        },
+        "policy_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "procedures": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "p1",
+            "p2"
+          ],
+          "properties": {
+            "p1": {
+              "$ref": "#/$defs/procedure_p1"
+            },
+            "p2": {
+              "$ref": "#/$defs/procedure_p2"
+            }
+          }
+        },
+        "uplift": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta_mse",
+            "delta_rmse",
+            "delta_mae",
+            "delta_r2",
+            "rel_mse_uplift",
+            "decision",
+            "positive_repetition_share"
+          ],
+          "properties": {
+            "delta_mse": {
+              "$ref": "#/$defs/metric"
+            },
+            "delta_rmse": {
+              "$ref": "#/$defs/metric"
+            },
+            "delta_mae": {
+              "$ref": "#/$defs/metric"
+            },
+            "delta_r2": {
+              "$ref": "#/$defs/metric"
+            },
+            "rel_mse_uplift": {
+              "$ref": "#/$defs/metric"
+            },
+            "decision": {
+              "type": "string"
+            },
+            "positive_repetition_share": {
+              "$ref": "#/$defs/metric"
+            }
+          }
+        },
+        "decision_gates": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "PRACTICAL_REL_MSE_UPLIFT"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.1
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "minimum": 0.1
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMaximum": 0.1
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "POSITIVE_REPETITION_SHARE"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.9
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "minimum": 0.9
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMaximum": 0.9
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "SPLIT_SENSITIVITY_P10"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.0
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "minimum": 0.0
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMaximum": 0.0
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "BOOTSTRAP_STABILITY_LOWER"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.05
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "minimum": 0.05
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMaximum": 0.05
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "DELTA_RMSE_POSITIVE"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.0
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "maximum": 0.0
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "MAE_NO_HARM_RATIO"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 1.02
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "maximum": 1.02
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMinimum": 1.02
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "P2_VALID_FIT_RATE"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.9
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "minimum": 0.9
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMaximum": 0.9
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "P2_DIRECTION_FREQUENCY"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.8
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "minimum": 0.8
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMaximum": 0.8
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "P2_DOMINANT_PAIR_FREQUENCY"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.6
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "minimum": 0.6
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMaximum": 0.6
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "P2_BOUNDARY_WIDTH_FRACTION"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.25
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "maximum": 0.25
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.25
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "P2_EDGE_HIT_RATE"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.2
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "maximum": 0.2
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.2
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "P2_DEGENERACY_RATE"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.1
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "maximum": 0.1
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.1
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "P2_HARD_FAILURE_RATE"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": 0.1
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "maximum": 0.1
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.1
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "policy_version",
+                "threshold",
+                "observed",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "const": "P2_FULL_REFIT_CERTIFIED"
+                },
+                "policy_version": {
+                  "const": "prototype-policy-v1"
+                },
+                "threshold": {
+                  "const": "certified"
+                },
+                "observed": {
+                  "type": [
+                    "number",
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "unavailable"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "const": "certified"
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "fail"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "string",
+                        "not": {
+                          "const": "certified"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "unavailable"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "observed": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "split_sensitivity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "label",
+            "p10",
+            "repetition_distribution"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "available",
+                "unavailable"
+              ]
+            },
+            "label": {
+              "type": "string"
+            },
+            "p10": {
+              "$ref": "#/$defs/metric"
+            },
+            "repetition_distribution": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "repetition",
+                  "rel_mse_uplift",
+                  "status",
+                  "reason"
+                ],
+                "properties": {
+                  "repetition": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "rel_mse_uplift": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "status": {
+                    "enum": [
+                      "defined",
+                      "unavailable"
+                    ]
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "bootstrap_stability": {
+          "$ref": "#/$defs/bootstrap"
+        },
+        "p2_stability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "valid_fit_rate",
+            "dominant_family_pair_frequency",
+            "dominant_family_pair",
+            "direction_frequency",
+            "outer_fit_ledger",
+            "outer_fit_export",
+            "outer_fit_denominator",
+            "valid_fit_count",
+            "fallback_fit_count",
+            "breakpoint_distribution",
+            "breakpoint_central80_interval",
+            "boundary_width_fraction",
+            "edge_hit_rate",
+            "fallback_rate",
+            "flat_profile_rate",
+            "multiple_near_optima_rate",
+            "collapse_rate",
+            "degeneracy_rate",
+            "hard_failure_rate",
+            "sensitivity_estimands",
+            "policy_sha256",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "available",
+                "unavailable"
+              ]
+            },
+            "valid_fit_rate": {
+              "$ref": "#/$defs/metric"
+            },
+            "dominant_family_pair_frequency": {
+              "$ref": "#/$defs/metric"
+            },
+            "dominant_family_pair": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "direction_frequency": {
+              "$ref": "#/$defs/metric"
+            },
+            "outer_fit_ledger": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "outer_fit_id",
+                  "repetition",
+                  "outer_fold",
+                  "status",
+                  "fallback_reason",
+                  "direction",
+                  "family_pair",
+                  "boundary",
+                  "edge_hit",
+                  "flat_profile",
+                  "multiple_near_optima",
+                  "collapsed",
+                  "hard_failure"
+                ],
+                "properties": {
+                  "outer_fit_id": {
+                    "type": "string",
+                    "pattern": "^outer-[0-9]{2}-fold-[1-9][0-9]*$"
+                  },
+                  "repetition": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "outer_fold": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "status": {
+                    "enum": [
+                      "valid",
+                      "fallback"
+                    ]
+                  },
+                  "fallback_reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "direction": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "family_pair": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "boundary": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "edge_hit": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "flat_profile": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "multiple_near_optima": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "collapsed": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "hard_failure": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "outer_fit_export": {
+              "const": "p2-stability-outer-fits.csv"
+            },
+            "outer_fit_denominator": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "valid_fit_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fallback_fit_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "breakpoint_distribution": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "breakpoint_central80_interval": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              ]
+            },
+            "boundary_width_fraction": {
+              "$ref": "#/$defs/metric"
+            },
+            "edge_hit_rate": {
+              "$ref": "#/$defs/metric"
+            },
+            "fallback_rate": {
+              "$ref": "#/$defs/metric"
+            },
+            "flat_profile_rate": {
+              "$ref": "#/$defs/metric"
+            },
+            "multiple_near_optima_rate": {
+              "$ref": "#/$defs/metric"
+            },
+            "collapse_rate": {
+              "$ref": "#/$defs/metric"
+            },
+            "degeneracy_rate": {
+              "$ref": "#/$defs/metric"
+            },
+            "hard_failure_rate": {
+              "$ref": "#/$defs/metric"
+            },
+            "sensitivity_estimands": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "policy_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "bootstrap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "label",
+        "target",
+        "level",
+        "unit",
+        "interval",
+        "resampling_unit",
+        "selection_scope",
+        "percentile_method",
+        "resample_export",
+        "successful_resamples",
+        "requested_resamples",
+        "failed_resamples",
+        "failure_reasons",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "available",
+            "unavailable"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "target": {
+          "const": "full_pipeline_rel_mse_uplift"
+        },
+        "level": {
+          "const": 0.9
+        },
+        "unit": {
+          "const": "fraction"
+        },
+        "interval": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "resampling_unit": {
+          "const": "x_group"
+        },
+        "selection_scope": {
+          "const": "full_pipeline"
+        },
+        "percentile_method": {
+          "type": "string"
+        },
+        "resample_export": {
+          "const": "bootstrap-resamples.csv"
+        },
+        "successful_resamples": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requested_resamples": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "failed_resamples": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failure_reasons": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "available"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "interval": {
+                "type": "array"
+              },
+              "successful_resamples": {
+                "minimum": 160
+              },
+              "reason": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "interval": {
+                "type": "null"
+              },
+              "successful_resamples": {
+                "const": 0
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "canonical_ast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ast_id",
+        "root",
+        "prefix",
+        "node_count"
+      ],
+      "properties": {
+        "ast_id": {
+          "type": "string",
+          "pattern": "^registry_v1:[a-z0-9_]+$"
+        },
+        "root": {
+          "enum": [
+            "parameter",
+            "add"
+          ]
+        },
+        "prefix": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^(?:add|multiply|parameter:[a-z]+|variable:t)$"
+          }
+        },
+        "node_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "affine_transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "offset",
+        "scale",
+        "target_interval",
+        "invertible"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "affine_unit_interval",
+            "affine_center_scale"
+          ]
+        },
+        "offset": {
+          "type": "number"
+        },
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "target_interval": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "invertible": {
+          "const": true
+        }
+      }
+    },
+    "derivative_certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "method",
+        "family_id",
+        "polynomial_degree_after_simplification",
+        "interval",
+        "direction",
+        "analytic_derivative",
+        "critical_points",
+        "minimum_signed_derivative",
+        "domain_margin",
+        "finite_function",
+        "finite_derivative"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "PASS",
+            "UNAVAILABLE"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "family_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "interval": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "polynomial_degree_after_simplification": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 3
+        },
+        "direction": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "analytic_derivative": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "critical_points": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          ]
+        },
+        "minimum_signed_derivative": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "domain_margin": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "finite_function": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "finite_derivative": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "method": {
+                "const": "analytic_family_specific"
+              },
+              "family_id": {
+                "type": "string"
+              },
+              "polynomial_degree_after_simplification": {
+                "type": "integer"
+              },
+              "interval": {
+                "type": "array"
+              },
+              "direction": {
+                "type": "string"
+              },
+              "analytic_derivative": {
+                "type": "string"
+              },
+              "critical_points": {
+                "type": "array"
+              },
+              "minimum_signed_derivative": {
+                "type": "number",
+                "minimum": 0
+              },
+              "domain_margin": {
+                "type": "number",
+                "minimum": 0
+              },
+              "finite_function": {
+                "const": true
+              },
+              "finite_derivative": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "UNAVAILABLE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "method": {
+                "type": "null"
+              },
+              "family_id": {
+                "type": "null"
+              },
+              "polynomial_degree_after_simplification": {
+                "type": "null"
+              },
+              "interval": {
+                "type": "null"
+              },
+              "direction": {
+                "type": "null"
+              },
+              "analytic_derivative": {
+                "type": "null"
+              },
+              "critical_points": {
+                "type": "null"
+              },
+              "minimum_signed_derivative": {
+                "type": "null"
+              },
+              "domain_margin": {
+                "type": "null"
+              },
+              "finite_function": {
+                "type": "null"
+              },
+              "finite_derivative": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "tie_safe_cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cell_id",
+        "lower_x",
+        "upper_x_exclusive",
+        "left_n",
+        "right_n",
+        "left_share",
+        "right_share",
+        "ties_atomic"
+      ],
+      "properties": {
+        "cell_id": {
+          "type": "string",
+          "pattern": "^raw-cell-[0-9]{3}$"
+        },
+        "lower_x": {
+          "type": "number"
+        },
+        "upper_x_exclusive": {
+          "type": "number"
+        },
+        "left_n": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "right_n": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "left_share": {
+          "type": "number",
+          "minimum": 0.4,
+          "maximum": 0.6
+        },
+        "right_share": {
+          "type": "number",
+          "minimum": 0.4,
+          "maximum": 0.6
+        },
+        "ties_atomic": {
+          "const": true
+        }
+      }
+    },
+    "optimizer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strategy",
+        "scope",
+        "status",
+        "reason",
+        "trace_path",
+        "tie_safe_cell_count",
+        "eligible_cell_count",
+        "starts_per_cell",
+        "start_count",
+        "attempt_count",
+        "trace_record_count",
+        "successful_attempt_count",
+        "failed_attempt_count",
+        "evaluation_count",
+        "competing_basin_count",
+        "competing_basin_status",
+        "certificate_result",
+        "reason_codes",
+        "warning_codes"
+      ],
+      "properties": {
+        "strategy": {
+          "const": "PROFILE_CELLS"
+        },
+        "scope": {
+          "const": "full_data_p2_refit"
+        },
+        "status": {
+          "enum": [
+            "SUCCEEDED",
+            "COLLAPSED",
+            "FAILED",
+            "NO_FEASIBLE_CELL",
+            "NOT_RUN"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "trace_path": {
+          "const": "trace/fit-attempts.jsonl.gz"
+        },
+        "tie_safe_cell_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "eligible_cell_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "starts_per_cell": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "start_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempt_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "trace_record_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "successful_attempt_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed_attempt_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evaluation_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "competing_basin_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "competing_basin_status": {
+          "enum": [
+            "NONE",
+            "MULTIPLE_NEAR_OPTIMA",
+            "UNAVAILABLE"
+          ]
+        },
+        "certificate_result": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "reason_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "warning_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "SUCCEEDED",
+                  "COLLAPSED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attempt_count": {
+                "minimum": 1
+              },
+              "trace_record_count": {
+                "minimum": 1
+              },
+              "successful_attempt_count": {
+                "minimum": 1
+              },
+              "certificate_result": {
+                "const": "PASS"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "SUCCEEDED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "reason_codes": {
+                "maxItems": 0
+              },
+              "competing_basin_status": {
+                "enum": [
+                  "NONE",
+                  "MULTIPLE_NEAR_OPTIMA"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "COLLAPSED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "warning_codes": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "FAILED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attempt_count": {
+                "minimum": 1
+              },
+              "failed_attempt_count": {
+                "minimum": 1
+              },
+              "certificate_result": {
+                "enum": [
+                  "FAIL",
+                  "NOT_RUN"
+                ]
+              },
+              "reason_codes": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "NO_FEASIBLE_CELL",
+                  "NOT_RUN"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "starts_per_cell": {
+                "const": 0
+              },
+              "start_count": {
+                "const": 0
+              },
+              "attempt_count": {
+                "const": 0
+              },
+              "trace_record_count": {
+                "const": 0
+              },
+              "successful_attempt_count": {
+                "const": 0
+              },
+              "failed_attempt_count": {
+                "const": 0
+              },
+              "evaluation_count": {
+                "const": 0
+              },
+              "certificate_result": {
+                "const": "NOT_RUN"
+              },
+              "reason_codes": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "NO_FEASIBLE_CELL"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tie_safe_cell_count": {
+                "const": 0
+              },
+              "eligible_cell_count": {
+                "const": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "refit_p1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "registry_version",
+        "registry_role",
+        "incubator_excluded",
+        "family_id",
+        "canonical_ast_id",
+        "canonical_ast",
+        "formula_display",
+        "transforms",
+        "parameters",
+        "domain",
+        "direction",
+        "certificate",
+        "derivative_certificate",
+        "identifiability_status",
+        "bound_status",
+        "collapse_status",
+        "solver_status",
+        "model_structure_hash",
+        "model_instance_hash",
+        "model_path",
+        "r2_fit_all",
+        "rmse_fit_all",
+        "mae_fit_all",
+        "n",
+        "n_unique_x",
+        "plot"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "certified",
+            "failed"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "registry_version": {
+          "const": "registry_v1"
+        },
+        "registry_role": {
+          "const": "core"
+        },
+        "incubator_excluded": {
+          "const": true
+        },
+        "family_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "canonical_ast_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "canonical_ast": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/canonical_ast"
+            }
+          ]
+        },
+        "formula_display": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transforms": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "x",
+                "y"
+              ],
+              "properties": {
+                "x": {
+                  "$ref": "#/$defs/affine_transform"
+                },
+                "y": {
+                  "$ref": "#/$defs/affine_transform"
+                }
+              }
+            }
+          ]
+        },
+        "parameters": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "a",
+                "b"
+              ],
+              "properties": {
+                "a": {
+                  "type": "number"
+                },
+                "b": {
+                  "type": "number"
+                }
+              }
+            }
+          ]
+        },
+        "domain": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "direction": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "certificate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "derivative_certificate": {
+          "$ref": "#/$defs/derivative_certificate"
+        },
+        "identifiability_status": {
+          "enum": [
+            "IDENTIFIED",
+            "CANONICAL_IDENTIFIED",
+            "UNAVAILABLE"
+          ]
+        },
+        "bound_status": {
+          "enum": [
+            "NO_ACTIVE_BOUNDS",
+            "PARAMETER_BOUND_HIT",
+            "UNAVAILABLE"
+          ]
+        },
+        "collapse_status": {
+          "enum": [
+            "NO_COLLAPSE",
+            "CANONICAL_CONSTANT",
+            "COLLAPSED_TO_SIMPLER",
+            "UNAVAILABLE"
+          ]
+        },
+        "solver_status": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED",
+            "NOT_RUN"
+          ]
+        },
+        "model_structure_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_instance_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_path": {
+          "enum": [
+            "models/one-model.json",
+            null
+          ]
+        },
+        "r2_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "n": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "n_unique_x": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "plot": {
+          "$ref": "#/$defs/plot"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "certified"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "family_id": {
+                "type": "string"
+              },
+              "canonical_ast_id": {
+                "type": "string"
+              },
+              "canonical_ast": {
+                "type": "object"
+              },
+              "formula_display": {
+                "type": "string"
+              },
+              "transforms": {
+                "type": "object"
+              },
+              "parameters": {
+                "type": "object"
+              },
+              "domain": {
+                "type": "array"
+              },
+              "direction": {
+                "type": "string"
+              },
+              "certificate": {
+                "const": "PASS"
+              },
+              "derivative_certificate": {
+                "properties": {
+                  "status": {
+                    "const": "PASS"
+                  }
+                }
+              },
+              "identifiability_status": {
+                "enum": [
+                  "IDENTIFIED",
+                  "CANONICAL_IDENTIFIED"
+                ]
+              },
+              "bound_status": {
+                "enum": [
+                  "NO_ACTIVE_BOUNDS",
+                  "PARAMETER_BOUND_HIT"
+                ]
+              },
+              "collapse_status": {
+                "enum": [
+                  "NO_COLLAPSE",
+                  "CANONICAL_CONSTANT",
+                  "COLLAPSED_TO_SIMPLER"
+                ]
+              },
+              "solver_status": {
+                "const": "SUCCEEDED"
+              },
+              "model_structure_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "model_instance_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "model_path": {
+                "const": "models/one-model.json"
+              },
+              "rmse_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "mae_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "n": {
+                "type": "integer"
+              },
+              "n_unique_x": {
+                "type": "integer"
+              },
+              "plot": {
+                "properties": {
+                  "line_present": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "failed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "family_id": {
+                "type": "null"
+              },
+              "canonical_ast_id": {
+                "type": "null"
+              },
+              "canonical_ast": {
+                "type": "null"
+              },
+              "formula_display": {
+                "type": "null"
+              },
+              "transforms": {
+                "type": "null"
+              },
+              "parameters": {
+                "type": "null"
+              },
+              "domain": {
+                "type": "null"
+              },
+              "direction": {
+                "type": "null"
+              },
+              "derivative_certificate": {
+                "properties": {
+                  "status": {
+                    "const": "UNAVAILABLE"
+                  }
+                }
+              },
+              "identifiability_status": {
+                "const": "UNAVAILABLE"
+              },
+              "bound_status": {
+                "const": "UNAVAILABLE"
+              },
+              "collapse_status": {
+                "const": "UNAVAILABLE"
+              },
+              "model_structure_hash": {
+                "type": "null"
+              },
+              "model_instance_hash": {
+                "type": "null"
+              },
+              "model_path": {
+                "type": "null"
+              },
+              "r2_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "rmse_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "mae_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "n": {
+                "type": "null"
+              },
+              "n_unique_x": {
+                "type": "null"
+              },
+              "plot": {
+                "properties": {
+                  "line_present": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "n",
+        "share",
+        "n_unique_x",
+        "span",
+        "r2_fit",
+        "rmse_fit",
+        "mae_fit"
+      ],
+      "properties": {
+        "n": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "share": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0.4,
+          "maximum": 0.6
+        },
+        "n_unique_x": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "span": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "r2_fit": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_fit": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_fit": {
+          "$ref": "#/$defs/metric"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "n": {
+                "type": "integer"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "share": {
+                "type": "number"
+              },
+              "n_unique_x": {
+                "type": "integer"
+              },
+              "span": {
+                "type": "array"
+              },
+              "rmse_fit": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "mae_fit": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "n": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "share": {
+                "type": "null"
+              },
+              "n_unique_x": {
+                "type": "null"
+              },
+              "span": {
+                "type": "null"
+              },
+              "r2_fit": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "rmse_fit": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "mae_fit": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "refit_p2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "registry_version",
+        "registry_role",
+        "incubator_excluded",
+        "family_left",
+        "family_right",
+        "ordered_family_pair",
+        "canonical_ast_left",
+        "canonical_ast_right",
+        "formula_left",
+        "formula_right",
+        "transforms",
+        "parameters",
+        "boundary",
+        "shared_mu",
+        "membership",
+        "membership_cell",
+        "domain",
+        "direction",
+        "continuity_residual",
+        "certificate",
+        "derivative_certificate_left",
+        "derivative_certificate_right",
+        "identifiability_status",
+        "bound_status",
+        "collapse_status",
+        "solver_status",
+        "stability_status",
+        "optimizer",
+        "model_structure_hash",
+        "model_instance_hash",
+        "model_path",
+        "left",
+        "right",
+        "r2_fit_all",
+        "rmse_fit_all",
+        "mae_fit_all",
+        "n",
+        "n_unique_x",
+        "plot"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "certified",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "registry_version": {
+          "const": "registry_v1"
+        },
+        "registry_role": {
+          "const": "core"
+        },
+        "incubator_excluded": {
+          "const": true
+        },
+        "family_left": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "family_right": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ordered_family_pair": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "canonical_ast_left": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/canonical_ast"
+            }
+          ]
+        },
+        "canonical_ast_right": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/canonical_ast"
+            }
+          ]
+        },
+        "formula_left": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "formula_right": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transforms": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "left_x",
+                "right_x",
+                "y"
+              ],
+              "properties": {
+                "left_x": {
+                  "$ref": "#/$defs/affine_transform"
+                },
+                "right_x": {
+                  "$ref": "#/$defs/affine_transform"
+                },
+                "y": {
+                  "$ref": "#/$defs/affine_transform"
+                }
+              }
+            }
+          ]
+        },
+        "parameters": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "c",
+                "mu",
+                "q_left",
+                "q_right"
+              ],
+              "properties": {
+                "c": {
+                  "type": "number"
+                },
+                "mu": {
+                  "type": "number"
+                },
+                "q_left": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "q_right": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          ]
+        },
+        "boundary": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "shared_mu": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "membership": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "membership_cell": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/tie_safe_cell"
+            }
+          ]
+        },
+        "domain": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "direction": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "continuity_residual": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "certificate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "derivative_certificate_left": {
+          "$ref": "#/$defs/derivative_certificate"
+        },
+        "derivative_certificate_right": {
+          "$ref": "#/$defs/derivative_certificate"
+        },
+        "identifiability_status": {
+          "enum": [
+            "IDENTIFIED",
+            "WEAK_IDENTIFIABILITY",
+            "UNAVAILABLE"
+          ]
+        },
+        "bound_status": {
+          "enum": [
+            "NO_ACTIVE_BOUNDS",
+            "PARAMETER_BOUND_HIT",
+            "UNAVAILABLE"
+          ]
+        },
+        "collapse_status": {
+          "enum": [
+            "NO_COLLAPSE",
+            "COLLAPSED_SEGMENTS",
+            "UNAVAILABLE"
+          ]
+        },
+        "solver_status": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED",
+            "NOT_RUN"
+          ]
+        },
+        "stability_status": {
+          "enum": [
+            "STABLE",
+            "UNSTABLE",
+            "UNAVAILABLE"
+          ]
+        },
+        "optimizer": {
+          "$ref": "#/$defs/optimizer"
+        },
+        "model_structure_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_instance_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_path": {
+          "enum": [
+            "models/two-segment-model.json",
+            null
+          ]
+        },
+        "left": {
+          "$ref": "#/$defs/segment"
+        },
+        "right": {
+          "$ref": "#/$defs/segment"
+        },
+        "r2_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "rmse_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "mae_fit_all": {
+          "$ref": "#/$defs/metric"
+        },
+        "n": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "n_unique_x": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "plot": {
+          "$ref": "#/$defs/plot"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "certified"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "family_left": {
+                "type": "string"
+              },
+              "family_right": {
+                "type": "string"
+              },
+              "ordered_family_pair": {
+                "type": "string"
+              },
+              "canonical_ast_left": {
+                "type": "object"
+              },
+              "canonical_ast_right": {
+                "type": "object"
+              },
+              "formula_left": {
+                "type": "string"
+              },
+              "formula_right": {
+                "type": "string"
+              },
+              "transforms": {
+                "type": "object"
+              },
+              "parameters": {
+                "type": "object"
+              },
+              "boundary": {
+                "type": "number"
+              },
+              "shared_mu": {
+                "type": "number"
+              },
+              "membership": {
+                "type": "string"
+              },
+              "membership_cell": {
+                "type": "object"
+              },
+              "domain": {
+                "type": "array"
+              },
+              "direction": {
+                "type": "string"
+              },
+              "continuity_residual": {
+                "const": 0.0
+              },
+              "certificate": {
+                "const": "PASS"
+              },
+              "derivative_certificate_left": {
+                "properties": {
+                  "status": {
+                    "const": "PASS"
+                  }
+                }
+              },
+              "derivative_certificate_right": {
+                "properties": {
+                  "status": {
+                    "const": "PASS"
+                  }
+                }
+              },
+              "identifiability_status": {
+                "enum": [
+                  "IDENTIFIED",
+                  "WEAK_IDENTIFIABILITY"
+                ]
+              },
+              "bound_status": {
+                "enum": [
+                  "NO_ACTIVE_BOUNDS",
+                  "PARAMETER_BOUND_HIT"
+                ]
+              },
+              "collapse_status": {
+                "const": "NO_COLLAPSE"
+              },
+              "solver_status": {
+                "const": "SUCCEEDED"
+              },
+              "stability_status": {
+                "enum": [
+                  "STABLE",
+                  "UNSTABLE"
+                ]
+              },
+              "optimizer": {
+                "properties": {
+                  "status": {
+                    "const": "SUCCEEDED"
+                  },
+                  "certificate_result": {
+                    "const": "PASS"
+                  }
+                }
+              },
+              "model_structure_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "model_instance_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "model_path": {
+                "const": "models/two-segment-model.json"
+              },
+              "rmse_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "mae_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "n": {
+                "type": "integer"
+              },
+              "n_unique_x": {
+                "type": "integer"
+              },
+              "plot": {
+                "properties": {
+                  "line_present": {
+                    "const": true
+                  },
+                  "boundary_present": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "family_left": {
+                "type": "null"
+              },
+              "family_right": {
+                "type": "null"
+              },
+              "ordered_family_pair": {
+                "type": "null"
+              },
+              "canonical_ast_left": {
+                "type": "null"
+              },
+              "canonical_ast_right": {
+                "type": "null"
+              },
+              "formula_left": {
+                "type": "null"
+              },
+              "formula_right": {
+                "type": "null"
+              },
+              "transforms": {
+                "type": "null"
+              },
+              "parameters": {
+                "type": "null"
+              },
+              "boundary": {
+                "type": "null"
+              },
+              "shared_mu": {
+                "type": "null"
+              },
+              "membership": {
+                "type": "null"
+              },
+              "membership_cell": {
+                "type": "null"
+              },
+              "domain": {
+                "type": "null"
+              },
+              "direction": {
+                "type": "null"
+              },
+              "continuity_residual": {
+                "type": "null"
+              },
+              "derivative_certificate_left": {
+                "properties": {
+                  "status": {
+                    "const": "UNAVAILABLE"
+                  }
+                }
+              },
+              "derivative_certificate_right": {
+                "properties": {
+                  "status": {
+                    "const": "UNAVAILABLE"
+                  }
+                }
+              },
+              "identifiability_status": {
+                "const": "UNAVAILABLE"
+              },
+              "bound_status": {
+                "const": "UNAVAILABLE"
+              },
+              "stability_status": {
+                "const": "UNAVAILABLE"
+              },
+              "model_structure_hash": {
+                "type": "null"
+              },
+              "model_instance_hash": {
+                "type": "null"
+              },
+              "model_path": {
+                "type": "null"
+              },
+              "left": {
+                "properties": {
+                  "n": {
+                    "type": "null"
+                  }
+                }
+              },
+              "right": {
+                "properties": {
+                  "n": {
+                    "type": "null"
+                  }
+                }
+              },
+              "r2_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "rmse_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "mae_fit_all": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "n": {
+                "type": "null"
+              },
+              "n_unique_x": {
+                "type": "null"
+              },
+              "plot": {
+                "properties": {
+                  "line_present": {
+                    "const": false
+                  },
+                  "boundary_present": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "diagnostic_flag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "severity",
+        "reason",
+        "threshold",
+        "policy_version",
+        "explanation"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "LARGE_OOF_RESIDUAL",
+            "HIGH_REFIT_INFLUENCE"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "review",
+            "extreme"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "policy_version": {
+          "const": "prototype-policy-v1"
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "diagnostic_scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "status",
+        "reason",
+        "method",
+        "scope"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "defined",
+            "undefined"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "method": {
+          "enum": [
+            "qn_finite_sample",
+            "finite_sample_s_mad"
+          ]
+        },
+        "scope": {
+          "const": "outer_train_inner_oof"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "value": {
+                "type": "number"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "exclusiveMinimum": 0
+              },
+              "status": {
+                "const": "defined"
+              },
+              "reason": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "undefined"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "influence_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x_group_id",
+        "x",
+        "row_ids",
+        "status",
+        "reason",
+        "dmax",
+        "drms",
+        "delta_c",
+        "segment_share_delta",
+        "oof_rmse_relative_delta",
+        "rel_mse_uplift_delta",
+        "full_state",
+        "without_group_state",
+        "recommendation_changed",
+        "decision_changed",
+        "p2_status_changed",
+        "family_changed",
+        "direction_changed",
+        "certificate_changed",
+        "high_refit_influence",
+        "action"
+      ],
+      "properties": {
+        "x_group_id": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "row_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "sensitivity_only",
+            "unassessable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dmax": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "drms": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "delta_c": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "segment_share_delta": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "oof_rmse_relative_delta": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "rel_mse_uplift_delta": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "full_state": {
+          "$ref": "#/$defs/influence_state"
+        },
+        "without_group_state": {
+          "$ref": "#/$defs/influence_state"
+        },
+        "recommendation_changed": {
+          "type": "boolean"
+        },
+        "decision_changed": {
+          "type": "boolean"
+        },
+        "p2_status_changed": {
+          "type": "boolean"
+        },
+        "family_changed": {
+          "type": "boolean"
+        },
+        "direction_changed": {
+          "type": "boolean"
+        },
+        "certificate_changed": {
+          "type": "boolean"
+        },
+        "high_refit_influence": {
+          "type": "boolean"
+        },
+        "action": {
+          "const": "review_only"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "sensitivity_only"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "null"
+              },
+              "dmax": {
+                "type": "number",
+                "minimum": 0
+              },
+              "drms": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "unassessable"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "dmax": {
+                "type": "null"
+              },
+              "drms": {
+                "type": "null"
+              },
+              "delta_c": {
+                "type": "null"
+              },
+              "segment_share_delta": {
+                "type": "null"
+              },
+              "oof_rmse_relative_delta": {
+                "type": "null"
+              },
+              "rel_mse_uplift_delta": {
+                "type": "null"
+              },
+              "high_refit_influence": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "influence_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recommendation",
+        "decision_code",
+        "p2_status",
+        "direction",
+        "family",
+        "certificate"
+      ],
+      "properties": {
+        "recommendation": {
+          "enum": [
+            "one",
+            "two",
+            null
+          ]
+        },
+        "decision_code": {
+          "type": "string"
+        },
+        "p2_status": {
+          "enum": [
+            "certified",
+            "unavailable"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "flat",
+            "nondecreasing",
+            null
+          ]
+        },
+        "family": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "certificate": {
+          "type": "string"
+        }
+      }
+    },
+    "diagnostic_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row_id",
+        "source_row_id",
+        "x",
+        "y",
+        "x_group_id",
+        "segment_refit",
+        "procedure",
+        "oof_prediction_median",
+        "oof_prediction_mean",
+        "oof_prediction_spread",
+        "oof_residual_median",
+        "oof_residual_mean",
+        "oof_residual_spread",
+        "appearance_count",
+        "outer_fold_ids",
+        "robust_scale",
+        "scale_trace_index",
+        "z_median",
+        "z_spread",
+        "score_median_abs_z",
+        "threshold",
+        "flag_rate",
+        "refit_prediction",
+        "refit_residual",
+        "refit_label",
+        "influence_group",
+        "flags",
+        "action"
+      ],
+      "properties": {
+        "row_id": {
+          "type": "string"
+        },
+        "source_row_id": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "x_group_id": {
+          "type": "string"
+        },
+        "segment_refit": {
+          "enum": [
+            "left",
+            "right",
+            null
+          ]
+        },
+        "procedure": {
+          "enum": [
+            "one",
+            "two",
+            null
+          ]
+        },
+        "oof_prediction_median": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "oof_prediction_mean": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "oof_prediction_spread": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "oof_residual_median": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "oof_residual_mean": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "oof_residual_spread": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "appearance_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "outer_fold_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "robust_scale": {
+          "$ref": "#/$defs/diagnostic_scale"
+        },
+        "scale_trace_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "z_median": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "z_spread": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "score_median_abs_z": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "threshold": {
+          "const": 3.5
+        },
+        "flag_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "refit_prediction": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "refit_residual": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "refit_label": {
+          "enum": [
+            "descriptive_final_refit",
+            null
+          ]
+        },
+        "influence_group": {
+          "$ref": "#/$defs/influence_group"
+        },
+        "flags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/diagnostic_flag"
+          }
+        },
+        "action": {
+          "const": "review_only"
+        }
+      }
+    },
+    "repeated_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x_group_id",
+        "x",
+        "n",
+        "mean_y",
+        "median_y",
+        "mean_oof_residual",
+        "median_oof_residual",
+        "within_group_mad_y",
+        "positive_residual_share",
+        "negative_residual_share",
+        "group_systematic_residual",
+        "action"
+      ],
+      "properties": {
+        "x_group_id": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "n": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mean_y": {
+          "type": "number"
+        },
+        "median_y": {
+          "type": "number"
+        },
+        "mean_oof_residual": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "median_oof_residual": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "within_group_mad_y": {
+          "type": "number",
+          "minimum": 0
+        },
+        "positive_residual_share": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "negative_residual_share": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "group_systematic_residual": {
+          "type": "boolean"
+        },
+        "action": {
+          "const": "review_only"
+        }
+      }
+    },
+    "diagnostic_scale_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row_id",
+        "x_group_id",
+        "procedure",
+        "status",
+        "reason",
+        "estimator",
+        "scope",
+        "global_scale",
+        "bin_count",
+        "target_bin_id",
+        "target_bin_group_ids",
+        "raw_local_scale",
+        "local_floor",
+        "final_scale",
+        "zero_tolerance",
+        "training_sample_count",
+        "local_sample_count"
+      ],
+      "properties": {
+        "row_id": {
+          "type": "string"
+        },
+        "x_group_id": {
+          "type": "string"
+        },
+        "procedure": {
+          "enum": [
+            "one",
+            "two"
+          ]
+        },
+        "status": {
+          "enum": [
+            "defined",
+            "undefined",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "estimator": {
+          "enum": [
+            "qn_finite_sample",
+            "finite_sample_s_mad"
+          ]
+        },
+        "scope": {
+          "const": "outer_train_inner_oof"
+        },
+        "global_scale": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "bin_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "target_bin_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_bin_group_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "raw_local_scale": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "local_floor": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "final_scale": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "zero_tolerance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "training_sample_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "local_sample_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "diagnostic_pattern": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "status",
+        "observed",
+        "threshold",
+        "reason",
+        "action"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "SYSTEMATIC_OOF_RESIDUAL",
+            "HETEROSCEDASTIC_PATTERN",
+            "BREAKPOINT_LOCAL_BIAS"
+          ]
+        },
+        "status": {
+          "enum": [
+            "triggered",
+            "not_triggered",
+            "unavailable"
+          ]
+        },
+        "observed": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "threshold": {
+          "type": "string"
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "action": {
+          "const": "review_only"
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy",
+        "oof",
+        "rows",
+        "scale_traces",
+        "repeated_x_groups",
+        "pure_error_lack_of_fit",
+        "patterns",
+        "influence",
+        "influence_groups",
+        "flagged_rows"
+      ],
+      "properties": {
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version",
+            "tau_z",
+            "extreme_tau_z",
+            "persistent_flag_rate",
+            "scale_estimators",
+            "local_bin_rule",
+            "local_floor_factor",
+            "zero_scale_tolerance_rule",
+            "influence_thresholds"
+          ],
+          "properties": {
+            "version": {
+              "const": "prototype-policy-v1"
+            },
+            "tau_z": {
+              "const": 3.5
+            },
+            "extreme_tau_z": {
+              "const": 5.25
+            },
+            "persistent_flag_rate": {
+              "const": 0.5
+            },
+            "scale_estimators": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "type": "string"
+              }
+            },
+            "local_bin_rule": {
+              "type": "string"
+            },
+            "local_floor_factor": {
+              "const": 0.5
+            },
+            "zero_scale_tolerance_rule": {
+              "type": "string"
+            },
+            "influence_thresholds": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "oof": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason",
+            "procedure",
+            "residual_definition",
+            "prediction_count",
+            "appearance_export",
+            "scale_trace_export",
+            "threshold",
+            "scale_method",
+            "scale_scope",
+            "separate_from_refit_influence",
+            "plot"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "available",
+                "unavailable"
+              ]
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "procedure": {
+              "enum": [
+                "one",
+                "two",
+                null
+              ]
+            },
+            "residual_definition": {
+              "type": "string"
+            },
+            "prediction_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "appearance_export": {
+              "const": "diagnostic-appearances.csv"
+            },
+            "scale_trace_export": {
+              "const": "diagnostic-scale-trace.csv"
+            },
+            "threshold": {
+              "const": 3.5
+            },
+            "scale_method": {
+              "const": "qn_then_mad_fallback"
+            },
+            "scale_scope": {
+              "const": "outer_train_inner_oof"
+            },
+            "separate_from_refit_influence": {
+              "const": true
+            },
+            "plot": {
+              "type": "object",
+              "required": [
+                "path",
+                "status",
+                "panels"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "const": "figures/residuals.svg"
+                },
+                "status": {
+                  "enum": [
+                    "four_separate_panels",
+                    "typed_unavailable_with_descriptive_refit"
+                  ]
+                },
+                "panels": {
+                  "type": "array",
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "const": "available"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "reason": {
+                    "type": "null"
+                  },
+                  "procedure": {
+                    "enum": [
+                      "one",
+                      "two"
+                    ]
+                  },
+                  "prediction_count": {
+                    "minimum": 1
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "const": "unavailable"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "procedure": {
+                    "type": "null"
+                  },
+                  "prediction_count": {
+                    "const": 0
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/diagnostic_row"
+          }
+        },
+        "scale_traces": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/diagnostic_scale_trace"
+          }
+        },
+        "repeated_x_groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/repeated_group"
+          }
+        },
+        "pure_error_lack_of_fit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason",
+            "procedure",
+            "sse_total",
+            "sse_pure_error",
+            "sse_lack_of_fit",
+            "test_performed"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "descriptive",
+                "unavailable"
+              ]
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "procedure": {
+              "enum": [
+                "one",
+                "two",
+                null
+              ]
+            },
+            "sse_total": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "sse_pure_error": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "sse_lack_of_fit": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "test_performed": {
+              "const": false
+            }
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/diagnostic_pattern"
+          }
+        },
+        "influence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "method",
+            "scope",
+            "grid_export",
+            "evaluation_grid_size",
+            "thresholds",
+            "group_count",
+            "flagged_group_count",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "available",
+                "unavailable"
+              ]
+            },
+            "method": {
+              "type": "string"
+            },
+            "scope": {
+              "const": "sensitivity_only"
+            },
+            "grid_export": {
+              "const": "influence-grid.csv"
+            },
+            "evaluation_grid_size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "thresholds": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "group_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "flagged_group_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "influence_groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/influence_group"
+          }
+        },
+        "flagged_rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "row_id",
+              "flag_codes",
+              "flags",
+              "action",
+              "diagnostic_row_index"
+            ],
+            "properties": {
+              "row_id": {
+                "type": "string"
+              },
+              "flag_codes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "LARGE_OOF_RESIDUAL",
+                    "HIGH_REFIT_INFLUENCE"
+                  ]
+                }
+              },
+              "flags": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/diagnostic_flag"
+                }
+              },
+              "action": {
+                "const": "review_only"
+              },
+              "diagnostic_row_index": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "visualization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "geometry",
+        "palette"
+      ],
+      "properties": {
+        "geometry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "view_box",
+            "plot_rect",
+            "xlim",
+            "ylim",
+            "x_ticks",
+            "y_ticks"
+          ],
+          "properties": {
+            "view_box": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "plot_rect": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "xlim": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "ylim": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "x_ticks": {
+              "type": "integer",
+              "minimum": 2
+            },
+            "y_ticks": {
+              "type": "integer",
+              "minimum": 2
+            }
+          }
+        },
+        "palette": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "model",
+            "boundary",
+            "point",
+            "text",
+            "grid"
+          ],
+          "properties": {
+            "model": {
+              "type": "string"
+            },
+            "boundary": {
+              "type": "string"
+            },
+            "point": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            },
+            "grid": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": {
+              "role": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {
+                "const": "NO_VALIDATED_RECOMMENDATION"
+              }
+            }
+          },
+          "decision": {
+            "properties": {
+              "recommended_procedure": {
+                "type": "null"
+              }
+            }
+          },
+          "recommendation": {
+            "properties": {
+              "model_preview_path": {
+                "type": "null"
+              },
+              "formula_display": {
+                "type": "null"
+              },
+              "domain": {
+                "type": "null"
+              },
+              "extrapolation": {
+                "type": "null"
+              },
+              "global_primary_r2_oos": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "global_primary_rmse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              },
+              "global_primary_mae_oof": {
+                "properties": {
+                  "value": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": {
+              "role": {
+                "const": "one"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {
+                "const": "ONE_RECOMMENDED"
+              }
+            }
+          },
+          "decision": {
+            "properties": {
+              "recommended_procedure": {
+                "const": "one"
+              }
+            }
+          },
+          "recommendation": {
+            "properties": {
+              "model_preview_path": {
+                "const": "models/one-model-preview.json"
+              },
+              "formula_display": {
+                "type": "string"
+              },
+              "domain": {
+                "type": "array"
+              },
+              "extrapolation": {
+                "const": "forbidden"
+              },
+              "global_primary_rmse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "global_primary_mae_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "validation": {
+            "properties": {
+              "repetitions": {
+                "minimum": 1
+              },
+              "procedures": {
+                "properties": {
+                  "p1": {
+                    "properties": {
+                      "status": {
+                        "const": "valid"
+                      }
+                    }
+                  }
+                }
+              },
+              "decision_gates": {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "status"
+                  ],
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "fail",
+                        "unavailable"
+                      ]
+                    }
+                  }
+                },
+                "minContains": 1
+              }
+            }
+          },
+          "refit": {
+            "properties": {
+              "p1": {
+                "properties": {
+                  "status": {
+                    "const": "certified"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": {
+              "role": {
+                "const": "two"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "properties": {
+              "recommendation_status": {
+                "const": "TWO_RECOMMENDED"
+              }
+            }
+          },
+          "decision": {
+            "properties": {
+              "recommended_procedure": {
+                "const": "two"
+              }
+            }
+          },
+          "recommendation": {
+            "properties": {
+              "model_preview_path": {
+                "const": "models/two-model-preview.json"
+              },
+              "formula_display": {
+                "type": "string"
+              },
+              "domain": {
+                "type": "array"
+              },
+              "extrapolation": {
+                "const": "forbidden"
+              },
+              "global_primary_r2_oos": {
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  }
+                }
+              },
+              "global_primary_rmse_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "global_primary_mae_oof": {
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "validation": {
+            "properties": {
+              "repetitions": {
+                "minimum": 1
+              },
+              "procedures": {
+                "properties": {
+                  "p1": {
+                    "properties": {
+                      "status": {
+                        "const": "valid"
+                      }
+                    }
+                  },
+                  "p2": {
+                    "properties": {
+                      "status": {
+                        "enum": [
+                          "valid",
+                          "fallback"
+                        ]
+                      },
+                      "full_data_refit_status": {
+                        "const": "certified"
+                      },
+                      "fallback_rate": {
+                        "properties": {
+                          "value": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 0.1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "decision_gates": {
+                "prefixItems": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "const": "pass"
+                      }
+                    }
+                  }
+                ],
+                "items": false
+              }
+            }
+          },
+          "refit": {
+            "properties": {
+              "p1": {
+                "properties": {
+                  "status": {
+                    "const": "certified"
+                  }
+                }
+              },
+              "p2": {
+                "properties": {
+                  "status": {
+                    "const": "certified"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "properties": {
+              "analysis_status": {
+                "const": "FAILED"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": {
+              "role": {
+                "type": "null"
+              }
+            }
+          },
+          "refit": {
+            "properties": {
+              "p1": {
+                "properties": {
+                  "status": {
+                    "const": "failed"
+                  }
+                }
+              },
+              "p2": {
+                "properties": {
+                  "status": {
+                    "const": "unavailable"
+                  }
+                }
+              }
+            }
+          },
+          "validation": {
+            "properties": {
+              "repetitions": {
+                "const": 0
+              },
+              "procedures": {
+                "properties": {
+                  "p1": {
+                    "properties": {
+                      "status": {
+                        "const": "failed"
+                      }
+                    }
+                  },
+                  "p2": {
+                    "properties": {
+                      "status": {
+                        "const": "failed"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

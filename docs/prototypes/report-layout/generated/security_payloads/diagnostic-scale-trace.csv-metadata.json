@@ -1,0 +1,74 @@
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "diagnostic-scale-trace.csv",
+  "dc:title": "PROTOTYPE synthetic outer-train residual samples and robust-scale trace",
+  "dialect": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "lineTerminators": [
+      "\n"
+    ],
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "header": true,
+    "null": [
+      ""
+    ]
+  },
+  "tableSchema": {
+    "columns": [
+      {
+        "name": "trace_id"
+      },
+      {
+        "name": "row_id"
+      },
+      {
+        "name": "procedure"
+      },
+      {
+        "name": "training_row_id"
+      },
+      {
+        "name": "training_x_group_id"
+      },
+      {
+        "name": "sample_residual"
+      },
+      {
+        "name": "center_median"
+      },
+      {
+        "name": "estimator"
+      },
+      {
+        "name": "bin_count"
+      },
+      {
+        "name": "target_bin_id"
+      },
+      {
+        "name": "in_target_bin"
+      },
+      {
+        "name": "raw_local_scale"
+      },
+      {
+        "name": "local_floor"
+      },
+      {
+        "name": "computed_scale"
+      },
+      {
+        "name": "zero_tolerance"
+      },
+      {
+        "name": "scale_status"
+      },
+      {
+        "name": "scale_reason"
+      }
+    ]
+  },
+  "identifierEncoding": "id: + UTF-8 percent encoding"
+}

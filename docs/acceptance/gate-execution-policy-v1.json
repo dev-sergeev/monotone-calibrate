@@ -1,0 +1,46 @@
+{
+  "schema_version": "gate-execution-policy-v1",
+  "policy_id": "monotone-calibrate-gate-execution-v1",
+  "required_platforms": [
+    "macOS 14 or newer, arm64, CPython 3.12",
+    "Ubuntu 24.04 LTS, x86_64, CPython 3.12"
+  ],
+  "execution_context": {
+    "working_directory": ".",
+    "source_materialization": "canonical-source-zip-v1",
+    "runner": ".venv/bin/python",
+    "environment": {
+      "LC_ALL": "C",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONHASHSEED": "0",
+      "PYTHONUTF8": "1",
+      "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    }
+  },
+  "gates": [
+    {"gate_id": "DATA-CONTRACT-001", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/acceptance/test_data_contract.py"], "source_targets": ["tests/acceptance/test_data_contract.py"], "test_ids": ["DATA-CONTRACT-001::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"},
+    {"gate_id": "MODEL-CONTRACT-002", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/acceptance/test_model_registry.py"], "source_targets": ["tests/acceptance/test_model_registry.py"], "test_ids": ["MODEL-CONTRACT-002::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"},
+    {"gate_id": "STAT-CALIBRATION-003", "executor_kind": "python_workflow", "argv": [".venv/bin/python", "-I", "tools/run_acceptance.py", "--suite", "statistical-calibration"], "source_targets": ["tools/run_acceptance.py"], "test_ids": ["STAT-CALIBRATION-003::contract-v1"], "tolerance_policy": "simulation-operating-characteristics-v1"},
+    {"gate_id": "CLI-E2E-004", "executor_kind": "python_workflow", "argv": [".venv/bin/python", "-I", "tools/run_acceptance.py", "--suite", "cli-e2e"], "source_targets": ["tools/run_acceptance.py"], "test_ids": ["CLI-E2E-004::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"},
+    {"gate_id": "OPS-NET-005", "executor_kind": "python_workflow", "argv": [".venv/bin/python", "-I", "tools/run_acceptance.py", "--suite", "ops-network"], "source_targets": ["tools/run_acceptance.py"], "test_ids": ["OPS-NET-005::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "INPUT-SNAPSHOT-006", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/security/test_input_snapshot.py"], "source_targets": ["tests/security/test_input_snapshot.py"], "test_ids": ["INPUT-SNAPSHOT-006::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "ADMISSION-007", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/acceptance/test_admission.py"], "source_targets": ["tests/acceptance/test_admission.py"], "test_ids": ["ADMISSION-007::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "PUBLICATION-008", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/security/test_atomic_publication.py"], "source_targets": ["tests/security/test_atomic_publication.py"], "test_ids": ["PUBLICATION-008::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "CHECKPOINT-009", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/acceptance/test_checkpoint_resume.py"], "source_targets": ["tests/acceptance/test_checkpoint_resume.py"], "test_ids": ["CHECKPOINT-009::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"},
+    {"gate_id": "FAILURE-EXIT-010", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/acceptance/test_exit_matrix.py"], "source_targets": ["tests/acceptance/test_exit_matrix.py"], "test_ids": ["FAILURE-EXIT-010::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "VERIFY-011", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/security/test_verify_fail_closed.py"], "source_targets": ["tests/security/test_verify_fail_closed.py"], "test_ids": ["VERIFY-011::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"},
+    {"gate_id": "PREDICT-012", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/acceptance/test_predict_contract.py"], "source_targets": ["tests/acceptance/test_predict_contract.py"], "test_ids": ["PREDICT-012::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"},
+    {"gate_id": "REPORT-SEC-013", "executor_kind": "python_workflow", "argv": [".venv/bin/python", "-I", "tools/run_acceptance.py", "--suite", "report-security"], "source_targets": ["tools/run_acceptance.py"], "test_ids": ["REPORT-SEC-013::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "PRIVACY-014", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/security/test_sensitive_boundaries.py"], "source_targets": ["tests/security/test_sensitive_boundaries.py"], "test_ids": ["PRIVACY-014::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "IDENTITY-015", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/contracts/test_identity_goldens.py"], "source_targets": ["tests/contracts/test_identity_goldens.py"], "test_ids": ["IDENTITY-015::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "REPLAY-016", "executor_kind": "python_workflow", "argv": [".venv/bin/python", "-I", "tools/run_acceptance.py", "--suite", "replay"], "source_targets": ["tools/run_acceptance.py"], "test_ids": ["REPLAY-016::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"},
+    {"gate_id": "XPLAT-017", "executor_kind": "python_workflow", "argv": [".venv/bin/python", "-I", "tools/run_acceptance.py", "--suite", "cross-platform"], "source_targets": ["tools/run_acceptance.py"], "test_ids": ["XPLAT-017::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"},
+    {"gate_id": "CSVW-018", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/acceptance/test_csvw_contract.py"], "source_targets": ["tests/acceptance/test_csvw_contract.py"], "test_ids": ["CSVW-018::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "BENCHMARK-019", "executor_kind": "python_workflow", "argv": [".venv/bin/python", "-I", "tools/benchmark.py", "--full", "--evidence", "evidence/acceptance/BENCHMARK-019.json"], "source_targets": ["tools/benchmark.py"], "test_ids": ["BENCHMARK-019::contract-v1"], "tolerance_policy": null},
+    {"gate_id": "LLM-ADVISOR-020", "executor_kind": "pytest", "argv": [".venv/bin/python", "-I", "-m", "pytest", "-p", "no:cacheprovider", "tests/acceptance/test_llm_advisor.py", "tests/security/test_llm_secrets_network.py"], "source_targets": ["tests/acceptance/test_llm_advisor.py", "tests/security/test_llm_secrets_network.py"], "test_ids": ["LLM-ADVISOR-020::contract-v1"], "tolerance_policy": "numeric-acceptance-v1"}
+  ]
+}

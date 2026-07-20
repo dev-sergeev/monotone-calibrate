@@ -1,0 +1,143 @@
+{
+  "$schema": "urn:monotone-calibrate:csvw-contract:v1",
+  "contract_id": "csvw-contract-v1",
+  "context_token": "http://www.w3.org/ns/csvw",
+  "context_network_policy": "The token is recognized locally and is never fetched.",
+  "dialect": {
+    "delimiter": ",",
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "encoding": "utf-8",
+    "header": true,
+    "lineTerminators": ["\n"],
+    "null": [""]
+  },
+  "identifier_encoding": {
+    "name": "id-percent-v1",
+    "prefix": "id:",
+    "unescaped_ascii": "A-Za-z0-9._~-",
+    "percent_hex_case": "uppercase",
+    "percent_is_always_encoded": true,
+    "round_trip": "Remove id:, percent-decode bytes, decode strict UTF-8 and compare exactly with logical identifier."
+  },
+  "tables": {
+    "observations.csv": {
+      "primaryKey": ["row_id"],
+      "columns": [
+        {"name": "row_id", "datatype": "string", "nullable": false, "semantic": "canonical logical row identifier", "identifier": true},
+        {"name": "source_row_id", "datatype": "string", "nullable": true, "semantic": "original external identifier", "identifier": true},
+        {"name": "source_position", "datatype": "integer", "nullable": false, "minimum": 1, "semantic": "one-based logical data-record position"},
+        {"name": "input_status", "datatype": "string", "nullable": false, "enum": ["USED", "EXCLUDED"]},
+        {"name": "reason_codes", "datatype": "string", "nullable": false, "format": "space-separated stable codes"},
+        {"name": "x", "datatype": "double", "nullable": true, "unit_ref": "x_unit"},
+        {"name": "y", "datatype": "double", "nullable": true, "unit_ref": "y_unit"},
+        {"name": "x_group_id", "datatype": "string", "nullable": true, "identifier": true, "format": "^xg:f64:[0-9a-f]{16}$", "maxLength": 23},
+        {"name": "exact_duplicate_group_id", "datatype": "string", "nullable": true, "identifier": true},
+        {"name": "recommended_segment", "datatype": "string", "nullable": true, "enum": ["single", "left", "right"]},
+        {"name": "oof_flag_codes", "datatype": "string", "nullable": false, "format": "space-separated stable codes"},
+        {"name": "action", "datatype": "string", "nullable": true, "enum": ["review_only"]}
+      ]
+    },
+    "oof-appearances.csv.gz": {
+      "primaryKey": ["row_id", "procedure", "repetition"],
+      "columns": [
+        {"name": "row_id", "datatype": "string", "nullable": false, "identifier": true},
+        {"name": "procedure", "datatype": "string", "nullable": false, "enum": ["P1", "P2"]},
+        {"name": "repetition", "datatype": "integer", "nullable": false, "minimum": 0},
+        {"name": "outer_fold_id", "datatype": "string", "nullable": false, "identifier": true},
+        {"name": "x_group_id", "datatype": "string", "nullable": false, "identifier": true, "format": "^xg:f64:[0-9a-f]{16}$", "maxLength": 23},
+        {"name": "x", "datatype": "double", "nullable": false, "unit_ref": "x_unit"},
+        {"name": "y", "datatype": "double", "nullable": false, "unit_ref": "y_unit"},
+        {"name": "prediction", "datatype": "double", "nullable": true, "unit_ref": "y_unit"},
+        {"name": "residual", "datatype": "double", "nullable": true, "unit_ref": "y_unit"},
+        {"name": "robust_scale", "datatype": "double", "nullable": true, "unit_ref": "y_unit"},
+        {"name": "standardized_residual", "datatype": "double", "nullable": true, "unit": "1"},
+        {"name": "segment", "datatype": "string", "nullable": true, "enum": ["single", "left", "right"]},
+        {"name": "procedure_status", "datatype": "string", "nullable": false},
+        {"name": "fallback_code", "datatype": "string", "nullable": true}
+      ]
+    },
+    "p2-stability-outer-fits.csv.gz": {
+      "primaryKey": ["repetition", "outer_fold_id"],
+      "columns": [
+        {"name": "repetition", "datatype": "integer", "nullable": false, "minimum": 0},
+        {"name": "outer_fold_id", "datatype": "string", "nullable": false, "identifier": true},
+        {"name": "split_id", "datatype": "string", "nullable": false, "identifier": true},
+        {"name": "status", "datatype": "string", "nullable": false},
+        {"name": "fallback_code", "datatype": "string", "nullable": true},
+        {"name": "direction", "datatype": "string", "nullable": true, "enum": ["increasing", "decreasing", "flat"]},
+        {"name": "family_left", "datatype": "string", "nullable": true},
+        {"name": "family_right", "datatype": "string", "nullable": true},
+        {"name": "membership_cell_id", "datatype": "string", "nullable": true, "identifier": true},
+        {"name": "breakpoint", "datatype": "double", "nullable": true, "unit_ref": "x_unit"},
+        {"name": "left_n", "datatype": "integer", "nullable": true, "minimum": 0},
+        {"name": "right_n", "datatype": "integer", "nullable": true, "minimum": 0},
+        {"name": "rel_mse_uplift", "datatype": "double", "nullable": true, "unit": "1"},
+        {"name": "reason_codes", "datatype": "string", "nullable": false, "format": "space-separated stable codes"}
+      ]
+    },
+    "bootstrap-resamples.csv.gz": {
+      "primaryKey": ["resample_id"],
+      "columns": [
+        {"name": "resample_id", "datatype": "string", "nullable": false, "identifier": true},
+        {"name": "seed", "datatype": "integer", "nullable": false, "minimum": 0},
+        {"name": "status", "datatype": "string", "nullable": false, "enum": ["SUCCESS", "FAILED"]},
+        {"name": "n_distinct_x_groups", "datatype": "integer", "nullable": false, "minimum": 0},
+        {"name": "sampled_x_group_multiplicities_json", "datatype": "string", "nullable": false, "format": "compact RFC 8259 JSON array of [x_group_id,multiplicity] pairs in canonical x-group order; zero-multiplicity groups are omitted"},
+        {"name": "p2_fallback_rate", "datatype": "double", "nullable": true, "minimum": 0, "maximum": 1, "unit": "1"},
+        {"name": "rel_mse_uplift", "datatype": "double", "nullable": true, "unit": "1"},
+        {"name": "reason_code", "datatype": "string", "nullable": true}
+      ]
+    },
+    "influence-groups.csv": {
+      "primaryKey": ["x_group_id"],
+      "columns": [
+        {"name": "x_group_id", "datatype": "string", "nullable": false, "identifier": true, "format": "^xg:f64:[0-9a-f]{16}$", "maxLength": 23},
+        {"name": "x", "datatype": "double", "nullable": false, "unit_ref": "x_unit"},
+        {"name": "member_count", "datatype": "integer", "nullable": false, "minimum": 1},
+        {"name": "status", "datatype": "string", "nullable": false},
+        {"name": "dmax", "datatype": "double", "nullable": true, "unit": "1"},
+        {"name": "drms", "datatype": "double", "nullable": true, "unit": "1"},
+        {"name": "delta_c", "datatype": "double", "nullable": true, "unit": "1"},
+        {"name": "delta_share", "datatype": "double", "nullable": true, "unit": "1"},
+        {"name": "parameter_delta_status", "datatype": "string", "nullable": false, "enum": ["DEFINED", "UNAVAILABLE"]},
+        {"name": "parameter_delta_linf_relative", "datatype": "double", "nullable": true, "minimum": 0, "unit": "1"},
+        {"name": "parameter_deltas_json", "datatype": "string", "nullable": false, "format": "compact strict RFC 8259 JSON array in model-role/segment/parameter order; each record has model_role, segment_id, parameter_name, tagged full_value/leave_group_value/absolute_delta/relative_delta or null, transform_changed and status"},
+        {"name": "certificate_changes", "datatype": "string", "nullable": false, "format": "space-separated stable certificate/failure transition codes"},
+        {"name": "flag_codes", "datatype": "string", "nullable": false, "format": "space-separated stable codes"},
+        {"name": "action", "datatype": "string", "nullable": false, "enum": ["review_only"]}
+      ]
+    },
+    "plot-data.csv": {
+      "primaryKey": ["series_id", "point_index"],
+      "columns": [
+        {"name": "series_id", "datatype": "string", "nullable": false, "identifier": true},
+        {"name": "point_index", "datatype": "integer", "nullable": false, "minimum": 0},
+        {"name": "series_role", "datatype": "string", "nullable": false, "enum": ["observation", "p1_line", "p2_left_line", "p2_right_line", "residual", "influence"]},
+        {"name": "row_id", "datatype": "string", "nullable": true, "identifier": true},
+        {"name": "x", "datatype": "double", "nullable": false, "unit_ref": "x_unit"},
+        {"name": "y", "datatype": "double", "nullable": true, "unit_ref": "y_unit"},
+        {"name": "segment", "datatype": "string", "nullable": true, "enum": ["single", "left", "right"]},
+        {"name": "flag_codes", "datatype": "string", "nullable": false, "format": "space-separated stable codes"}
+      ]
+    },
+    "predictions.csv": {
+      "primaryKey": ["row_id"],
+      "columns": [
+        {"name": "row_id", "datatype": "string", "nullable": false, "identifier": true},
+        {"name": "x", "datatype": "double", "nullable": true, "unit_ref": "x_unit"},
+        {"name": "prediction", "datatype": "double", "nullable": true, "unit_ref": "y_unit"},
+        {"name": "status", "datatype": "string", "nullable": false, "enum": ["PREDICTED", "OUT_OF_DOMAIN", "INVALID_X"]},
+        {"name": "reason", "datatype": "string", "nullable": true}
+      ]
+    }
+  },
+  "metadata_requirements": {
+    "url": "exact sibling data filename",
+    "tableSchema": "must exactly reproduce the matching table definition above",
+    "x_unit_y_unit": "resolved literal strings, unspecified when absent",
+    "foreign_context_fetch": false,
+    "gzip": "metadata url names the .csv.gz payload; contentEncoding is gzip",
+    "column_order": "exact and closed; unknown/missing/reordered columns fail verification"
+  }
+}

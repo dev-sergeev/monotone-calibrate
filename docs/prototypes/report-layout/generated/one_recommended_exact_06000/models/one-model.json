@@ -1,0 +1,117 @@
+{
+  "model_schema_version": "prototype-final-refit-dossier-1.0.0",
+  "prototype_only": true,
+  "usable_for_prediction": false,
+  "notice": "SYNTHETIC FINAL-REFIT DOSSIER; not recommended-model.json",
+  "report_id": "prototype-one_recommended_exact_06000",
+  "role": "one",
+  "registry_version": "registry_v1",
+  "refit": {
+    "status": "certified",
+    "reason": null,
+    "registry_version": "registry_v1",
+    "registry_role": "core",
+    "incubator_excluded": true,
+    "family_id": "poly1_v1",
+    "canonical_ast_id": "registry_v1:poly1_v1",
+    "canonical_ast": {
+      "ast_id": "registry_v1:poly1_v1",
+      "root": "add",
+      "prefix": [
+        "add",
+        "parameter:a",
+        "multiply",
+        "parameter:b",
+        "variable:t"
+      ],
+      "node_count": 5
+    },
+    "formula_display": "f(x) = 1.25 + 7.04 * ((x - 0.0) / 11.0)",
+    "transforms": {
+      "x": {
+        "kind": "affine_unit_interval",
+        "offset": 0.0,
+        "scale": 11.0,
+        "target_interval": [
+          0.0,
+          1.0
+        ],
+        "invertible": true
+      },
+      "y": {
+        "kind": "affine_center_scale",
+        "offset": 4.665,
+        "scale": 3.4149999999999983,
+        "target_interval": null,
+        "invertible": true
+      }
+    },
+    "parameters": {
+      "a": 1.25,
+      "b": 7.04
+    },
+    "domain": [
+      0.0,
+      11.0
+    ],
+    "direction": "nondecreasing",
+    "certificate": "PASS",
+    "derivative_certificate": {
+      "status": "PASS",
+      "reason": null,
+      "method": "analytic_family_specific",
+      "family_id": "poly1_v1",
+      "polynomial_degree_after_simplification": 1,
+      "interval": [
+        0.0,
+        11.0
+      ],
+      "direction": "nondecreasing",
+      "analytic_derivative": "0.64",
+      "critical_points": [],
+      "minimum_signed_derivative": 0.64,
+      "domain_margin": 1.0,
+      "finite_function": true,
+      "finite_derivative": true
+    },
+    "identifiability_status": "IDENTIFIED",
+    "bound_status": "NO_ACTIVE_BOUNDS",
+    "collapse_status": "NO_COLLAPSE",
+    "solver_status": "SUCCEEDED",
+    "model_structure_hash": "c3344cbfcf4b6d6e4491a3ea0ad6e8e79d398b4eb53efd4a585e84446768cf66",
+    "model_instance_hash": "4b5e73572a2e8aa79f9daf1f1eafd3d3350e200f810ea36fc5fcd69cceeb80e0",
+    "model_path": "models/one-model.json",
+    "r2_fit_all": {
+      "value": 0.9961006551826859,
+      "status": "defined",
+      "reason": null,
+      "scope": "in_sample",
+      "definition": "in_sample_sse",
+      "unit": "1"
+    },
+    "rmse_fit_all": {
+      "value": 0.13496913227351914,
+      "status": "defined",
+      "reason": null,
+      "scope": "in_sample",
+      "definition": "root_mean_squared_full_data_refit_error",
+      "unit": "mV"
+    },
+    "mae_fit_all": {
+      "value": 0.11666666666666677,
+      "status": "defined",
+      "reason": null,
+      "scope": "in_sample",
+      "definition": "mean_absolute_full_data_refit_error",
+      "unit": "mV"
+    },
+    "n": 12,
+    "n_unique_x": 12,
+    "plot": {
+      "path": "figures/one-function.svg",
+      "status": "line_and_points",
+      "line_present": true
+    }
+  },
+  "extrapolation": "forbidden"
+}

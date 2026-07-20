@@ -1,0 +1,15 @@
+{
+  "request_schema_version": "prototype-synthetic-request-v1",
+  "logical_adapter_version": "prototype-synthetic-input-v1",
+  "result_bearing_scenario": {
+    "decision_reason": "CLEAR_PRACTICAL_UPLIFT",
+    "invalid_row": true,
+    "profile": "two",
+    "r2_one": 0.43,
+    "r2_two": 0.5996,
+    "recommendation": "two",
+    "synthetic_influence_dmax_by_x": {
+      "7": 0.6
+    }
+  }
+}

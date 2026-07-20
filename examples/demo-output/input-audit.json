@@ -1,0 +1,24 @@
+{
+  "exclusions": [
+    {
+      "external_row_id": "demo-invalid-x",
+      "raw_x": "not-a-number",
+      "raw_y": "5.0",
+      "reason_codes": [
+        "INVALID_X"
+      ],
+      "row_id": "demo-invalid-x",
+      "source_row": 31
+    },
+    {
+      "external_row_id": "demo-missing-y",
+      "raw_x": "30",
+      "raw_y": "",
+      "reason_codes": [
+        "MISSING_Y"
+      ],
+      "row_id": "demo-missing-y",
+      "source_row": 32
+    }
+  ]
+}

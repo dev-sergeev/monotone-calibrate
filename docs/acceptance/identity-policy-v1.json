@@ -1,0 +1,153 @@
+{
+  "$schema": "urn:monotone-calibrate:identity-policy:v1",
+  "policy_id": "canonical-hash-json-v1",
+  "canonical_json": {
+    "encoding": "UTF-8 without BOM and without a trailing line feed for identity preimages",
+    "objects": "reject duplicate keys; emit keys in ascending Unicode scalar-value order; no insignificant whitespace",
+    "arrays": "preserve the semantic order declared by the projection; never sort observations, parameters or segments after projection",
+    "strings": "NFC-normalize only fields explicitly marked result-bearing metadata; logical row_id is never an identity preimage except inside already-hashed ledgers",
+    "integers": "canonical base-10 JSON integer with no leading zero and no negative zero",
+    "binary64": "normalize -0 to +0 and replace every finite value by JSON string f64:<16 lowercase hexadecimal digits of big-endian IEEE-754 bytes>; reject NaN and infinity",
+    "booleans_and_null": "lowercase RFC 8259 literals",
+    "hash": "lowercase hexadecimal SHA-256 of the exact canonical preimage bytes"
+  },
+  "analysis_id_projection": {
+    "additional_fields": "forbidden",
+    "ordered_fields_before_canonical_key_sort": [
+      "input_sha256",
+      "adapter_version",
+      "request_metadata",
+      "resolved_policy_sha256",
+      "registry_sha256",
+      "solver_sha256",
+      "source_manifest_sha256",
+      "dependency_lock_sha256",
+      "base_seed",
+      "seed_derivation_version",
+      "llm_advisor"
+    ],
+    "request_metadata_fields": ["x_unit", "y_unit"],
+    "llm_off_shape": {"mode": "off"},
+    "llm_on_fields": [
+      "mode",
+      "model",
+      "normalized_endpoint_sha256",
+      "normalized_origin_sha256",
+      "timeout_seconds",
+      "max_retries",
+      "prompt_sha256",
+      "response_schema_sha256",
+      "start_slot_policy_sha256",
+      "ledger_sha256"
+    ],
+    "secret_exclusions": ["access_token", "raw_base_url"],
+    "other_exclusions": ["output_path", "work_path", "report_id", "generated_at", "elapsed", "rss", "filesystem_metadata", "presentation_only_warnings"]
+  },
+  "model_structure_projection": {
+    "source": "the validated model-v1 artifact; unknown/missing projection source fields fail",
+    "root_fields": ["schema_version", "registry_version", "direction", "segments", "p2"],
+    "segment_fields": ["segment_id", "family_id", "canonical_ast_id", "ast_sha256"],
+    "segment_order": "artifact order: single, or left then right",
+    "p1_value": {"p2": null},
+    "p2_fields": ["membership_convention", "membership_cell_id", "cell_lower_x", "cell_upper_x"],
+    "p2_binary64_fields": ["cell_lower_x", "cell_upper_x"],
+    "excluded": ["role", "analysis_id", "decision_state", "recommendation_status", "domain", "parameters", "transforms", "numeric_segment_intervals", "breakpoint", "shared_mu", "continuity", "certificate", "formula_display", "warnings", "attempt_order"]
+  },
+  "model_instance_projection": {
+    "source": "the same validated model-v1 artifact; construct the structure projection, then replace each segment by the exact numeric segment projection and p2 by the exact numeric p2 projection",
+    "root_fields": ["schema_version", "registry_version", "direction", "segments", "p2"],
+    "segment_fields": ["segment_id", "family_id", "canonical_ast_id", "ast_sha256", "interval", "parameters", "transforms"],
+    "interval_fields": ["lower", "upper", "left_closed", "right_closed"],
+    "parameters": "copy the artifact parameter object with exact keys; canonical JSON sorts keys and converts every finite value to tagged binary64; an allowed constant branch may be an empty object",
+    "transforms_fields": ["x_offset", "x_scale", "y_offset", "y_scale"],
+    "p1_value": {"p2": null},
+    "p2_fields": ["membership_convention", "membership_cell_id", "cell_lower_x", "cell_upper_x", "breakpoint", "shared_mu"],
+    "p2_binary64_fields": ["cell_lower_x", "cell_upper_x", "breakpoint", "shared_mu"],
+    "excluded": ["role", "analysis_id", "decision_state", "recommendation_status", "domain", "canonical_ast", "continuity", "certificate", "formula_display", "warnings", "fit_metrics", "attempt_order"]
+  },
+  "openai_compatible_base_url": {
+    "parse": "parse the complete Unicode input as one absolute hierarchical URL; leading/trailing ASCII whitespace, control characters and backslash are rejected before parsing",
+    "scheme": "ASCII-lowercase; https is required except explicit insecure opt-in; http without opt-in is accepted only for a loopback host",
+    "userinfo_query_fragment": "username, password, query and fragment are forbidden, including empty marker forms ending in ? or #",
+    "host": "required; Unicode/non-ASCII and percent-encoding are rejected; a DNS name must already be an ASCII A-label, is lowercased, has one terminal dot removed and each label must match LDH with no leading/trailing hyphen; IPv4 is canonical dotted decimal; IPv6 is RFC 5952 lowercase compressed inside brackets",
+    "port": "decimal 1..65535; omit explicit 443 for https and 80 for http; preserve any other port without leading zero",
+    "path": "empty or / becomes empty origin path; otherwise slash-separated nonempty ASCII segments matching [A-Za-z0-9._~-]+; percent-encoding, duplicate slash and dot/dot-dot segments are rejected; one terminal slash is removed",
+    "normalized_origin": "scheme://canonical-host plus non-default port, with IPv6 brackets and no path",
+    "normalized_endpoint": "normalized_origin plus canonical path",
+    "loopback": "only canonical DNS host localhost or an IPv4/IPv6 address classified loopback; subdomains of localhost are not loopback",
+    "redirects": "HTTP redirect following is disabled; any 3xx is a typed advisor transport failure",
+    "persistence": "persist only SHA-256 of normalized_origin and normalized_endpoint; never persist raw URL or access token"
+  },
+  "goldens": [
+    {
+      "id": "analysis-off-v1",
+      "kind": "analysis_id",
+      "canonical_bytes_utf8": "{\"adapter_version\":\"csv-parser-v1\",\"base_seed\":20260716,\"dependency_lock_sha256\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"input_sha256\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"llm_advisor\":{\"mode\":\"off\"},\"registry_sha256\":\"2222222222222222222222222222222222222222222222222222222222222222\",\"request_metadata\":{\"x_unit\":\"s\",\"y_unit\":\"V\"},\"resolved_policy_sha256\":\"3333333333333333333333333333333333333333333333333333333333333333\",\"seed_derivation_version\":\"sha256-counter-v1\",\"solver_sha256\":\"4444444444444444444444444444444444444444444444444444444444444444\",\"source_manifest_sha256\":\"5555555555555555555555555555555555555555555555555555555555555555\"}",
+      "sha256": "c0bd351efa29da2e1d0d39c818e1d3e9a07862a04ac53385bbe2d84dfdd4dde8"
+    },
+    {
+      "id": "structure-poly1-v1",
+      "kind": "model_structure_hash",
+      "canonical_bytes_utf8": "{\"direction\":\"increasing\",\"p2\":null,\"registry_version\":\"registry-v1\",\"schema_version\":\"model-v1\",\"segments\":[{\"ast_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"canonical_ast_id\":\"poly1-v1\",\"family_id\":\"poly1_v1\",\"segment_id\":\"single\"}]}",
+      "sha256": "400847f81b553281ef2600cfa97fae69d0d8b5227fe47ffea70f300e669d3be4"
+    },
+    {
+      "id": "instance-poly1-v1",
+      "kind": "model_instance_hash",
+      "canonical_bytes_utf8": "{\"direction\":\"increasing\",\"p2\":null,\"registry_version\":\"registry-v1\",\"schema_version\":\"model-v1\",\"segments\":[{\"ast_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"canonical_ast_id\":\"poly1-v1\",\"family_id\":\"poly1_v1\",\"interval\":{\"left_closed\":true,\"lower\":\"f64:0000000000000000\",\"right_closed\":true,\"upper\":\"f64:403d000000000000\"},\"parameters\":{\"a\":\"f64:4000000000000000\",\"b\":\"f64:3fe0000000000000\"},\"segment_id\":\"single\",\"transforms\":{\"x_offset\":\"f64:0000000000000000\",\"x_scale\":\"f64:403d000000000000\",\"y_offset\":\"f64:0000000000000000\",\"y_scale\":\"f64:3ff0000000000000\"}}]}",
+      "sha256": "4889ec6a49ffe3cb234e8a662f1b1504ed3406acd4cddb691df64e4da066d76b"
+    },
+    {
+      "id": "structure-p2-poly1-poly1-v1",
+      "kind": "model_structure_hash",
+      "canonical_bytes_utf8": "{\"direction\":\"increasing\",\"p2\":{\"cell_lower_x\":\"f64:4024000000000000\",\"cell_upper_x\":\"f64:4026000000000000\",\"membership_cell_id\":\"cell-000001\",\"membership_convention\":\"x<=c:left;x>c:right\"},\"registry_version\":\"registry-v1\",\"schema_version\":\"model-v1\",\"segments\":[{\"ast_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"canonical_ast_id\":\"poly1-v1\",\"family_id\":\"poly1_v1\",\"segment_id\":\"left\"},{\"ast_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"canonical_ast_id\":\"poly1-v1\",\"family_id\":\"poly1_v1\",\"segment_id\":\"right\"}]}",
+      "sha256": "6c842b0dd7b7cce5440d45e9d5b3fd21f41493ea53e8c82ef74ac6d2bba473d5"
+    },
+    {
+      "id": "instance-p2-poly1-poly1-v1",
+      "kind": "model_instance_hash",
+      "canonical_bytes_utf8": "{\"direction\":\"increasing\",\"p2\":{\"breakpoint\":\"f64:4025000000000000\",\"cell_lower_x\":\"f64:4024000000000000\",\"cell_upper_x\":\"f64:4026000000000000\",\"membership_cell_id\":\"cell-000001\",\"membership_convention\":\"x<=c:left;x>c:right\",\"shared_mu\":\"f64:4014000000000000\"},\"registry_version\":\"registry-v1\",\"schema_version\":\"model-v1\",\"segments\":[{\"ast_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"canonical_ast_id\":\"poly1-v1\",\"family_id\":\"poly1_v1\",\"interval\":{\"left_closed\":true,\"lower\":\"f64:0000000000000000\",\"right_closed\":true,\"upper\":\"f64:4025000000000000\"},\"parameters\":{\"b\":\"f64:3fd3333333333333\"},\"segment_id\":\"left\",\"transforms\":{\"x_offset\":\"f64:0000000000000000\",\"x_scale\":\"f64:4025000000000000\",\"y_offset\":\"f64:0000000000000000\",\"y_scale\":\"f64:3ff0000000000000\"}},{\"ast_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"canonical_ast_id\":\"poly1-v1\",\"family_id\":\"poly1_v1\",\"interval\":{\"left_closed\":false,\"lower\":\"f64:4025000000000000\",\"right_closed\":true,\"upper\":\"f64:4034000000000000\"},\"parameters\":{\"b\":\"f64:3ff3333333333333\"},\"segment_id\":\"right\",\"transforms\":{\"x_offset\":\"f64:4025000000000000\",\"x_scale\":\"f64:4023000000000000\",\"y_offset\":\"f64:0000000000000000\",\"y_scale\":\"f64:3ff0000000000000\"}}]}",
+      "sha256": "b909b730efe823a1f132cef7052fd46f88c734f1b796d85485c4fef3f17d1a65"
+    },
+    {
+      "id": "origin-default-https-v1",
+      "kind": "normalized_origin_sha256",
+      "raw_input": "HTTPS://Example.COM:443/v1/",
+      "normalized_origin": "https://example.com",
+      "normalized_endpoint": "https://example.com/v1",
+      "canonical_bytes_utf8": "https://example.com",
+      "sha256": "100680ad546ce6a577f42f52df33b4cfdca756859e664b8d7de329b150d09ce9",
+      "normalized_endpoint_sha256": "c2939bd1ae5fce5bb2a8fcddb4cb893a8f6987a51754d102cfd4df98c205d944"
+    },
+    {
+      "id": "origin-loopback-ipv6-v1",
+      "kind": "normalized_origin_sha256",
+      "raw_input": "http://[0:0:0:0:0:0:0:1]:80/v1",
+      "normalized_origin": "http://[::1]",
+      "normalized_endpoint": "http://[::1]/v1",
+      "canonical_bytes_utf8": "http://[::1]",
+      "sha256": "7cea31832e0bc1ec6b2acbfe8e94d9efea39924c4d3875bfb062e02efc003a48",
+      "normalized_endpoint_sha256": "87ea186108ca8c423c1659c4a8a5481756f8d7cc937fbe31779a8f97328eb1cb"
+    }
+  ],
+  "base_url_rejection_goldens": [
+    "https://user@example.com/v1",
+    "https://example.com/v1?",
+    "https://example.com/v1#fragment",
+    "https://exämple.com/v1",
+    "https://example.com/%76%31",
+    "https://example.com/v1/../chat",
+    "https://example.com//v1",
+    "https://example.com\\v1",
+    " https://example.com/v1"
+  ],
+  "anti_alias_checks": [
+    "Changing any included analysis field changes analysis_id.",
+    "Changing only an analysis exclusion leaves analysis_id unchanged.",
+    "Changing a parameter tagged binary64 changes model_instance_hash but not model_structure_hash.",
+    "Changing family, direction, segment order or join/membership semantics changes model_structure_hash.",
+    "Negative zero and positive zero have one canonical tagged representation.",
+    "A duplicate JSON key, unknown projection field, non-finite number or untagged binary64 fails before hashing.",
+    "Different normalized endpoint paths may share an origin hash but must have different normalized_endpoint_sha256 and analysis_id."
+  ]
+}

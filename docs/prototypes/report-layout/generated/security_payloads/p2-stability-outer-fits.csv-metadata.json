@@ -1,0 +1,62 @@
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "p2-stability-outer-fits.csv",
+  "dc:title": "PROTOTYPE synthetic P2 outer-fit stability ledger",
+  "dialect": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "lineTerminators": [
+      "\n"
+    ],
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "header": true,
+    "null": [
+      ""
+    ]
+  },
+  "tableSchema": {
+    "columns": [
+      {
+        "name": "outer_fit_id"
+      },
+      {
+        "name": "repetition"
+      },
+      {
+        "name": "outer_fold"
+      },
+      {
+        "name": "status"
+      },
+      {
+        "name": "fallback_reason"
+      },
+      {
+        "name": "direction"
+      },
+      {
+        "name": "family_pair"
+      },
+      {
+        "name": "boundary"
+      },
+      {
+        "name": "edge_hit"
+      },
+      {
+        "name": "flat_profile"
+      },
+      {
+        "name": "multiple_near_optima"
+      },
+      {
+        "name": "collapsed"
+      },
+      {
+        "name": "hard_failure"
+      }
+    ]
+  },
+  "identifierEncoding": "id: + UTF-8 percent encoding"
+}

@@ -1,0 +1,14 @@
+{
+  "request_schema_version": "prototype-synthetic-request-v1",
+  "logical_adapter_version": "prototype-synthetic-input-v1",
+  "result_bearing_scenario": {
+    "decision_reason": "NO_VALID_TWO_SEGMENT",
+    "p2_failure": "NO_BALANCED_SPLIT",
+    "profile": "repeated",
+    "r2_one": 0.73,
+    "recommendation": "one",
+    "synthetic_influence_dmax_by_x": {
+      "1": 0.6
+    }
+  }
+}

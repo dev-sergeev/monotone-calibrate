@@ -1,0 +1,58 @@
+{
+  "registry_version": "registry_v1",
+  "artifact_scope": "prototype_exercised_subset",
+  "authoritative_core_family_ids": [
+    "constant_v1",
+    "poly1_v1",
+    "poly2_v1",
+    "poly3_v1",
+    "exp_affine_v1",
+    "log_shift_v1",
+    "reciprocal_shift_pos_v1",
+    "logistic_v1"
+  ],
+  "included_family_ids": [
+    "constant_v1",
+    "poly1_v1"
+  ],
+  "unexercised_family_ids": [
+    "poly2_v1",
+    "poly3_v1",
+    "exp_affine_v1",
+    "log_shift_v1",
+    "reciprocal_shift_pos_v1",
+    "logistic_v1"
+  ],
+  "maximum_polynomial_degree": 3,
+  "families": {
+    "constant_v1": {
+      "canonical_ast": {
+        "ast_id": "registry_v1:constant_v1",
+        "root": "parameter",
+        "prefix": [
+          "parameter:a"
+        ],
+        "node_count": 1
+      },
+      "degree": 0,
+      "role": "core"
+    },
+    "poly1_v1": {
+      "canonical_ast": {
+        "ast_id": "registry_v1:poly1_v1",
+        "root": "add",
+        "prefix": [
+          "add",
+          "parameter:a",
+          "multiply",
+          "parameter:b",
+          "variable:t"
+        ],
+        "node_count": 5
+      },
+      "degree": 1,
+      "role": "core"
+    }
+  },
+  "incubator_excluded": true
+}

@@ -1,0 +1,71 @@
+{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "diagnostic-appearances.csv",
+  "dc:title": "PROTOTYPE synthetic long row × procedure × repetition diagnostics",
+  "dialect": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "lineTerminators": [
+      "\n"
+    ],
+    "quoteChar": "\"",
+    "doubleQuote": true,
+    "header": true,
+    "null": [
+      ""
+    ]
+  },
+  "tableSchema": {
+    "columns": [
+      {
+        "name": "appearance_id"
+      },
+      {
+        "name": "repetition"
+      },
+      {
+        "name": "outer_fold_id"
+      },
+      {
+        "name": "row_id"
+      },
+      {
+        "name": "x_group_id"
+      },
+      {
+        "name": "procedure"
+      },
+      {
+        "name": "y"
+      },
+      {
+        "name": "prediction_oof"
+      },
+      {
+        "name": "residual_oof"
+      },
+      {
+        "name": "robust_scale"
+      },
+      {
+        "name": "scale_method"
+      },
+      {
+        "name": "scale_scope"
+      },
+      {
+        "name": "z_oof"
+      },
+      {
+        "name": "fallback_status"
+      },
+      {
+        "name": "fallback_code"
+      },
+      {
+        "name": "action"
+      }
+    ]
+  },
+  "identifierEncoding": "id: + UTF-8 percent encoding"
+}
