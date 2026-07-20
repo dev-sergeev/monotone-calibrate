@@ -2,7 +2,7 @@
 
 Статус: форма поставки, report prototype и acceptance specification утверждены; production execution выполняется отдельным implementation handoff  
 Дата: 2026-07-16  
-Связанный тикет: [13 — выбрать форму поставки и эксплуатационный контур](../../.scratch/monotone-curve-approximation/issues/13-choose-delivery-surface.md)
+Связанный тикет: 13 — выбрать форму поставки и эксплуатационный контур (внутренний архив, не включён в публичный репозиторий)
 
 Основания: [RQ5 — отчётность и визуализация](../research/topics/05-reporting-visualization.md), [контракт данных](01-data-contract.md), [контракт моделей](02-model-contract.md), [validation/uplift](03-validation-uplift-contract.md), [диагностика остатков и влияния](04-residual-diagnostics-contract.md) и [численный fitting verdict](05-fitting-strategy-verdict.md).
 

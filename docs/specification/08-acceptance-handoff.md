@@ -3,7 +3,7 @@
 **Статус:** frozen design-time contract; production gates имеют начальный статус
 `NOT RUN` и исполняются только отдельной implementation-картой  
 **Дата:** 2026-07-16  
-**Связанный тикет:** [14 — утвердить приёмочные критерии и границу handoff](../../.scratch/monotone-curve-approximation/issues/14-approve-acceptance-handoff.md)  
+**Связанный тикет:** 14 — утвердить приёмочные критерии и границу handoff (внутренний архив, не включён в публичный репозиторий)  
 **Machine manifest:** [`acceptance-manifest-v1.json`](../acceptance/acceptance-manifest-v1.json)
 
 ## 1. Решение и честная граница

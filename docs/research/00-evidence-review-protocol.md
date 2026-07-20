@@ -686,7 +686,7 @@ CSV хранится в UTF-8, с заголовком, RFC 4180 quoting и ISO 
 
 ## 19. Состояние версионирования workspace
 
-На момент фиксации протокола каталог `/Users/kpaq/calib-pv-t1` **не является Git-репозиторием** (`git rev-parse --is-inside-work-tree` возвращает `fatal: not a git repository`). Поэтому требуемые Wayfinder research branch и commit создать невозможно. До появления Git прослеживаемость обеспечивают версия протокола, timestamps, неизменяемые `run_id`, SHA-256 экспортов/полных текстов и журнал изменений в `README.md`. После инициализации Git эти артефакты следует зафиксировать обычным commit без переписывания истории запусков.
+На момент фиксации протокола рабочий каталог **не являлся Git-репозиторием**, поэтому требуемые Wayfinder research branch и commit создать было невозможно. До появления Git прослеживаемость обеспечивали версия протокола, timestamps, неизменяемые `run_id`, SHA-256 экспортов/полных текстов и журнал изменений в `README.md`. Публичная Git-история была создана позднее без переписывания истории ранних запусков.
 
 ## 20. Первичные методологические и технические источники протокола
 
@@ -705,4 +705,3 @@ CSV хранится в UTF-8, с заголовком, RFC 4180 quoting и ISO 
 - Math-Net.Ru. [Official portal](https://www.mathnet.ru/?option_lang=rus).
 - NCBI/PMC. [Open Access Subset and reuse terms](https://pmc.ncbi.nlm.nih.gov/tools/openftlist/).
 - Creative Commons. [CC BY 4.0 legal code](https://creativecommons.org/licenses/by/4.0/legalcode.en).
-

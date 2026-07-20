@@ -2,7 +2,7 @@
 
 Статус: algorithmic seam и acceptance specification утверждены; confirmatory production execution выполняется отдельным implementation handoff  
 Дата прогона: 2026-07-16  
-Связанный тикет: [11 — проверить осуществимость и выбрать стратегию совместной оптимизации](../../.scratch/monotone-curve-approximation/issues/11-prototype-fitting-strategy.md)
+Связанный тикет: 11 — проверить осуществимость и выбрать стратегию совместной оптимизации (внутренний архив, не включён в публичный репозиторий)
 
 ## 1. Решение
 

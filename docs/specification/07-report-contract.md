@@ -2,7 +2,7 @@
 
 **Статус:** delegated v1 принят исполнителем по статическим evidence: 15 bundles, 1,021 checks, 0 failures и два независимых финальных GO на одном digest; live-review пользователем не проводился, а production runtime/browser/platform gates зафиксированы тикетом 14 и остаются `NOT RUN` до implementation handoff  
 **Дата:** 2026-07-16  
-**Связанный тикет:** [12 — утвердить контракт отчёта и графиков](../../.scratch/monotone-curve-approximation/issues/12-prototype-report-contract.md)  
+**Связанный тикет:** 12 — утвердить контракт отчёта и графиков (внутренний архив, не включён в публичный репозиторий)  
 **Место прототипа:** [`docs/prototypes/report-layout/`](../prototypes/report-layout/)
 
 Основания: [RQ5 — стандарты отчётности и визуализации](../research/topics/05-reporting-visualization.md), [математический контракт моделей](02-model-contract.md), [контракт validation, uplift и рекомендации](03-validation-uplift-contract.md), [контракт диагностики остатков и влияния](04-residual-diagnostics-contract.md), [вердикт по стратегии fitting](05-fitting-strategy-verdict.md) и [контракт формы поставки](06-delivery-surface-contract.md).
@@ -537,7 +537,7 @@ docs/prototypes/report-layout/
 
 1. Этот документ не помечается `одобрен пользователем`.
 2. Исследование RQ5, предыдущие контракты, automated gates, renders и независимые audits могут заменить live-review как **делегированный evidence gate качества**, но не как доказательство пользовательского UX-предпочтения.
-3. До разрешения [тикета 12](../../.scratch/monotone-curve-approximation/issues/12-prototype-report-contract.md) должны существовать все статические артефакты раздела 17 и проходить decision-bearing gates `RAW/CMP/GEOM/METRIC/WARN/RESID/A11Y-STATIC/JSON/FAIL/UNC/SECURITY-STATIC`; runtime/platform gates выше остаются явно `NOT RUN` и передаются в тикет 14.
+3. До разрешения тикета 12 (внутренний архив, не включён в публичный репозиторий) должны существовать все статические артефакты раздела 17 и проходить decision-bearing gates `RAW/CMP/GEOM/METRIC/WARN/RESID/A11Y-STATIC/JSON/FAIL/UNC/SECURITY-STATIC`; runtime/platform gates выше остаются явно `NOT RUN` и передаются в тикет 14.
 4. В истории тикета необходимо явно записать, что исходное требование live reaction было заменено последующей hands-off инструкцией, а не выполнено фиктивно.
 5. Resolution wording: `контракт принят исполнителем как delegated v1 default по evidence gate; live user review не проводился`.
 6. Если strict Wayfinder HITL-семантика типа `prototype` сохраняется без изменения, тикет нельзя выдавать за разрешённый через user reaction; tracker должен честно зафиксировать reclassification/supersession либо оставить live UX acceptance отдельным будущим gate.
