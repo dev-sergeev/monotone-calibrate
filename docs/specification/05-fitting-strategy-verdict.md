@@ -1,7 +1,7 @@
 # Численный вердикт по стратегии fitting v2.2
 
 Статус: algorithmic seam и acceptance specification утверждены; confirmatory production execution выполняется отдельным implementation handoff  
-Дата прогона: 2026-07-16  
+Дата прогона: 2026-07-16; amendment LLM-SR: 2026-07-22
 Связанный тикет: 11 — проверить осуществимость и выбрать стратегию совместной оптимизации (внутренний архив, не включён в публичный репозиторий)
 
 ## 1. Решение
@@ -131,19 +131,22 @@ Batch вернул `decision=PROFILE_CELLS`. Все 11 обязательных 
 6. отделять fit от независимого analytic/high-precision certificate;
 7. сворачивать constant, lower-degree и indistinguishable P2 в канонический простой объект до сравнения;
 8. не включать runtime, warning presentation и traversal artifacts в model hash;
-9. не разрешать stochastic shadow менять recommendation текущего registry
-   version; единственное исключение — явно включённый
-   `llm-start-advisor-v1`, который до solver заменяет только bounded start
-   slots, а его принятый ledger замораживается и входит в analysis identity;
-10. запускать весь fitting search заново внутри каждого outer-validation
-    training scope; bootstrap только агрегирует frozen OOF contributions, а
-    influence переоценивает выбранные full-data структуры без нового registry
-    selection.
-11. принимать LLM output только как strict typed finite parameter vectors для
-    predeclared policy-known slot IDs; formula text, code, tool calls, новые family/AST,
-    `eval` и обход bounds запрещены. Exact IDs, vector shapes/bounds, anchor и
-    fallback values определяет только frozen
-    [`start-slot-policy-v1.json`](../acceptance/start-slot-policy-v1.json).
+9. при явно включённом `llm-sr-registry-search-v1` разрешать stochastic search
+   менять finite hypothesis portfolio, но только через типизированные P1 family
+   IDs и ordered P2 family pairs из текущего registry;
+10. оптимизировать параметры и breakpoint каждой LLM-гипотезы только локальным
+    solver-ом, оценивать её через `-MSE` после quantization/certificate и
+    передавать score обратно через multi-island experience buffer;
+11. принимать LLM output только как strict JSON skeletons; coefficient values,
+    formula text, code, tool calls, новые family/AST, `eval` и обход bounds
+    запрещены. Provider/schema failure атомарно возвращает полный registry;
+12. запускать fitting search заново внутри каждого outer-validation training
+    scope по замороженному portfolio. Поскольку portfolio выбран по full-data
+    fitness, такой запуск маркировать warnings
+    `LLM_TRAINING_SUMMARY_DISCLOSED` и
+    `LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION`, не выдавая OOF за untouched
+    оценку самой discovery-стадии; bootstrap агрегирует только frozen OOF
+    contributions.
 
 ## 9. Что этот прототип не доказал
 
@@ -157,8 +160,9 @@ Batch вернул `decision=PROFILE_CELLS`. Все 11 обязательных 
 - Qn/MAD residual scale, heteroscedastic bins и selected-structure LGO refit
   influence;
 - cross-platform reproducibility и golden report checks.
-- mock OpenAI-compatible/LangChain integration, scope leakage, secret redaction,
-  response freezing и deterministic fallback optional LLM advisor-а.
+- mock OpenAI-compatible/LangChain integration, multi-island sampling,
+  schema/code rejection, scope leakage, secret redaction и deterministic
+  fallback optional LLM-SR selector-а.
 
 Эти пункты формализованы тикетом 14 в
 [`08-acceptance-handoff.md`](08-acceptance-handoff.md) и machine manifest.

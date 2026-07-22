@@ -2,9 +2,18 @@
 
 **Статус:** frozen design-time contract; production gates имеют начальный статус
 `NOT RUN` и исполняются только отдельной implementation-картой  
-**Дата:** 2026-07-16  
+**Дата:** 2026-07-16; amendment LLM-SR: 2026-07-22
 **Связанный тикет:** 14 — утвердить приёмочные критерии и границу handoff (внутренний архив, не включён в публичный репозиторий)  
-**Machine manifest:** [`acceptance-manifest-v1.json`](../acceptance/acceptance-manifest-v1.json)
+**Исторический machine manifest:** [`acceptance-manifest-v1.json`](../acceptance/acceptance-manifest-v1.json)
+**Текущая LLM policy:** [`llm-sr-policy-v2.json`](../acceptance/llm-sr-policy-v2.json)
+
+Поправка от 2026-07-22 заменяет исторический numerical start-advisor на
+типизированный LLM-SR selector из
+[`llm-sr-algorithm.md`](../llm-sr-algorithm.md). Frozen machine manifest v1 при
+этом не переписан и не является acceptance evidence нового selector-а: его
+старые `LLM-ADVISOR-020`, schema и hashes сохранены как исторический snapshot.
+Для LLM-SR создана отдельная policy v2; полный новый release manifest ещё не
+выполнен. Не затронутые поправкой production gates сохраняют статус `NOT RUN`.
 
 ## 1. Решение и честная граница
 
@@ -170,9 +179,11 @@ solver с `NONINVERTIBLE_X_SCALE + NORMALIZED_X_COLLISION`. Реализация
 В source project schemas живут в `schemas/`; source-known
 [`production-report.schema.json`](production-report.schema.json),
 [`model.schema.json`](model.schema.json) и
-[`manifest.schema.json`](manifest.schema.json), а для optional advisor также
-[`llm-start-advice.schema.json`](llm-start-advice.schema.json), являются
-normative. Verified
+[`manifest.schema.json`](manifest.schema.json) являются normative. Схема
+[`llm-start-advice.schema.json`](llm-start-advice.schema.json) сохранена только
+как исторический артефакт прежнего start-advisor и не применяется к
+LLM-SR-ответу. Его закрытый JSON contract проверяется непосредственно typed
+parser-ом `llm-sr-hypotheses-v1`. Verified
 byte-identical copies первых двух публикуются в корне bundle как
 `report.schema.json` и `model.schema.json`. Verifier использует installed
 source-known schemas, а не доверяет произвольной схеме из проверяемого
@@ -213,28 +224,33 @@ fixtures публикует
 Актуальный machine catalogue фиксирует 23 schema-reject, 13 semantic-only и
 15 legitimate schema-accept cases, включая все восемь decision states.
 
-### 3.5 Optional LLM start advisor
+### 3.5 Optional LLM-SR selector
 
 Default policy остаётся `off` и полностью offline. Явный
-`--llm-start-advisor` либо `MONOTONE_CALIBRATE_LLM_ENABLED=true` использует
-только `langchain_openai.ChatOpenAI` и
-обязательные `MONOTONE_CALIBRATE_LLM_BASE_URL`,
+`--llm-symbolic-search` (исторический `--llm-start-advisor` остаётся alias)
+либо `MONOTONE_CALIBRATE_LLM_ENABLED=true` использует только
+`langchain_openai.ChatOpenAI` и обязательные
+`MONOTONE_CALIBRATE_LLM_BASE_URL`,
 `MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN`, `MONOTONE_CALIBRATE_LLM_MODEL`;
-timeout/retries и insecure-HTTP opt-in заданы контрактом 06. Ambient
-`OPENAI_*`, LangSmith tracing, tools и provider-specific extensions запрещены.
+timeout/retries, число search iterations и insecure-HTTP opt-in заданы
+контрактом 06. Ambient `OPENAI_*`, LangSmith tracing, tools и
+provider-specific extensions запрещены.
 
-Advisor не выбирает новую функцию. Для full-data и каждого outer train он
-может заменить только bounded start slots уже зарегистрированных
-family/pair/direction/cell; число starts/evaluations и certificates неизменно.
-Все exact slot IDs, vector shapes/bounds, anchors, replaceable ordinals и
-fallback vectors берутся только из frozen
-[`start-slot-policy-v1.json`](../acceptance/start-slot-policy-v1.json), чей hash
-входит в manifest и identity.
-Outer-test rows отсутствуют. Strict schema/bounds failure возвращает исходный
-deterministic start. Все ответы/fallback states замораживаются до solver,
-ledger hash входит в `analysis_id`, а access token/raw URL нигде не
-сериализуются. Это позволяет улучшать numerical basin discovery без доверия к
-формуле или утверждению LLM.
+LLM выбирает только типизированные skeletons: один registry family для P1 или
+ordered family pair для P2. Коэффициенты, направление, breakpoint, fitness,
+quantization и certificates полностью принадлежат локальному solver. Ответ с
+кодом, формулой, неизвестным family ID, лишним полем, duplicate key или
+nonfinite atom атомарно отклоняется. Поиск использует negative-MSE fitness,
+десять islands, score clusters, Boltzmann sampling, два scored experiences и
+до четырёх proposals на итерацию. Ошибка configuration/provider/parser либо
+отсутствие новой валидной гипотезы возвращает полный deterministic registry.
+
+Найденный по полному набору portfolio замораживается и повторно fit-ится в
+outer folds. Поэтому OOF оценивает численный выбор внутри portfolio, но не
+независимо сам discovery; успешный run обязан раскрыть warning
+`LLM_TRAINING_SUMMARY_DISCLOSED` и
+`LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION`. Access token, raw URL, prompt и
+response не сериализуются.
 
 ## 4. Exact grouped validation и uncertainty
 
@@ -325,9 +341,12 @@ Residual/influence FPR/power bands также записаны в manifest и с
 | `XPLAT-017` | support matrix | macOS/Linux structural exactness and pinned numeric tolerances |
 | `CSVW-018` | exports | complete local typing/units/null/key/identifier round trip |
 | `BENCHMARK-019` | measurement | full outer-validation/bootstrap/refit-sensitivity completes; actual≤forecast; wall/RSS retained without SLA |
-| `LLM-ADVISOR-020` | optional LLM seam | ChatOpenAI/env/mock endpoint, no leakage, strict starts, secret/network isolation, frozen fallback replay |
+| `LLM-ADVISOR-020` | historical v1 seam | frozen numerical-start contract; не является evidence для LLM-SR |
 
-Каждая manifest row содержит requirement pointers, fixture IDs, executor,
+Текущая LLM-SR implementation traceability вынесена в
+[`traceability-llm-sr-v2.md`](../acceptance/traceability-llm-sr-v2.md); новый
+signed gate `LLM-SR-020` ещё не создан. Каждая frozen v1 manifest row содержит
+requirement pointers, fixture IDs, executor,
 oracle, tolerance-policy, будущий evidence path и `NOT_RUN` status. Новый gate
 нельзя принять устным утверждением или тестом более узкого seam.
 
@@ -379,9 +398,9 @@ conditional exports перечислены в manifest. До этой trust boun
 
 ### Browser and network
 
-В default advisor-off режиме `run`, `predict`, `verify` после
+В default symbolic-search-off режиме `run`, `predict`, `verify` после
 `uv sync --frozen` исполняются с `--frozen --no-sync` под OS-level deny/trace.
-Pass — ноль попыток DNS, AF_INET/AF_INET6. Advisor-enabled `run` отдельно
+Pass — ноль попыток DNS, AF_INET/AF_INET6. LLM-SR-enabled `run` отдельно
 проверяется hostile local mock: разрешён только configured origin во время
 prefit phase, redirects/telemetry/LangSmith запрещены; `predict`/`verify`
 всегда zero-network. `file://report.html` проверяется в Chromium 138+ и
@@ -403,8 +422,9 @@ diagnostic export; отдельный неоговорённый `diagnostic-app
 `bootstrap-resamples.csv.gz` являются обязательным источником §7 report
 statistics и содержат aggregation-only resample outcomes.
 `influence-groups.csv` содержит selected-structure refit sensitivity summary.
-`trace/llm-advisor.jsonl.gz` присутствует iff advisor включён; свободный ответ,
-token и raw endpoint туда не попадают.
+Историческое требование `trace/llm-advisor.jsonl.gz` к текущему LLM-SR seam не
+применяется. В bundle публикуются только redacted aggregate counts, policy
+versions и hashes; prompt, response, token и raw endpoint туда не попадают.
 
 `manifest.json` валиден по `manifest.schema.json`, использует поле `artifacts`,
 не перечисляет себя/`COMPLETE` и сериализуется canonical compact sorted-key
@@ -447,8 +467,8 @@ pass condition, но обязан быть exact внутри каждой platf
 - checkpoint/resume/admission/process races;
 - runtime browser/network/screen-reader/forced-colors;
 - macOS/Linux replay и full resource benchmark.
-- optional LangChain/OpenAI-compatible advisor seam, mock-provider network,
-  secret redaction и frozen-ledger replay.
+- optional LangChain/OpenAI-compatible LLM-SR seam, mock-provider network,
+  secret redaction и frozen-portfolio replay.
 
 Эти строки остаются `NOT RUN`, а не inheritance от prototype PASS.
 
@@ -483,4 +503,4 @@ production pipeline и выдавать проверяемую функцию и
 Также не заявляются качество/доступность/подлинность внешнего LLM provider,
 bit-identical fresh responses, LLM-generated executable formulas/AST/families
 или автоматическое расширение registry. Надёжная offline функция остаётся
-обязательной при advisor=`off` или полном advisor fallback.
+обязательной при symbolic search=`off` или полном LLM-SR fallback.

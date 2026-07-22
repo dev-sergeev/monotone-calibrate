@@ -22,24 +22,45 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=(
             "Fit and compare monotone one- and two-function approximations.\n"
-            "LLM advisor: disabled by default."
+            "LLM-SR symbolic search: disabled by default."
         ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
-    run = subparsers.add_parser("run", help="calibrate one x,y CSV and write a report bundle")
+    run = subparsers.add_parser(
+        "run",
+        help="calibrate one x,y CSV and write a report bundle",
+        description=(
+            "Run the blocking calibration batch. Progress is not streamed; "
+            "wait for the final JSON before invoking verify."
+        ),
+    )
     run.add_argument("input", type=Path, help="UTF-8 CSV containing x and y")
     run.add_argument("--output", type=Path, required=True, help="new report-bundle directory")
     run.add_argument(
+        "--llm-symbolic-search",
         "--llm-start-advisor",
+        dest="llm_symbolic_search",
         action="store_true",
-        help="enable the configured OpenAI-compatible numerical-start advisor",
+        help="enable configured OpenAI-compatible LLM-SR equation-skeleton search",
     )
     dotenv = run.add_mutually_exclusive_group()
     dotenv.add_argument("--dotenv", type=Path, default=Path(".env"), help="dotenv path (default: .env)")
     dotenv.add_argument("--no-dotenv", action="store_const", const=None, dest="dotenv")
-    run.add_argument("--validation-repetitions", type=int, default=10, metavar="N")
-    run.add_argument("--bootstrap-resamples", type=int, default=200, metavar="N")
+    run.add_argument(
+        "--validation-repetitions",
+        type=int,
+        default=10,
+        metavar="N",
+        help="grouped validation repetitions; lower values are faster but less stable (default: 10)",
+    )
+    run.add_argument(
+        "--bootstrap-resamples",
+        type=int,
+        default=200,
+        metavar="N",
+        help="paired OOF bootstrap resamples (default: 200)",
+    )
     run.add_argument(
         "--search-profile",
         choices=("fast", "balanced", "quality", "exhaustive"),
@@ -70,7 +91,7 @@ def _run(arguments: argparse.Namespace) -> dict[str, object]:
             input_path=arguments.input,
             output_dir=arguments.output,
             dotenv_path=arguments.dotenv,
-            llm_start_advisor=arguments.llm_start_advisor,
+            llm_symbolic_search=arguments.llm_symbolic_search,
             fit_options=FitOptions(
                 search_policy=SearchPolicy(arguments.search_profile),
             ),

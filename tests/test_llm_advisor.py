@@ -21,6 +21,7 @@ def test_llm_configuration_is_offline_by_default_and_keeps_secrets_out_of_repr()
     assert offline.enabled is False
     assert offline.timeout_seconds == 20
     assert offline.max_retries == 1
+    assert offline.search_iterations == 4
 
     enabled = LLMConfig.from_mapping(
         {
@@ -71,6 +72,7 @@ def test_enabled_configuration_requires_explicit_credentials_and_a_safe_endpoint
         ("MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS", "121", "LLM_CONFIG_RANGE"),
         ("MONOTONE_CALIBRATE_LLM_MAX_RETRIES", "-1", "LLM_CONFIG_RANGE"),
         ("MONOTONE_CALIBRATE_LLM_MAX_RETRIES", "4", "LLM_CONFIG_RANGE"),
+        ("MONOTONE_CALIBRATE_LLM_SEARCH_ITERATIONS", "0", "LLM_CONFIG_RANGE"),
     ],
 )
 def test_environment_values_are_exact_and_bounded(name: str, value: str, code: str) -> None:

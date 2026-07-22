@@ -1,10 +1,16 @@
 # Контракт формы поставки и эксплуатационного контура v1
 
-Статус: форма поставки, report prototype и acceptance specification утверждены; production execution выполняется отдельным implementation handoff  
-Дата: 2026-07-16  
+Статус: форма поставки, report prototype и acceptance specification утверждены; production execution выполняется отдельным implementation handoff
+Дата: 2026-07-16; amendment LLM-SR: 2026-07-22
 Связанный тикет: 13 — выбрать форму поставки и эксплуатационный контур (внутренний архив, не включён в публичный репозиторий)
 
-Основания: [RQ5 — отчётность и визуализация](../research/topics/05-reporting-visualization.md), [контракт данных](01-data-contract.md), [контракт моделей](02-model-contract.md), [validation/uplift](03-validation-uplift-contract.md), [диагностика остатков и влияния](04-residual-diagnostics-contract.md) и [численный fitting verdict](05-fitting-strategy-verdict.md).
+> Текущая реализация является компактным batch CLI, а не полным production
+> handoff из этого design target: progress streaming, checkpoint/resume,
+> `COMPLETE` marker, полный schema/CSVW tree и OS-level network gate ещё не
+> реализованы. Фактические команды и артефакты перечислены в
+> [`../../README.md`](../../README.md); статус schemas — в [`README.md`](README.md).
+
+Основания: [RQ5 — отчётность и визуализация](../research/topics/05-reporting-visualization.md), [RQ6 — LLM-SR integration](../research/topics/06-llm-openai-compatible-integration.md), [контракт данных](01-data-contract.md), [контракт моделей](02-model-contract.md), [validation/uplift](03-validation-uplift-contract.md), [диагностика остатков и влияния](04-residual-diagnostics-contract.md) и [численный fitting verdict](05-fitting-strategy-verdict.md).
 
 ## 1. Решение
 
@@ -17,6 +23,10 @@ validation, paired OOF group-bootstrap и selected-structure
 leave-one-`x`-group refits могут занимать значительное время. CLI обязан
 показывать прогресс, сохранять детерминированные checkpoints и возобновлять тот
 же анализ; обещание latency до измерительного гейта запрещено.
+
+В текущем compact CLI требование progress/checkpoint остаётся открытым: `run`
+блокируется и печатает только финальный JSON. Прерывание до атомарной публикации
+не создаёт output directory.
 
 ## 2. Grilling: закрытые ветви решения
 
@@ -62,36 +72,41 @@ uv sync --frozen
 
 uv run --frozen --no-sync monotone-calibrate run \
   examples/demo.csv \
-  --output runs/demo
+  --output runs/demo \
+  --no-dotenv
 ```
 
 Первый `uv sync` может обращаться к package index. Наличие `uv.lock` само по
 себе не означает offline-installable bundle. После синхронизации analysis
 command использует `--no-sync`. В default `LLM=off` application runtime не
 выполняет DNS/HTTP, telemetry, update checks или загрузку assets. Явно
-включённый LLM advisor — единственное исключение и может обращаться только к
+включённый LLM-SR selector — единственное исключение и может обращаться только к
 настроенному OpenAI-compatible base URL.
 
 Обязательные CLI subcommands:
 
 ```text
-monotone-calibrate run INPUT.csv --output OUTPUT_DIR [--x-unit TEXT] [--y-unit TEXT] [--llm-start-advisor] [--resume] [--recover-stale-lock]
-monotone-calibrate predict MODEL.json X.csv --output PREDICTION_DIR
+monotone-calibrate run INPUT.csv --output OUTPUT_DIR [--llm-symbolic-search] [--search-profile PROFILE]
+monotone-calibrate predict MODEL.json X.csv --output PREDICTION.csv
 monotone-calibrate verify REPORT_DIR
 ```
 
 - `run` выполняет полный утверждённый pipeline и публикует bundle;
 - `predict` вычисляет typed model artifact без повторного fitting;
-- `verify` проверяет schema, hashes, marker полноты и межартефактную согласованность без повторного анализа. Это проверка integrity/consistency, а не доказательство подлинности без внешней подписи.
+- `verify` в текущем compact bundle проверяет manifest hashes и semantic binding
+  отчёта с typed model без повторного анализа. Schema tree и `COMPLETE` marker
+  остаются требованиями полного handoff. В обоих случаях это проверка
+  integrity/consistency, а не доказательство подлинности без внешней подписи.
 
 Численные policy, registry, seeds и solver budgets не являются россыпью CLI-флагов. CLI использует один bundled versioned policy manifest; полный resolved manifest и hash попадают в bundle. Изменение policy — новая версия анализа, а не настройка после просмотра результата.
 
-### 3.1 Опциональный OpenAI-compatible LLM advisor
+### 3.1 Опциональный OpenAI-compatible LLM-SR selector
 
-Production dependency — pinned `langchain-openai`; единственный adapter —
-`langchain_openai.ChatOpenAI`. Advisor по умолчанию выключен и включается
-`--llm-start-advisor` либо exact env `MONOTONE_CALIBRATE_LLM_ENABLED=true`.
-Конфигурация читается из окружения:
+Production dependency — pinned `langchain-openai`; внешний adapter —
+`langchain_openai.ChatOpenAI`. Selector по умолчанию выключен и включается
+`--llm-symbolic-search` либо exact env
+`MONOTONE_CALIBRATE_LLM_ENABLED=true`. Старый `--llm-start-advisor` является
+CLI alias нового режима. Конфигурация читается из окружения:
 
 | Variable | Rule |
 |---|---|
@@ -101,49 +116,42 @@ Production dependency — pinned `langchain-openai`; единственный ad
 | `MONOTONE_CALIBRATE_LLM_MODEL` | обязательный непустой provider model/deployment ID |
 | `MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS` | optional, default `20`, диапазон `1…120` |
 | `MONOTONE_CALIBRATE_LLM_MAX_RETRIES` | optional, default `1`, диапазон `0…3` |
+| `MONOTONE_CALIBRATE_LLM_SEARCH_ITERATIONS` | optional, default `4`, диапазон `1…64` |
 | `MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP` | optional boolean, default `false`; разрешает non-loopback `http://` только как явный риск пользователя |
 
 Значения передаются `ChatOpenAI(model=…, base_url=…, api_key=…,
-temperature=0, use_responses_api=False, streaming=False, stream_usage=False,
+temperature=0.8, use_responses_api=False, streaming=False, stream_usage=False,
 timeout=…, max_retries=…)` явно;
 неявные ambient `OPENAI_*` aliases не читаются. LangSmith tracing, callbacks,
 tools, remote files, conversation state и provider-specific `extra_body`
-запрещены. Truthy `LANGSMITH_TRACING`/`LANGCHAIN_TRACING_V2` даёт
-`LLM_TRACING_FORBIDDEN` до network call.
+не настраиваются приложением. Однако текущий runtime не отклоняет truthy
+`LANGSMITH_TRACING`/`LANGCHAIN_TRACING_V2` fail-closed; оператор обязан оставить
+их выключенными. Такой guard и redirect-origin allowlist остаются будущим
+security hardening.
 
-Для full-data и каждого outer-training scope строится bounded summary максимум
-64 deterministic `x`-bins только из training `x/y`; одна chat request возвращает
-strict JSON по installed schema. Допускаются только конечные parameter vectors
-по [`llm-start-advice.schema.json`](llm-start-advice.schema.json) для заранее
-известных replaceable start-slot IDs. Advisor не добавляет
-family/AST, не пишет формулу, не меняет число starts/evaluations, bounds,
-registry, splits, thresholds или certificate. Anchor starts сохраняются.
+Для full-data строится bounded summary максимум из 64 deterministic `x`-bins.
+На каждой итерации request содержит problem specification, разрешённый registry,
+evaluation policy и два scored experience examples из одного из десяти islands.
+Response — strict [`llm-sr-hypotheses-v1`](llm-sr-hypotheses.schema.json): до
+четырёх P1 family/P2 ordered-pair skeletons. Duplicate keys, non-finite tokens,
+extra fields, unknown families, parameter values и generated code отклоняются
+до solver call.
 
-Exact ID templates, nonlinear vector order/length, inclusive bounds, anchor
-ordinals, replaceable ordinals и deterministic fallback vectors заморожены в
-[`start-slot-policy-v1.json`](../acceptance/start-slot-policy-v1.json). Его
-SHA-256 входит в resolved policy, advisor prompt, ledger и `analysis_id`;
-неизвестный/повторный slot либо одна неверная vector отклоняет весь response
-данного scope с atomic deterministic fallback.
+Каждый skeleton локально проходит parameter/breakpoint fit, quantization и
+certificate; его fitness `-MSE` может попасть только в исходный island.
+Score-cluster выбирается Boltzmann sampling, внутри cluster предпочтение
+получает короткий skeleton. После search immutable portfolio передаётся
+обычному fitting pipeline. Selector не меняет registry, solver bounds,
+search-profile, splits, thresholds или certificates.
 
-Base URL до создания клиента нормализуется только exact algorithm из
-[`identity-policy-v1.json`](../acceptance/identity-policy-v1.json): userinfo,
-query, fragment, percent-encoded/ambiguous path, Unicode host и dot-segments
-fail closed; default port удаляется, IPv4/IPv6 canonicalized, redirects
-отключены. Allowlist сравнивает normalized origin, а identity хранит hashes
-origin и полного normalized endpoint. Raw response ограничен declared byte
-limit и разбирается UTF-8 JSON parser-ом, который отклоняет duplicate keys и
-non-finite tokens **до** JSON Schema; schema сама такую проверку не заменяет.
-
-Все scope requests выполняются и ответы проходят schema/bounds validation до
-первого solver call. Accepted/fallback ledger замораживается, хешируется и
-входит в `analysis_id`; fitting и resume читают только этот ledger. Timeout,
-HTTP/refusal/malformed output дают `LLM_ADVISOR_UNAVAILABLE` и deterministic
-default slots для затронутого scope, но не блокируют core pipeline. Access
-token никогда не записывается, не хешируется и не логируется; raw base URL
-заменяется SHA-256 normalized origin и normalized endpoint. Report
-предупреждает, что training
-summaries передавались выбранному пользователем endpoint.
+Timeout, HTTP/refusal, malformed output или отсутствие новых валидных
+гипотез дают atomic full-registry fallback и typed `LLM_SR_*` warning, но не
+блокируют core pipeline. Access token, raw base URL, prompts, responses и
+provider diagnostics не записываются; в report остаются только endpoint hash,
+versions, counts и hypothesis-space hash. Поскольку portfolio найден по
+full-data fitness и только затем replayed внутри folds, успешный LLM run всегда
+маркируется `LLM_TRAINING_SUMMARY_DISCLOSED` и
+`LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION`.
 
 ## 4. Физический входной адаптер v1
 
@@ -230,8 +238,7 @@ report/
 │   ├── two-segment.svg
 │   └── residuals.svg
 ├── trace/
-│   ├── fit-attempts.jsonl.gz
-│   └── llm-advisor.jsonl.gz        # только если advisor был явно включён
+│   └── fit-attempts.jsonl.gz
 ├── provenance/
 │   ├── request.json
 │   ├── resolved-policy.json
@@ -251,9 +258,9 @@ report/
 4. `recommended-model.json` появляется **только** при validated recommendation. `DESCRIPTIVE_ONLY`, `NO_VALID_MODEL` и `PIPELINE_FAILURE` не создают готовую рекомендованную функцию.
 5. Отсутствующий или failed P2 остаётся видимой строкой/панелью с raw points и typed reason; фиктивной линии нет.
 6. Long OOF, P2 outer-fit, bootstrap и attempt exports сжимаются gzip, но не выбрасываются; gzip header является operational metadata и не входит в semantic hashes. Appearance-level residual diagnostics находятся в `oof-appearances.csv.gz`, а не в скрытом дополнительном export.
-   `trace/llm-advisor.jsonl.gz` появляется iff advisor включён и содержит
-   только bounded request hashes, schema-valid accepted start vectors и typed
-   fallback states — без access token, raw base URL и свободного ответа модели.
+   Отдельный raw LLM trace не публикуется: report provenance содержит только
+   bounded aggregate counts, policy versions и hash найденного portfolio — без
+   access token, raw base URL, prompt или ответа модели.
 7. `manifest.json` валиден по production `manifest.schema.json`, содержит
    отсортированные по bytewise-ASCII path записи всех содержательных artifacts
    и не перечисляет себя либо `COMPLETE`. Exact bytes: UTF-8 JSON, keys каждого
@@ -419,8 +426,8 @@ Exact logical identifiers сохраняются в JSON; HTML использу�
 - `analysis_id`: SHA-256 canonical payload из raw input hash, logical adapter
   version, canonical `x_unit/y_unit` и иных result-bearing request metadata,
   resolved policy/registry, source artifact hash, dependency-lock hash, seeds и,
-  если advisor включён, его sanitized config/prompt/schema и frozen accepted-or-
-  fallback ledger hash;
+  если LLM-SR включён, его sanitized policy/schema и frozen hypothesis-space
+  hash;
 - `report_id`: идентификатор конкретного execution/report instance;
 - `execution_environment_id`: SHA-256 exact-resume payload из OS/version, architecture, CPython implementation/build, resolved package versions, solver backend, CPU numerical features, BLAS/LAPACK vendor/version, thread policy и floating-point mode. Он хранится в checkpoint/provenance и запрещает exact checkpoint reuse в другой numerical environment, но не подменяет semantic `analysis_id`.
 
@@ -453,8 +460,9 @@ Reference support matrix для handoff: macOS 14+ arm64 и Ubuntu 24.04 LTS x86
 - Russian human report и stable English machine codes;
 - ready model JSON и local predictor при validated recommendation;
 - offline static report, verification, checkpoint/resume и audit trace.
-- optional explicitly configured OpenAI-compatible start advisor через
-  `langchain-openai`, не расширяющий registry и имеющий deterministic fallback.
+- optional explicitly configured OpenAI-compatible LLM-SR selector через
+  `langchain-openai`, выбирающий только typed registry skeletons и имеющий
+  deterministic full-registry fallback.
 
 Не входят:
 

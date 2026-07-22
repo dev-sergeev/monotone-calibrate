@@ -1,7 +1,7 @@
 # Математический контракт моделей v1
 
 Статус: утверждён для прототипа  
-Дата: 2026-07-16  
+Дата: 2026-07-16; amendment LLM-SR: 2026-07-22
 Связанный тикет: 08 — математический контракт допустимых моделей (внутренний архив, не включён в публичный репозиторий)
 
 ## 1. Область действия
@@ -118,8 +118,9 @@ constrained least squares; эти коэффициенты не являются
 Для nonlinear shape-параметров используется только фиксированный
 детерминированный multi-start из frozen
 [`start-slot-policy-v1.json`](../acceptance/start-slot-policy-v1.json).
-Сохраняются все запуски, а не только победитель; advisor может заменить лишь
-явно помеченные policy slots, не добавляя запусков.
+Сохраняются все запуски, а не только победитель. Опциональный LLM-SR selector
+может сузить finite portfolio typed family/pair skeletons, но не меняет starts,
+solver budget или certificate policy.
 
 Для каждого finite feasible optimum фиксируются Jacobian rank, singular values, condition number, active bounds, gradient/optimality, число evaluations и расстояние до конкурирующих решений. Статусы:
 

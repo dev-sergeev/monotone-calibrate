@@ -31,7 +31,20 @@ _LLM_PROVENANCE_FIELDS = frozenset(
         "prompt_version",
         "output_schema_version",
         "calls_requested",
+        "calls_succeeded",
+        "calls_failed",
         "accepted_slot_count",
+        "iterations_requested",
+        "hypotheses_proposed",
+        "hypotheses_evaluated",
+        "hypotheses_accepted",
+        "hypotheses_buffered",
+        "portfolio_size",
+        "p1_hypotheses",
+        "p2_hypotheses",
+        "island_count",
+        "experiences_per_prompt",
+        "samples_per_prompt",
         "scope",
         "used_in_validation",
         "family_search_space_changed",
@@ -39,6 +52,7 @@ _LLM_PROVENANCE_FIELDS = frozenset(
         "certificate_policy_changed",
         "baseline_p1_model_hash",
         "final_p1_model_hash",
+        "hypothesis_space_hash",
         "influenced_final_refit",
         "formula_source",
     }
@@ -80,7 +94,7 @@ def _safe_llm_provenance(value: Mapping[str, object] | None) -> dict[str, object
     if value is None:
         return {
             "status": "DISABLED",
-            "scope": "full_data_p1_refit_only",
+            "scope": "deterministic_full_registry",
             "used_in_validation": False,
             "influenced_final_refit": False,
             "formula_source": "certified_registry_solver",
@@ -108,7 +122,12 @@ def _safe_llm_provenance(value: Mapping[str, object] | None) -> dict[str, object
         "NO_IMPROVEMENT",
     }:
         raise ValueError("llm_advisor provenance has an invalid status")
-    for name in ("endpoint_origin_sha256", "baseline_p1_model_hash", "final_p1_model_hash"):
+    for name in (
+        "endpoint_origin_sha256",
+        "baseline_p1_model_hash",
+        "final_p1_model_hash",
+        "hypothesis_space_hash",
+    ):
         digest = normalized.get(name)
         if digest is not None and (not isinstance(digest, str) or not _SHA256.fullmatch(digest)):
             raise ValueError(f"llm_advisor provenance field {name!r} must be SHA-256")
@@ -332,6 +351,16 @@ _HTML_TEMPLATE = """<!doctype html>
 <h2>Вход</h2>
 <p>Использовано {{ input.n_used }} из {{ input.n_input }} строк; пропущено {{ input.n_skipped }}.
 Уникальных x: {{ input.n_unique_x }}.</p>
+<h2>Выбор калибровочной функции</h2>
+<p>Режим: <code>{{ llm_mode }}</code>; статус: <code>{{ llm_status }}</code>.
+{% if llm_status == "ACCEPTED" %}В численный fit передано {{ llm_portfolio_size }}
+типизированных гипотез (P1: {{ llm_p1_hypotheses }}, P2: {{ llm_p2_hypotheses }}).
+{% else %}Использован полный детерминированный реестр
+(P1: {{ llm_p1_hypotheses }}, P2: {{ llm_p2_hypotheses }}).{% endif %}</p>
+{% if llm_status == "ACCEPTED" %}<p>LLM-SR итеративно предлагал структуры; коэффициенты,
+граница P2 и fitness вычислялись локальным solver-ом. Произвольный код модели не исполнялся.
+OOF-метрики условны относительно portfolio, найденного на полном наборе данных, и не являются
+независимой проверкой самой LLM-стадии discovery.</p>{% endif %}
 <div class="grid">
   <section class="card"><h3>P1 — одна функция</h3>
     <p>Refit R²: {{ p1.metrics.r2_refit|metric }}</p>
@@ -581,6 +610,11 @@ def write_report_bundle(
         below_quality="BELOW_PRODUCT_R2" in warnings,
         diagnostic_available=diagnostic_status == "AVAILABLE_OOF",
         flagged_rows=problem_rows,
+        llm_mode=safe_llm_advisor.get("mode", "off"),
+        llm_status=safe_llm_advisor.get("status", "DISABLED"),
+        llm_portfolio_size=safe_llm_advisor.get("portfolio_size"),
+        llm_p1_hypotheses=safe_llm_advisor.get("p1_hypotheses", 0),
+        llm_p2_hypotheses=safe_llm_advisor.get("p2_hypotheses", 0),
     )
     report_html = root / "report.html"
     report_html.write_text(rendered + "\n", encoding="utf-8")

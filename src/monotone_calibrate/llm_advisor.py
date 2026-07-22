@@ -1,8 +1,9 @@
-"""Bounded optional LLM advice for deterministic nonlinear start values.
+"""Legacy numerical-start advisor plus the shared bounded data summary.
 
-This module is intentionally outside the mathematical model runtime. Advice
-can only name a predeclared replaceable slot and supply a bounded nonlinear
-vector; an empty result leaves every deterministic start unchanged.
+The active application no longer calls :class:`ChatOpenAIStartAdvisor`; LLM-SR
+uses only :func:`summarize_training` from this module.  The old adapter remains
+temporarily available for compatibility tests and historical consumers.  It
+never participates in current calibration-function selection.
 """
 
 from __future__ import annotations

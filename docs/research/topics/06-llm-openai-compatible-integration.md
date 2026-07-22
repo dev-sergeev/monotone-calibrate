@@ -1,152 +1,225 @@
-# RQ6 — опциональный LLM start-advisor через OpenAI-compatible API
+# RQ6 — LLM-SR selector через OpenAI-compatible API
 
-**Дата исполнения и отсечения:** 2026-07-16, Europe/Moscow  
-**Область:** Python `langchain-openai` / `ChatOpenAI`, настраиваемый OpenAI-compatible Chat Completions endpoint  
-**Источники:** только официальная документация и исходный код LangChain/OpenAI; вторичные обзоры не использованы.
+**Исходная дата:** 2026-07-16.
+**Актуализация LLM-SR:** 2026-07-22, Europe/Moscow.
+**Область:** `langchain-openai` / `ChatOpenAI`, внешний
+OpenAI-compatible Chat Completions endpoint и локальный typed fitting runtime.
+
+## Источники
+
+- [LLM-SR: Scientific Equation Discovery via Programming with Large Language Models](https://arxiv.org/abs/2404.18400);
+- [официальная реализация LLM-SR](https://github.com/deep-symbolic-mathematics/LLM-SR),
+  изученный commit `41c212312df6c16d936c9cb395356a62774c47e3`;
+- [LangChain: ChatOpenAI integration](https://docs.langchain.com/oss/python/integrations/chat/openai);
+- [OpenAI Chat API reference](https://developers.openai.com/api/reference/resources/chat).
+
+Подробное сопоставление статьи с кодом проекта находится в
+[`../../llm-sr-algorithm.md`](../../llm-sr-algorithm.md).
 
 ## Решение
 
-LLM не должна входить в доверенное вычислительное ядро и не нужна для корректности метода. Её допустимая роль — **необязательный start-advisor**, который заменяет только заранее помеченные replaceable slots, сохраняя обязательные anchor starts и общий численный budget. Семейства функций, численная оптимизация, сертификаты монотонности, `R²`, uplift и итоговая рекомендация остаются локальными и проверяемыми. Таймаут, HTTP/API-ошибка, невалидный JSON или нарушение схемы дают warning и возврат исходного deterministic start, но не останавливают калибровку.
+LLM является недоверенным генератором **дискретных typed skeletons**, а не
+источником готовой формулы или численных коэффициентов. Она может назвать
+только:
 
-Это соответствует области применимости `ChatOpenAI`: LangChain разрешает custom `base_url` для **basic chat functionality**, но предупреждает, что класс ориентирован на официальную схему OpenAI и не сохраняет нестандартные поля сторонних провайдеров ([LangChain: Chat model integrations](https://docs.langchain.com/oss/python/integrations/chat)).
+- одно семейство из `registry-v1` для P1;
+- одну ordered-пару семейств из `registry-v1` для P2.
 
-## 1. Точный контракт переменных окружения
+Коэффициенты, направление, breakpoint, непрерывное сопряжение, quantization,
+fitness, сертификаты, validation и рекомендация вычисляются локально. Этот
+seam сохраняет ключевое разделение LLM-SR «program skeleton + numerical
+optimizer», не исполняя generated Python из внешнего ответа.
 
-Проект использует собственный префикс и явно передаёт значения в `ChatOpenAI`; это исключает неявное смешение с ambient `OPENAI_*` другого приложения.
+При выключенном selector-е или любом полном fallback приложение перебирает
+весь реестр и остаётся локальным детерминированным инструментом.
+
+## 1. Конфигурация
+
+Приложение читает только собственный префикс
+`MONOTONE_CALIBRATE_LLM_*`; ambient `OPENAI_API_KEY` и `OPENAI_BASE_URL` не
+подменяют настройки.
 
 ```dotenv
 MONOTONE_CALIBRATE_LLM_ENABLED=false
-MONOTONE_CALIBRATE_LLM_MODEL=
-MONOTONE_CALIBRATE_LLM_BASE_URL=
-MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN=
+MONOTONE_CALIBRATE_LLM_MODEL=my-model-id
+MONOTONE_CALIBRATE_LLM_BASE_URL=https://provider.example/v1
+MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN=your-access-token
 MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS=20
 MONOTONE_CALIBRATE_LLM_MAX_RETRIES=1
+MONOTONE_CALIBRATE_LLM_SEARCH_ITERATIONS=4
 MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP=false
 ```
 
-| Переменная | Контракт |
+| Переменная | Текущий контракт |
 |---|---|
-| `MONOTONE_CALIBRATE_LLM_ENABLED` | Только `true` или `false`, default `false`; CLI `--llm-start-advisor` также включает режим. |
-| `MONOTONE_CALIBRATE_LLM_MODEL` | Непустая строка, обязательна при `true`; всегда передаётся как `model`, без библиотечного default. |
-| `MONOTONE_CALIBRATE_LLM_BASE_URL` | Непустой абсолютный API root, обычно `https://host/v1`, а не полный `/chat/completions`; обязателен при `true`. Запрещены userinfo, query и fragment. Разрешён `https`; `http` — literal loopback либо отдельный explicit insecure opt-in. |
-| `MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN` | Непустой raw bearer credential, обязательный при `true`; префикс `Bearer ` пользователь **не** добавляет. |
-| `MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS` | Целое число `1..120`, default `20`. |
-| `MONOTONE_CALIBRATE_LLM_MAX_RETRIES` | Целое число `0..3`, default `1`; это один повтор после первой попытки. |
-| `MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP` | Только `true|false`, default `false`; разрешает non-loopback HTTP как явный операторский риск. |
+| `MONOTONE_CALIBRATE_LLM_ENABLED` | exact `true|false`, default `false` |
+| `MONOTONE_CALIBRATE_LLM_MODEL` | обязательный непустой model/deployment ID при enabled |
+| `MONOTONE_CALIBRATE_LLM_BASE_URL` | абсолютный URL без credentials/query/fragment; HTTPS либо loopback HTTP |
+| `MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN` | обязательный raw credential без префикса `Bearer ` |
+| `MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS` | integer `1..120`, default `20` |
+| `MONOTONE_CALIBRATE_LLM_MAX_RETRIES` | integer `0..3`, default `1` |
+| `MONOTONE_CALIBRATE_LLM_SEARCH_ITERATIONS` | integer `1..64`, default `4` |
+| `MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP` | разрешает non-loopback HTTP как явный opt-in |
 
-Если enabled-конфигурация неполна или невалидна, приложение не должно подставлять `https://api.openai.com/v1` или случайный model default: оно не выполняет сетевой вызов, пишет `LLM_ADVISOR_CONFIG_INVALID` без секрета и продолжает с детерминированными стартами.
+CLI `--llm-symbolic-search` force-enables selector и поэтому также требует три
+обязательных provider-поля. `--llm-start-advisor` — только compatibility alias
+того же LLM-SR режима. Если данные находятся в `.env`, `--no-dotenv` указывать
+нельзя.
 
-`ChatOpenAI` действительно принимает `model`, `api_key`, `base_url`, `timeout` и `max_retries`; `api_key` внутри модели имеет тип `SecretStr`, а `base_url` можно передать явно ([документация интеграции](https://docs.langchain.com/oss/python/integrations/chat/openai), [зафиксированный исходник LangChain](https://github.com/langchain-ai/langchain/blob/98216c0c1d7d2dc13e3ebeac36329853a5cb52a0/libs/partners/openai/langchain_openai/chat_models/base.py#L640-L751)). OpenAI API принимает API key или access token как Bearer credential, а официальный Python SDK сам строит `Authorization: Bearer <api_key>` ([OpenAI API authentication](https://developers.openai.com/api/reference/overview#authentication), [исходник SDK](https://github.com/openai/openai-python/blob/f16fbbd2bd25dc1ff150b5f78dbd15ff6bab6d91/src/openai/_client.py#L497-L513)). Поэтому в `MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN` хранится токен без префикса.
+Неполная/невалидная конфигурация не вызывает provider call. Run продолжается
+на полном реестре со статусом `CONFIG_INVALID` и typed `LLM_CONFIG_*` warning.
 
-Рекомендуемое явное создание клиента:
+## 2. Минимальный endpoint contract
+
+Клиент создаётся явно:
 
 ```python
-from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
-
-llm = ChatOpenAI(
+ChatOpenAI(
     model=config.model,
     base_url=config.base_url,
-    api_key=SecretStr(config.access_token),
+    api_key=config.access_token,
+    temperature=0.8,
     timeout=config.timeout_seconds,
     max_retries=config.max_retries,
-    use_responses_api=False,
     streaming=False,
     stream_usage=False,
+    disable_streaming=True,
+    use_responses_api=False,
 )
 ```
 
-Параметры нельзя делать runtime-configurable из CSV, HTTP payload или ответа модели. В частности, LangChain предупреждает, что unrestricted runtime configuration может менять `api_key` и `base_url` и перенаправлять запросы на другой сервис ([security note для `init_chat_model`](https://reference.langchain.com/python/langchain/chat_models/base/init_chat_model)).
+Используется только обычный non-streaming message invocation. Tools,
+function-calling, server-side structured output, files, conversation state и
+provider-specific `extra_body` не требуются. Ответ должен предоставлять
+строковый `message.content`.
 
-## 2. Минимальная совместимость endpoint
+LangChain прямо указывает, что `ChatOpenAI` ориентирован на официальную OpenAI
+API specification и не обязан сохранять нестандартные response fields сторонних
+провайдеров. Проект намеренно использует только минимальное текстовое
+пересечение протоколов; compatibility конкретного endpoint должна проверяться
+отдельно, а provider-specific reasoning/tool fields игнорируются.
 
-Версия v1 опирается только на базовый Chat Completions-контракт:
+Входной `base_url` валидируется локально, но текущий код не устанавливает
+собственный HTTP transport с redirect allowlist. Поэтому формальная гарантия
+«ни одного redirect за пределы configured origin» пока не доказана и остаётся
+за пределами текущего security claim.
 
-- SDK отправляет `POST <base_url>/chat/completions` с `model` и `messages`;
-- credential передаётся HTTP Bearer authentication;
-- ответ содержит хотя бы `choices[0].message.content`;
-- вызов не требует Responses API, streaming usage, tools/function calling, provider-specific reasoning fields или server-side storage.
+Приложение не настраивает LangSmith callbacks, однако также не отклоняет
+ambient `LANGSMITH_TRACING`/`LANGCHAIN_TRACING_V2`. Оператор обязан оставить их
+выключенными. Явный fail-closed tracing guard — будущий hardening, а не
+свойство текущей реализации.
 
-Официальная OpenAI reference определяет `POST /chat/completions` и ответ с `choices[].message` ([Chat Completions API](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)). `use_responses_api=False`, `streaming=False` и `stream_usage=False` задаются явно, чтобы LangChain не включил возможность, которую совместимый сервер мог не реализовать. Если нужны нестандартные поля провайдера, следует использовать его отдельную LangChain-интеграцию, а не расширять доверенную поверхность `ChatOpenAI`.
+## 3. Что отправляется модели
 
-## 3. Structured output: только локальная гарантия
+На каждой итерации prompt содержит:
 
-`ChatOpenAI.with_structured_output` умеет три разных протокола: `json_schema`, `function_calling` и `json_mode` ([LangChain reference](https://reference.langchain.com/python/langchain-openai/chat_models/base/ChatOpenAI/with_structured_output)). Они требуют разных server capabilities. OpenAI Structured Outputs обеспечивает соответствие поддерживаемой JSON Schema, тогда как JSON mode гарантирует лишь валидный JSON, но не конкретную схему ([OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs#structured-outputs-vs-json-mode)). Сторонний endpoint, заявляющий только Chat Completions compatibility, не обязан реализовать ни одну из этих надстроек.
+- generic problem specification для одной конечной координаты `x` и цели `y`;
+- агрегированный training summary максимум из 64 deterministic `x`-bins;
+- список разрешённых registry families и их program skeletons;
+- локальную evaluation/certificate policy;
+- до двух scored experience examples из выбранного island.
 
-Поэтому baseline v1:
+`row_id`, невалидные raw fields, пути, access token и provider URL в prompt не
+входят. Но summary содержит числовые диапазоны и агрегаты исходной кривой;
+поэтому включение LLM является явным раскрытием данных и маркируется
+`LLM_TRAINING_SUMMARY_DISCLOSED`.
 
-1. вызывает обычный `llm.invoke(messages)` без `response_format` и tools;
-2. просит вернуть один JSON object без Markdown;
-3. ограничивает размер принятого текста;
-4. разбирает только `json.loads`, никогда `eval`, `ast.literal_eval` или исполняемую формулу;
-5. валидирует результат локальной Pydantic/JSON Schema моделью в strict mode с `extra="forbid"`;
-6. при любой ошибке отбрасывает весь ответ без repair-loop и включает fallback.
+## 4. Закрытый output contract
 
-Если позднее конкретный провайдер будет аттестован на native structured output, режим должен включаться отдельной versioned capability policy и всегда указывать `method="json_schema"` явно. Автоматически угадывать поддержку или зависеть от меняющегося library default нельзя.
-
-## 4. Allowlisted schema советов
-
-Ответ модели содержит только данные для старта, например:
+Текущая schema:
+[`../../specification/llm-sr-hypotheses.schema.json`](../../specification/llm-sr-hypotheses.schema.json).
 
 ```json
 {
-  "schema_version": "llm-start-advice-v1",
-  "suggestions": [
+  "schema_version": "llm-sr-hypotheses-v1",
+  "hypotheses": [
+    {"structure": "P1", "family_ids": ["logistic_v1"]},
     {
-      "slot_id": "<schema-known-replaceable-slot-id>",
-      "parameter_vector": [0.1, 0.5]
+      "structure": "P2",
+      "family_ids": ["poly1_v1", "poly2_v1"]
     }
   ]
 }
 ```
 
-Локальная проверка обязана обеспечить:
+Parser отклоняет весь ответ при любом из условий:
 
-- не более числа объявленных replaceable slots в fit scope;
-- каждый `slot_id` существует в predeclared scope request и встречается один раз;
-- точную длину `parameter_vector` по registry slot schema, только конечные числа и только registry bounds;
-- отсутствие дополнительных полей, свободного Python-кода, произвольных функций, выражений и файловых/сетевых инструкций.
+- prose/Markdown вместо одного JSON object;
+- duplicate object key, `NaN`/`Infinity`, лишнее или пропущенное поле;
+- пустой batch, batch больше request maximum;
+- unknown family, неверная длина `family_ids`, duplicate hypothesis;
+- P2 `constant_v1/constant_v1`;
+- `code`, `formula`, coefficient или иной внешний payload.
 
-LLM не может добавлять новое семейство, повышать степень полинома выше 3, менять budget, отбрасывать anchor starts или сертифицировать найденную модель. Принятый vector заменяет только соответствующий deterministic replaceable slot; после этого работает тот же локальный fitter и те же сертификаты.
+JSON Schema документирует форму, но runtime parser дополнительно обеспечивает
+duplicate-key, non-finite и canonical-ID проверки. Ни `eval`, ни dynamic
+import, ни generated code в активном пути нет.
 
-## 5. Validation boundary и воспроизводимость
+## 5. Search и local evaluation
 
-Главный инвариант: **LLM не видит ни одной строки, held out для метрики, на которую её совет может повлиять**.
+Адаптация использует параметры статьи:
 
-- В outer fold ей доступны только outer-training rows или их детерминированное нормализованное представление; row IDs и заведомо лишние поля не отправляются.
-- В v1 inner fit scopes отсутствуют: registry/budgets/thresholds заранее
-  заморожены, а полный selector переоценивается на каждом outer train.
-- Полный final refit после завершения оценки может использовать все принятые строки, но не меняет уже зафиксированную OOF-оценку.
+- `10` islands;
+- `4` skeletons на prompt;
+- generation temperature `0.8`;
+- `2` in-context experiences;
+- fitness `-MSE`;
+- Boltzmann cluster sampling с `T₀=0.1`, period `10 000`;
+- предпочтение короткого skeleton внутри score cluster.
 
-Для replay сохраняются точные **принятые и нормализованные** numeric suggestions, version/hash prompt и schema, training-scope hash, model string, package versions, status и rejection codes. Access token, полный raw prompt/response и текст исключения в bundle не попадают; вместо raw ответа достаточно SHA-256. Повторное воспроизведение использует сохранённые старты без нового LLM-вызова.
+Каждая typed гипотеза отдельно fit-ится существующим solver-ом. В buffer
+попадает только кандидат с конечным score после quantization и certificate.
+Все валидные score-clusters сохраняются для diversity; best score используется
+для ранжирования/reset islands. Numerical evaluation кэшируется по canonical
+hypothesis ID.
 
-Качество LLM не предполагается заранее. Её польза доказывается отдельной ablation-проверкой `deterministic starts` против `anchor + LLM-substituted slots` при строго одинаковом числе starts/evaluations. До такого результата LLM остаётся экспериментальным средством basin discovery, а не основанием доверять модели.
+Product default — четыре provider calls, а не paper-scale 2.5K iterations.
+Слабая половина islands перезапускается по детерминированному iteration period,
+если configured budget до него доходит.
 
-## 6. Таймауты, retries и fallback
+## 6. Validation boundary
 
-Underlying OpenAI Python SDK по умолчанию ждёт до 10 минут и повторяет ряд connection/408/409/429/5xx ошибок два раза; оба значения настраиваются ([официальный SDK: retries](https://github.com/openai/openai-python/blob/f16fbbd2bd25dc1ff150b5f78dbd15ff6bab6d91/README.md#retries), [timeouts](https://github.com/openai/openai-python/blob/f16fbbd2bd25dc1ff150b5f78dbd15ff6bab6d91/README.md#timeouts)). Для fit loop это слишком долго, поэтому фиксируются `20 s` и один retry. Дополнительный внешний retry-layer не добавляется.
+Selector один раз использует full-data summary и full-data fitness, после чего
+portfolio замораживается. В каждом grouped outer fold заново выполняются
+локальный fit параметров, breakpoint и выбор лучшего кандидата только внутри
+этого portfolio.
 
-Нормальные fallback-события:
+Следствие: outer-test `y` не участвует в fold fit, но full-data `y` уже повлиял
+на состав portfolio. Поэтому OOF является **conditional validation**, а не
+untouched оценкой всей discovery procedure. Успешный поиск всегда получает
+`LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION`.
 
-- timeout, DNS/TLS/connection failure;
-- HTTP authentication, rate-limit или server error;
-- отсутствующий/неподдерживаемый model;
-- пустой или слишком большой content;
-- invalid JSON, schema/cross-field violation, NaN/Infinity, unknown family;
-- отказ модели.
+Полностью nested LLM-SR потребовал бы отдельного provider search в каждом
+outer-training scope и оставлен будущей явно бюджетируемой политикой.
 
-Во всех случаях: sanitized warning `LLM_ADVISOR_UNAVAILABLE`, `accepted_suggestions=0`, запуск обязательных deterministic starts и продолжение анализа. Parsing/schema failures не ретраятся: transport retry не должен превращаться в скрытый prompt-repair agent.
+## 7. Fallback и provenance
 
-## 7. Секреты и сетевой контур
+Полный deterministic registry используется при:
 
-OpenAI рекомендует не коммитить ключ, не отдавать его browser/mobile client и хранить в environment variable или secret manager ([API key safety](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety)). Практический контракт проекта:
+- disabled или invalid configuration;
+- timeout/transport/provider failure;
+- malformed/untrusted response;
+- отсутствии хотя бы одной новой валидной гипотезы;
+- неожиданной ошибке search stage.
 
-- `.env.example` содержит только пустые placeholders; рабочий `.env` игнорируется VCS и не публикуется;
-- token не выводится в stdout/stderr, report, manifest, cache key, telemetry и exception text;
-- `base_url` задаётся только доверенным оператором при старте; ввод из CSV не может перенаправить credential;
-- URL с embedded credentials запрещён; production требует TLS, кроме явно локального loopback;
-- LangSmith tracing и verbose OpenAI logging по умолчанию выключены, потому что prompt содержит данные fit scope;
-- в публичной provenance вместо полного URL сохраняются capability-policy ID и hash нормализованного URL; секрет никогда не хешируется и не сохраняется;
-- при подозрении на раскрытие token ротируется вне приложения.
+Fallback атомарный: случайный частичный portfolio не подменяет полный реестр.
+Provider exception text не попадает в report.
 
-Итог: такая интеграция удобна для пользователя с любым базово OpenAI-compatible сервером, но не меняет математический trust boundary проекта. Доступность или качество LLM влияет только на replaceable starts и всегда наблюдаемо в отчёте.
+Исторически совместимое поле `report.json.llm_advisor` хранит только status,
+версии, counts, booleans и SHA-256 hashes. Access token, raw endpoint, prompts,
+responses и provider diagnostics не сериализуются.
+
+## 8. Non-claims
+
+Текущая интеграция не заявляет:
+
+- качество, доступность или подлинность внешнего provider-а;
+- bit-identical fresh LLM responses;
+- произвольную symbolic grammar за пределами `registry-v1`;
+- независимую validation full-data discovery;
+- redirect/telemetry isolation уровня formal security gate;
+- подписанное cross-platform release acceptance.
+
+Исторический numerical start-advisor удалён из application flow. Его схема,
+live-run и frozen acceptance v1 сохранены только как архив; граница описана в
+[`../../acceptance/README.md`](../../acceptance/README.md).

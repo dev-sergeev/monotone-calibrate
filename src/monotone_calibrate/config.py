@@ -1,4 +1,4 @@
-"""Configuration for the optional OpenAI-compatible start advisor.
+"""Configuration for optional OpenAI-compatible LLM-SR hypothesis search.
 
 Only the explicitly documented ``MONOTONE_CALIBRATE_LLM_*`` names are read.
 The mathematical pipeline can therefore construct the default configuration
@@ -30,7 +30,7 @@ class LLMConfigError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class LLMConfig:
-    """Resolved settings for one optional advisor boundary."""
+    """Resolved settings for the typed symbolic-search adapter."""
 
     enabled: bool = False
     model: str | None = None
@@ -38,6 +38,7 @@ class LLMConfig:
     access_token: str | None = field(default=None, repr=False)
     timeout_seconds: int = 20
     max_retries: int = 1
+    search_iterations: int = 4
     allow_insecure_http: bool = False
 
     @classmethod
@@ -74,6 +75,13 @@ class LLMConfig:
             minimum=0,
             maximum=3,
         )
+        search_iterations = _bounded_int(
+            values.get(f"{_PREFIX}SEARCH_ITERATIONS"),
+            name=f"{_PREFIX}SEARCH_ITERATIONS",
+            default=4,
+            minimum=1,
+            maximum=64,
+        )
 
         model = _optional_text(values.get(f"{_PREFIX}MODEL"))
         base_url = _optional_text(values.get(f"{_PREFIX}BASE_URL"))
@@ -96,7 +104,7 @@ class LLMConfig:
             if missing:
                 raise LLMConfigError(
                     "LLM_CONFIG_MISSING",
-                    "enabled LLM advisor requires: " + ", ".join(missing),
+                    "enabled LLM symbolic search requires: " + ", ".join(missing),
                 )
 
         return cls(
@@ -106,6 +114,7 @@ class LLMConfig:
             access_token=token,
             timeout_seconds=timeout,
             max_retries=retries,
+            search_iterations=search_iterations,
             allow_insecure_http=allow_insecure,
         )
 

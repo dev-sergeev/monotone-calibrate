@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:monotone-calibrate:schema:llm-sr-hypotheses:1",
+  "title": "Typed LLM-SR calibration hypotheses v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "hypotheses"],
+  "properties": {
+    "schema_version": {"const": "llm-sr-hypotheses-v1"},
+    "hypotheses": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hypothesis"}
+    }
+  },
+  "$defs": {
+    "family_id": {
+      "enum": [
+        "constant_v1",
+        "poly1_v1",
+        "poly2_v1",
+        "poly3_v1",
+        "exp_affine_v1",
+        "log_shift_v1",
+        "reciprocal_shift_pos_v1",
+        "logistic_v1"
+      ]
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["structure", "family_ids"],
+      "properties": {
+        "structure": {"enum": ["P1", "P2"]},
+        "family_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/family_id"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"structure": {"const": "P1"}},
+            "required": ["structure"]
+          },
+          "then": {
+            "properties": {
+              "family_ids": {"minItems": 1, "maxItems": 1}
+            }
+          },
+          "else": {
+            "properties": {
+              "family_ids": {"minItems": 2, "maxItems": 2}
+            }
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "structure": {"const": "P2"},
+              "family_ids": {
+                "prefixItems": [
+                  {"const": "constant_v1"},
+                  {"const": "constant_v1"}
+                ],
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": ["structure", "family_ids"]
+          }
+        }
+      ]
+    }
+  },
+  "$comment": "Runtime parsing additionally rejects duplicate JSON object keys and non-finite JSON constants, enforces the per-request maximum (default 4), and canonicalizes unique hypothesis IDs. Numeric coefficients, formulas, code and extra fields are forbidden."
+}

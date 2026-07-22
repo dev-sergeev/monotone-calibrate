@@ -290,6 +290,7 @@ def validate_candidates(
         min_segment_share=full_candidates.search_trace.min_segment_share,
         max_elementary_starts=full_candidates.search_trace.max_elementary_starts,
         search_policy=SearchPolicy(full_candidates.search_trace.profile),
+        hypothesis_space=full_candidates.hypothesis_space,
     )
 
     for repetition in range(resolved.repetitions):

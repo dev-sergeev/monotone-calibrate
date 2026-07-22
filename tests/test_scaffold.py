@@ -20,4 +20,4 @@ def test_installed_cli_exposes_product_commands_and_defaults_offline() -> None:
     assert "run" in completed.stdout
     assert "predict" in completed.stdout
     assert "verify" in completed.stdout
-    assert "LLM advisor: disabled by default" in completed.stdout
+    assert "LLM-SR symbolic search: disabled by default" in completed.stdout

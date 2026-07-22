@@ -1,9 +1,16 @@
 # Контракт отчёта и графиков v1
 
 **Статус:** delegated v1 принят исполнителем по статическим evidence: 15 bundles, 1,021 checks, 0 failures и два независимых финальных GO на одном digest; live-review пользователем не проводился, а production runtime/browser/platform gates зафиксированы тикетом 14 и остаются `NOT RUN` до implementation handoff  
-**Дата:** 2026-07-16  
+**Дата:** 2026-07-16; amendment LLM-SR: 2026-07-22
 **Связанный тикет:** 12 — утвердить контракт отчёта и графиков (внутренний архив, не включён в публичный репозиторий)  
 **Место прототипа:** [`docs/prototypes/report-layout/`](../prototypes/report-layout/)
+
+> Это целевой production/report contract. Текущий compact bundle сохраняет те
+> же decision-first, OOF/refit, warning и typed-model инварианты, но использует
+> плоские `plot-one.svg`/`plot-two.svg`, восемь content artifacts и более
+> компактный `report.json`. Фактическая поверхность описана в
+> [`../../README.md`](../../README.md), а status machine schemas — в
+> [`README.md`](README.md).
 
 Основания: [RQ5 — стандарты отчётности и визуализации](../research/topics/05-reporting-visualization.md), [математический контракт моделей](02-model-contract.md), [контракт validation, uplift и рекомендации](03-validation-uplift-contract.md), [контракт диагностики остатков и влияния](04-residual-diagnostics-contract.md), [вердикт по стратегии fitting](05-fitting-strategy-verdict.md) и [контракт формы поставки](06-delivery-surface-contract.md).
 
@@ -283,10 +290,10 @@ repetition/resample denominator (полный fallback даёт uplift `0`, а �
   dependency-lock hashes;
 - solver/backend, environment, thread policy, seeds и numerical tolerances;
 - validation/bootstrap/influence work counts и fallback/failure counts;
-- LLM advisor mode/status, provider model, hashes normalized endpoint origin
-  и полного normalized Base URL endpoint,
-  prompt/output-schema versions, call/accepted/fallback counts и frozen ledger
-  hash; access token и raw base URL запрещены;
+- LLM-SR selector mode/status, provider model, endpoint hash,
+  prompt/output-schema versions, iteration/call/hypothesis/buffer counts и
+  frozen hypothesis-space hash; access token, raw base URL, prompts и responses
+  запрещены;
 - model hashes и certificate versions;
 - manifest table: relative path, media type, size и SHA-256;
 - ссылки на `report.json`, schemas, model artifacts, CSV/CSVW, SVG, compressed OOF/influence/trace exports и provenance;
@@ -294,11 +301,13 @@ repetition/resample denominator (полный fallback даёт uplift `0`, а �
 
 Если validated recommendation существует, `models/recommended-model.json` виден как основной machine artifact и поддерживается `predict`. При `DESCRIPTIVE_ONLY`, `NO_VALID_MODEL` или `PIPELINE_FAILURE` он отсутствует, и отчёт объясняет это явно.
 
-При включённом advisor-е раздел содержит заметное
-`LLM_TRAINING_SUMMARY_DISCLOSED`: численные summaries каждого training scope
-были отправлены на настроенный endpoint. Свободный текст/рассуждения модели не
-становятся report evidence; сохраняются только schema-valid принятые start
-vectors, typed fallback reasons и hashes.
+При включённом selector-е раздел содержит заметные
+`LLM_TRAINING_SUMMARY_DISCLOSED` и
+`LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION`: full-data numerical summary был
+отправлен на настроенный endpoint, а OOF conditional относительно найденного
+portfolio. Свободный текст/рассуждения модели не становятся report evidence;
+сохраняются только schema-valid typed skeleton counts, fallback reasons и
+hashes.
 
 ## 11. OOF/refit firewall
 

@@ -1,0 +1,152 @@
+{
+  "schema_version": "llm-sr-policy-v2",
+  "policy_id": "llm-sr-registry-search-v2",
+  "status": "current_implementation_policy",
+  "effective_date": "2026-07-22",
+  "supersedes_llm_policy": "llm-start-advisor-v1",
+  "default_mode": "off",
+  "enable_sources": [
+    "--llm-symbolic-search",
+    "--llm-start-advisor (compatibility alias)",
+    "MONOTONE_CALIBRATE_LLM_ENABLED=true"
+  ],
+  "provider": {
+    "adapter": "langchain_openai.ChatOpenAI",
+    "protocol": "OpenAI-compatible non-streaming Chat Completions",
+    "compatibility_scope": "minimal text message.content only; ChatOpenAI targets the official OpenAI specification and provider-specific fields are unsupported",
+    "arguments": {
+      "temperature": 0.8,
+      "use_responses_api": false,
+      "streaming": false,
+      "stream_usage": false,
+      "disable_streaming": true
+    },
+    "explicit_environment": {
+      "model": "MONOTONE_CALIBRATE_LLM_MODEL",
+      "base_url": "MONOTONE_CALIBRATE_LLM_BASE_URL",
+      "access_token": "MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN",
+      "timeout_seconds": {
+        "name": "MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS",
+        "default": 20,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "max_retries": {
+        "name": "MONOTONE_CALIBRATE_LLM_MAX_RETRIES",
+        "default": 1,
+        "minimum": 0,
+        "maximum": 3
+      },
+      "search_iterations": {
+        "name": "MONOTONE_CALIBRATE_LLM_SEARCH_ITERATIONS",
+        "default": 4,
+        "minimum": 1,
+        "maximum": 64
+      },
+      "allow_insecure_http": "MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP"
+    },
+    "ambient_openai_aliases_read": false,
+    "secrets_serialized": false,
+    "langsmith_tracing": "not configured by the application; ambient tracing must be disabled by the operator and is not currently rejected fail-closed",
+    "redirect_origin_enforcement": "not implemented by a project-owned HTTP transport"
+  },
+  "prompt": {
+    "version": "llm-sr-registry-prompt-v1",
+    "training_summary": "at most 64 deterministic x-bins; no row_id, invalid raw fields, paths or secrets",
+    "experience_examples": 2,
+    "samples_per_prompt": 4,
+    "response_schema_version": "llm-sr-hypotheses-v1",
+    "response_schema_path": "docs/specification/llm-sr-hypotheses.schema.json"
+  },
+  "search": {
+    "initial_hypotheses": [
+      "P1:constant_v1",
+      "P1:poly1_v1",
+      "P2:poly1_v1/poly1_v1"
+    ],
+    "islands": 10,
+    "fitness": "negative mean squared error after local quantized certified fit",
+    "cluster_signature": "structure plus fitness rounded to 12 decimal places",
+    "cluster_sampling": {
+      "method": "Boltzmann softmax",
+      "initial_temperature": 0.1,
+      "temperature_period": 10000
+    },
+    "program_sampling": "softmax preference for shorter canonical typed skeleton",
+    "weak_island_reset_period_iterations": 32,
+    "random_seed": 20260722
+  },
+  "trust_boundary": {
+    "llm_may_choose": [
+      "one registry family for P1",
+      "one ordered registry family pair for P2"
+    ],
+    "local_only": [
+      "numeric coefficients",
+      "direction",
+      "P2 breakpoint and continuous join",
+      "quantization",
+      "fitness",
+      "monotonicity and domain certificates",
+      "validation and recommendation"
+    ],
+    "rejected": [
+      "generated code",
+      "formula text",
+      "numeric parameter values",
+      "unknown family IDs",
+      "extra fields",
+      "duplicate JSON keys",
+      "non-finite JSON constants",
+      "constant/constant P2"
+    ]
+  },
+  "fallback": {
+    "mode": "complete deterministic registry",
+    "atomic": true,
+    "triggers": [
+      "invalid configuration",
+      "provider or transport failure",
+      "malformed or untrusted response",
+      "no new valid hypothesis",
+      "unexpected search-stage failure"
+    ]
+  },
+  "validation": {
+    "portfolio_scope": "selected once from full-data summary and full-data fitness, then frozen and refit inside every grouped outer fold",
+    "claim": "conditional validation of numerical selection inside the frozen portfolio, not untouched validation of the discovery stage",
+    "mandatory_warning_codes_when_accepted": [
+      "LLM_TRAINING_SUMMARY_DISCLOSED",
+      "LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION"
+    ]
+  },
+  "provenance": {
+    "compatibility_field": "report.json.llm_advisor",
+    "mode": "llm_sr_typed_symbolic_search",
+    "allowed_content": "redacted counts, versions, booleans and SHA-256 hashes",
+    "forbidden_content": "access token, raw endpoint, prompts, responses and provider diagnostics"
+  },
+  "implementation": {
+    "modules": [
+      "src/monotone_calibrate/hypotheses.py",
+      "src/monotone_calibrate/symbolic_search.py",
+      "src/monotone_calibrate/application.py",
+      "src/monotone_calibrate/engine.py",
+      "src/monotone_calibrate/validation.py"
+    ],
+    "tests": [
+      "tests/test_symbolic_search.py",
+      "tests/test_application.py",
+      "tests/test_validation_decision.py"
+    ]
+  },
+  "nonclaims": [
+    "provider quality or availability",
+    "bit-identical stochastic responses",
+    "arbitrary symbolic grammar outside registry-v1",
+    "untouched validation of full-data LLM discovery",
+    "formal signed cross-platform release acceptance",
+    "fail-closed rejection of ambient LangSmith tracing",
+    "project-enforced redirect origin allowlist"
+  ]
+}

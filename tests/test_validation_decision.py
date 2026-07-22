@@ -4,6 +4,7 @@ import numpy as np
 
 import monotone_calibrate.validation as validation_module
 from monotone_calibrate.engine import FitOptions, SearchPolicy, fit_candidates
+from monotone_calibrate.hypotheses import HypothesisSpace
 from monotone_calibrate.validation import ValidationOptions, validate_candidates
 
 
@@ -76,6 +77,7 @@ def test_equal_x_observations_are_atomic_in_every_outer_split() -> None:
 def test_validation_replays_the_full_fit_search_policy(monkeypatch) -> None:
     x = np.arange(20, dtype=float)
     y = 1.0 + 0.4 * x
+    hypothesis_space = HypothesisSpace.linear_seeds()
     full = fit_candidates(
         x,
         y,
@@ -83,6 +85,7 @@ def test_validation_replays_the_full_fit_search_policy(monkeypatch) -> None:
             min_segment_share=0.45,
             max_elementary_starts=1,
             search_policy=SearchPolicy("balanced"),
+            hypothesis_space=hypothesis_space,
         ),
     )
     seen: list[FitOptions] = []
@@ -104,3 +107,4 @@ def test_validation_replays_the_full_fit_search_policy(monkeypatch) -> None:
     assert all(options.min_segment_share == 0.45 for options in seen)
     assert all(options.max_elementary_starts == 1 for options in seen)
     assert all(options.search_policy.profile == "balanced" for options in seen)
+    assert all(options.hypothesis_space == hypothesis_space for options in seen)

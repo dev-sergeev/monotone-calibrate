@@ -1,7 +1,7 @@
 # Контракт validation, uplift и рекомендации v1
 
-Статус: утверждён для прототипа  
-Дата: 2026-07-16  
+Статус: утверждён для прототипа
+Дата: 2026-07-16; amendment LLM-SR: 2026-07-22
 Связанный тикет: 09 — протокол качества и критерий uplift (внутренний архив, не включён в публичный репозиторий)
 
 ## 1. Что оценивается
@@ -10,23 +10,30 @@ Primary estimand — качество полной процедуры на но�
 
 Сравниваются две deployable procedures:
 
-- `P1(train)`: preprocessing, оба направления, весь core registry, параметры, сертификаты, complexity tie-break и refit одной функции;
-- `P2(train)`: те же шаги плюс tie-aware граница, ordered family pair, exact continuity и все stability/failure rules.
+- `P1(train)`: preprocessing, оба направления, активный frozen hypothesis
+  portfolio, параметры, сертификаты, complexity tie-break и refit одной функции;
+- `P2(train)`: те же шаги плюс tie-aware граница, ordered family pair, exact
+  continuity и все stability/failure rules. В offline/fallback режиме активный
+  portfolio равен всему core registry.
 
 В каждом outer-training scope весь поиск запускается заново. Test `y` не
 участвует в scaling, выборе семейства, направления, границы, стартов,
 threshold или обработке наблюдений. Проверка уже выбранной на полном файле
 формулы не считается validation. Registry, solver budget и thresholds
-заморожены до анализа и не являются data-tuned hyperparameters; поэтому
-отдельный inner loop не нужен для честной оценки полной процедуры. Outer test
-оценивает весь selection pipeline, выполненный только на outer train.
+заморожены до анализа и не являются data-tuned hyperparameters. В
+offline/fallback режиме outer test оценивает весь selection pipeline,
+выполненный только на outer train.
 
-Опциональный `llm-start-advisor-v1` также вызывается отдельно для каждого
-outer train и видит только bounded summary его training rows. Он может заменить
-только заранее помеченные start slots внутри уже разрешённых family/pair,
-direction, bounds и общего solver budget. Outer-test `x/y`, новые AST/families,
-thresholds и готовый ответ модели ему недоступны. Невалидный/отсутствующий
-ответ возвращает deterministic starts того же scope и typed warning.
+Опциональный `llm-sr-registry-search-v1` один раз строит portfolio по bounded
+full-data summary и локальному full-data fitness. Затем только этот portfolio
+замораживается и весь его numerical selection заново выполняется внутри каждого
+outer train. Поэтому outer-test `y` не участвует в parameter/breakpoint fit,
+но full-data `y` уже повлиял на состав portfolio. Такой результат является
+conditional validation, всегда получает
+`LLM_TRAINING_SUMMARY_DISCLOSED` и
+`LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION` и не называется untouched оценкой
+всей LLM discovery procedure. Полностью nested provider search остаётся
+отдельной будущей budgeted policy.
 
 Secondary estimands:
 

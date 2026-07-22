@@ -1,14 +1,14 @@
 """Application orchestration for one immutable calibration run.
 
-The optional LLM boundary is deliberately downstream of validation.  It may
-replace only predeclared nonlinear P1 optimizer starts for one final full-data
-refit; it never participates in model-family search, P2 fitting, validation,
-selection policy, or mathematical certification.
+An optional LLM-SR stage now selects a finite portfolio of typed equation
+skeletons before fitting.  The numerical engine and outer validation replay
+that frozen portfolio; generated code and numeric coefficients are never
+accepted from the model.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from hashlib import sha256
 import os
 from pathlib import Path
@@ -23,17 +23,17 @@ from .data import ObservationSet, read_xy_csv
 from .engine import (
     CandidateSet,
     FitOptions,
-    StartOverride,
     fit_candidates,
-    p1_start_slots,
 )
-from .llm_advisor import (
-    AdviceResult,
-    ChatOpenAIStartAdvisor,
-    ReplaceableStartSlot,
-    summarize_training,
-)
+from .hypotheses import HypothesisSpace
 from .reporting import ReportBundle, write_report_bundle
+from .symbolic_search import (
+    OUTPUT_SCHEMA_VERSION,
+    PROMPT_VERSION,
+    SymbolicSearchOptions,
+    SymbolicSearchResult,
+    run_symbolic_search,
+)
 from .validation import (
     ValidationOptions,
     ValidationResult,
@@ -56,6 +56,8 @@ class RunRequest:
     input_path: str | Path
     output_dir: str | Path
     dotenv_path: str | Path | None = ".env"
+    llm_symbolic_search: bool = False
+    # Backward-compatible spelling: the old flag now enables symbolic search.
     llm_start_advisor: bool = False
     fit_options: FitOptions = field(default_factory=FitOptions)
     validation_options: ValidationOptions = field(default_factory=ValidationOptions)
@@ -65,10 +67,10 @@ class RunRequest:
         object.__setattr__(self, "output_dir", Path(self.output_dir))
         if self.dotenv_path is not None:
             object.__setattr__(self, "dotenv_path", Path(self.dotenv_path))
-        if self.fit_options.start_overrides:
+        if self.fit_options.start_overrides or self.fit_options.hypothesis_space is not None:
             raise ValueError(
-                "RunRequest.fit_options cannot contain start_overrides; "
-                "the optional advisor owns that boundary"
+                "RunRequest.fit_options cannot contain externally supplied starts or "
+                "a hypothesis space; application orchestration owns those seams"
             )
 
 
@@ -87,166 +89,135 @@ class RunResult:
 def _base_provenance(
     *,
     status: str,
-    baseline_hash: str,
-    final_hash: str,
     config: LLMConfig | None,
-    calls_requested: int,
-    accepted_slot_count: int,
-    influenced_final_refit: bool,
+    hypothesis_space: HypothesisSpace,
+    search: SymbolicSearchResult | None = None,
+    search_options: SymbolicSearchOptions | None = None,
 ) -> dict[str, object]:
     endpoint_digest = (
         None
         if config is None or config.base_url is None
         else sha256(config.base_url.encode("utf-8")).hexdigest()
     )
+    calls_requested = 0 if search is None else search.calls_requested
+    calls_succeeded = 0 if search is None else search.calls_succeeded
+    calls_failed = 0 if search is None else search.calls_failed
+    changed = hypothesis_space.source == "llm_sr"
     return {
         "status": status,
-        "mode": "langchain_openai_start_advisor",
+        "mode": "llm_sr_typed_symbolic_search",
         "provider_model": None if config is None else config.model,
         "endpoint_origin_sha256": endpoint_digest,
-        "prompt_version": "llm-start-prompt-v1",
-        "output_schema_version": "llm-start-advice-v1",
+        "prompt_version": PROMPT_VERSION,
+        "output_schema_version": OUTPUT_SCHEMA_VERSION,
         "calls_requested": calls_requested,
-        "accepted_slot_count": accepted_slot_count,
-        "scope": "full_data_p1_refit_only",
-        "used_in_validation": False,
-        "family_search_space_changed": False,
-        "selection_policy_changed": False,
+        "calls_succeeded": calls_succeeded,
+        "calls_failed": calls_failed,
+        "iterations_requested": 0 if search is None else search.iterations_requested,
+        "hypotheses_proposed": 0 if search is None else search.hypotheses_proposed,
+        "hypotheses_evaluated": 0 if search is None else search.hypotheses_evaluated,
+        "hypotheses_accepted": 0 if search is None else search.hypotheses_accepted,
+        "hypotheses_buffered": 0 if search is None else search.hypotheses_buffered,
+        "portfolio_size": len(hypothesis_space.hypotheses),
+        "p1_hypotheses": len(hypothesis_space.p1_family_ids),
+        "p2_hypotheses": len(hypothesis_space.p2_family_pairs),
+        "island_count": 0 if search_options is None else search_options.num_islands,
+        "experiences_per_prompt": 0
+        if search_options is None
+        else search_options.experiences_per_prompt,
+        "samples_per_prompt": 0
+        if search_options is None
+        else search_options.samples_per_prompt,
+        "scope": (
+            "full_data_hypothesis_portfolio_replayed_in_validation"
+            if changed
+            else "deterministic_full_registry"
+        ),
+        "used_in_validation": changed,
+        "family_search_space_changed": changed,
+        "selection_policy_changed": changed,
         "certificate_policy_changed": False,
-        "baseline_p1_model_hash": baseline_hash,
-        "final_p1_model_hash": final_hash,
-        "influenced_final_refit": influenced_final_refit,
-        "formula_source": "certified_registry_solver",
+        "hypothesis_space_hash": hypothesis_space.space_hash,
+        "formula_source": "typed_skeleton_plus_certified_registry_solver",
     }
 
 
-def _advisor_refit(
+def _resolve_hypothesis_space(
     x: np.ndarray,
     y: np.ndarray,
-    baseline: CandidateSet,
     request: RunRequest,
-) -> tuple[CandidateSet, dict[str, object], tuple[str, ...]]:
-    """Optionally advise one P1 refit after validation has already finished."""
+) -> tuple[HypothesisSpace, dict[str, object], tuple[str, ...]]:
+    """Run typed LLM-SR search or choose the deterministic full registry."""
 
-    baseline_hash = baseline.one.model.model_instance_hash
+    deterministic = HypothesisSpace.full_registry()
     try:
         config = LLMConfig.load(
             request.dotenv_path,
-            force_enable=request.llm_start_advisor,
+            force_enable=request.llm_symbolic_search or request.llm_start_advisor,
         )
     except LLMConfigError as error:
         return (
-            baseline,
+            deterministic,
             _base_provenance(
                 status="CONFIG_INVALID",
-                baseline_hash=baseline_hash,
-                final_hash=baseline_hash,
                 config=None,
-                calls_requested=0,
-                accepted_slot_count=0,
-                influenced_final_refit=False,
+                hypothesis_space=deterministic,
             ),
             (error.code,),
         )
 
     if not config.enabled:
         return (
-            baseline,
+            deterministic,
             _base_provenance(
                 status="DISABLED",
-                baseline_hash=baseline_hash,
-                final_hash=baseline_hash,
                 config=config,
-                calls_requested=0,
-                accepted_slot_count=0,
-                influenced_final_refit=False,
+                hypothesis_space=deterministic,
             ),
             (),
         )
 
-    slots = tuple(
-        ReplaceableStartSlot(
-            slot_id=slot.slot_id,
-            bounds=slot.bounds,
-            default_vector=slot.default_vector,
-        )
-        for slot in p1_start_slots()
+    search_options = SymbolicSearchOptions(iterations=config.search_iterations)
+    evaluation_options = replace(
+        request.fit_options,
+        hypothesis_space=None,
+        start_overrides=(),
     )
     try:
-        advice = ChatOpenAIStartAdvisor(config).advise(
-            summarize_training(x, y, replaceable_slots=slots)
+        search = run_symbolic_search(
+            x,
+            y,
+            config,
+            evaluation_options,
+            options=search_options,
         )
     except Exception:
-        # This is an external boundary.  Provider and transport details are
-        # intentionally discarded; deterministic fitting remains complete.
-        advice = AdviceResult(
-            status="FALLBACK",
-            warning_code="LLM_ADVISOR_UNAVAILABLE",
-        )
-
-    if advice.status == "FALLBACK":
+        # Provider, transport, and untrusted-output details never enter the
+        # report.  A complete deterministic analysis remains available.
         return (
-            baseline,
+            deterministic,
             _base_provenance(
                 status="FALLBACK",
-                baseline_hash=baseline_hash,
-                final_hash=baseline_hash,
                 config=config,
-                calls_requested=1,
-                accepted_slot_count=0,
-                influenced_final_refit=False,
+                hypothesis_space=deterministic,
+                search_options=search_options,
             ),
-            (advice.warning_code or "LLM_ADVISOR_UNAVAILABLE",),
+            (
+                "LLM_TRAINING_SUMMARY_DISCLOSED",
+                "LLM_SR_SEARCH_UNAVAILABLE",
+            ),
         )
 
-    overrides = tuple(
-        StartOverride(item.slot_id, item.parameter_vector)
-        for item in advice.suggestions
-    )
-    if not overrides:
-        return (
-            baseline,
-            _base_provenance(
-                status="ACCEPTED",
-                baseline_hash=baseline_hash,
-                final_hash=baseline_hash,
-                config=config,
-                calls_requested=1,
-                accepted_slot_count=0,
-                influenced_final_refit=False,
-            ),
-            (),
-        )
-
-    advised_options = FitOptions(
-        min_segment_share=request.fit_options.min_segment_share,
-        max_elementary_starts=request.fit_options.max_elementary_starts,
-        start_overrides=overrides,
-        search_policy=request.fit_options.search_policy,
-    )
-    advised = fit_candidates(x, y, advised_options)
-    retained = advised.one.sse <= baseline.one.sse
-    final_one = advised.one if retained else baseline.one
-    final = CandidateSet(
-        one=final_one,
-        two=baseline.two,
-        two_status=baseline.two_status,
-        search_trace=baseline.search_trace,
-    )
-    final_hash = final_one.model.model_instance_hash
-    influenced = retained and final_hash != baseline_hash
     return (
-        final,
+        search.hypothesis_space,
         _base_provenance(
-            status="ACCEPTED" if retained else "NO_IMPROVEMENT",
-            baseline_hash=baseline_hash,
-            final_hash=final_hash,
+            status=search.status,
             config=config,
-            calls_requested=1,
-            accepted_slot_count=len(overrides),
-            influenced_final_refit=influenced,
+            hypothesis_space=search.hypothesis_space,
+            search=search,
+            search_options=search_options,
         ),
-        (),
+        search.warning_codes,
     )
 
 
@@ -304,7 +275,7 @@ def _publish_report(
 
 
 def run_calibration(request: RunRequest) -> RunResult:
-    """Fit, validate, optionally advise one refit, and atomically publish."""
+    """Select hypotheses, fit, validate, and atomically publish one report."""
 
     output = Path(request.output_dir)
     if output.exists():
@@ -319,24 +290,22 @@ def run_calibration(request: RunRequest) -> RunResult:
     x = np.asarray([row.x for row in dataset.observations], dtype=np.float64)
     y = np.asarray([row.y for row in dataset.observations], dtype=np.float64)
 
-    baseline = fit_candidates(x, y, request.fit_options)
-    # Validation is intentionally completed before configuration loading or
-    # construction of the optional external advisor.
+    hypothesis_space, provenance, application_warnings = _resolve_hypothesis_space(
+        x,
+        y,
+        request,
+    )
+    fit_options = replace(request.fit_options, hypothesis_space=hypothesis_space)
+    candidates = fit_candidates(x, y, fit_options)
     validation = validate_candidates(
         x,
         y,
-        baseline,
+        candidates,
         request.validation_options,
-    )
-    final_candidates, provenance, application_warnings = _advisor_refit(
-        x,
-        y,
-        baseline,
-        request,
     )
     bundle = _publish_report(
         dataset,
-        final_candidates,
+        candidates,
         validation,
         output,
         llm_advisor=provenance,
@@ -352,7 +321,7 @@ def run_calibration(request: RunRequest) -> RunResult:
     return RunResult(
         bundle=bundle,
         dataset=dataset,
-        candidates=final_candidates,
+        candidates=candidates,
         validation=validation,
         llm_advisor=provenance,
         warning_codes=warnings,

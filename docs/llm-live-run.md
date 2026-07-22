@@ -1,7 +1,17 @@
-# Live-проверка OpenAI-compatible LLM advisor
+# Архив: live-проверка OpenAI-compatible numerical start-advisor
 
-Дата: 2026-07-17. Конфигурация была загружена из `.env.example` с явным
-`--llm-start-advisor`; access token и raw Base URL в результаты не записывались.
+> Исторический артефакт от 2026-07-17. Он проверяет удалённый
+> `llm-start-advisor-v1`, который после реализации LLM-SR больше не участвует в
+> application pipeline. Текущий алгоритм и его контракт описаны в
+> [`llm-sr-algorithm.md`](llm-sr-algorithm.md); старый CLI flag сохранён только
+> как alias нового symbolic search. Команда ниже приведена только для
+> исторической воспроизводимости и **не является инструкцией запуска текущего
+> LLM-SR**.
+
+Дата: 2026-07-17. Конфигурация была загружена из существовавшей на ту дату
+версии `.env.example` с явным `--llm-start-advisor`; текущий `.env.example`
+содержит generic placeholders и не воспроизводит этот provider. Access token и
+raw Base URL в результаты не записывались.
 
 Команда:
 
@@ -44,8 +54,6 @@ LLM-starts не улучшили full-data P1 относительно determini
 - `verify` подтвердил 8 артефактов;
 - predictor: три `OK`, один `OUT_OF_DOMAIN`, один `INVALID_X`.
 
-Вывод: качество всего calibration pipeline приемлемое с большим запасом выше
-product threshold `R² = 0.60`; OpenAI-compatible интеграция функциональна и
-безопасно не ухудшает результат. Однако этот запуск не даёт доказательства
-положительной добавочной ценности именно LLM-starts — для такого утверждения
-нужна отдельная ablation-выборка из нескольких типов кривых.
+Исторический вывод: прежний start-advisor не ухудшил calibration result. Этот
+run ничего не доказывает о compatibility, качестве или безопасности текущего
+`llm-sr-hypotheses-v1`; отдельного live provider run новой schema пока нет.

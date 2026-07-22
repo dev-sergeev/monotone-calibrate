@@ -18,3 +18,6 @@ build/
 dist/
 *.egg-info/
 outputs/
+
+# Local copy of the third-party LLM-SR paper; documentation links to arXiv.
+/docs/2404.18400v3.pdf

@@ -16,6 +16,7 @@ from typing import Iterable, Literal
 import numpy as np
 from scipy.optimize import lsq_linear, minimize, nnls
 
+from .hypotheses import EquationHypothesis, HypothesisSpace
 from .model_runtime import COEFFICIENT_DECIMAL_PLACES, FittedModel, SegmentModel
 from .registry import (
     FAMILY_IDS,
@@ -122,6 +123,7 @@ class CandidateSet:
     two: FitCandidate | None
     two_status: str
     search_trace: SearchTrace
+    hypothesis_space: HypothesisSpace = field(default_factory=HypothesisSpace.full_registry)
 
 
 SearchProfile = Literal["fast", "balanced", "quality", "exhaustive"]
@@ -157,7 +159,7 @@ class SearchTrace:
 
 @dataclass(frozen=True, slots=True)
 class StartOverride:
-    """One locally validated replacement for a predeclared P1 solver start."""
+    """Legacy locally validated replacement for a predeclared P1 solver start."""
 
     slot_id: str
     parameter_vector: tuple[float, ...]
@@ -165,7 +167,7 @@ class StartOverride:
 
 @dataclass(frozen=True, slots=True)
 class StartSlot:
-    """Public descriptor disclosed to an optional start advisor."""
+    """Legacy descriptor for the retired numerical-start advisor."""
 
     slot_id: str
     family_id: str
@@ -210,6 +212,7 @@ class FitOptions:
     max_elementary_starts: int | None = None
     start_overrides: tuple[StartOverride, ...] = ()
     search_policy: SearchPolicy = field(default_factory=SearchPolicy)
+    hypothesis_space: HypothesisSpace | None = None
 
     def __post_init__(self) -> None:
         if not np.isfinite(self.min_segment_share) or not 0.0 < self.min_segment_share <= 0.5:
@@ -222,6 +225,10 @@ class FitOptions:
             raise ValueError("max_elementary_starts must be nonnegative or None")
         if not isinstance(self.search_policy, SearchPolicy):
             raise ValueError("search_policy must be a SearchPolicy")
+        if self.hypothesis_space is not None and not isinstance(
+            self.hypothesis_space, HypothesisSpace
+        ):
+            raise ValueError("hypothesis_space must be a HypothesisSpace or None")
         known_slots = {slot.slot_id: slot for slot in p1_start_slots()}
         normalized: list[StartOverride] = []
         seen: set[str] = set()
@@ -418,24 +425,33 @@ def _shape_variants(
     return unique if maximum is None else unique[:maximum]
 
 
-def _fit_one(x: np.ndarray, y: np.ndarray, options: FitOptions) -> FitCandidate:
+def _fit_one(
+    x: np.ndarray,
+    y: np.ndarray,
+    options: FitOptions,
+    family_ids: tuple[str, ...] = FAMILY_IDS,
+) -> FitCandidate | None:
     lower_x = float(x[0])
     upper_x = float(x[-1])
     t = (x - lower_x) / (upper_x - lower_x)
     contenders: list[tuple[float, int, int, FittedModel, np.ndarray]] = []
     start_overrides = {override.slot_id: override.parameter_vector for override in options.start_overrides}
 
-    constant = round(float(np.mean(y)), COEFFICIENT_DECIMAL_PLACES)
-    constant_model = _quantized_model(
-        (SegmentModel("constant_v1", lower_x, upper_x, {"a": constant}),),
-        "flat",
-    )
-    constant_prediction = np.asarray(constant_model.predict(x))
-    constant_sse = float(np.sum((y - constant_prediction) ** 2))
-    contenders.append((constant_sse, 0, 0, constant_model, constant_prediction))
+    allowed_families = frozenset(family_ids)
+    if "constant_v1" in allowed_families:
+        constant = round(float(np.mean(y)), COEFFICIENT_DECIMAL_PLACES)
+        constant_model = _quantized_model(
+            (SegmentModel("constant_v1", lower_x, upper_x, {"a": constant}),),
+            "flat",
+        )
+        constant_prediction = np.asarray(constant_model.predict(x))
+        constant_sse = float(np.sum((y - constant_prediction) ** 2))
+        contenders.append((constant_sse, 0, 0, constant_model, constant_prediction))
 
     for direction in ("increasing", "decreasing"):
         for registry_index, family_id in enumerate(FAMILY_IDS):
+            if family_id not in allowed_families:
+                continue
             spec = family_spec(family_id)
             if family_id == "constant_v1":
                 continue
@@ -516,6 +532,8 @@ def _fit_one(x: np.ndarray, y: np.ndarray, options: FitOptions) -> FitCandidate:
                         sse = float(np.sum((y - prediction) ** 2))
                         contenders.append((sse, 4, registry_index, model, prediction))
 
+    if not contenders:
+        return None
     sse, _, _, model, prediction = min(
         contenders,
         key=lambda item: (round(item[0], 12), item[1], item[2], item[3].model_instance_hash),
@@ -562,9 +580,14 @@ def _normalized_atom(variant: _Variant, t: np.ndarray) -> np.ndarray:
     return (raw - endpoints[0]) / span
 
 
-def _variants(options: FitOptions) -> tuple[_Variant, ...]:
+def _variants(
+    options: FitOptions,
+    family_ids: tuple[str, ...] = FAMILY_IDS,
+) -> tuple[_Variant, ...]:
     values: list[_Variant] = []
     for family_id in FAMILY_IDS:
+        if family_id not in family_ids:
+            continue
         spec = family_spec(family_id)
         if spec.kind == "polynomial" or family_id == "constant_v1":
             values.append(_Variant(family_id, ()))
@@ -682,9 +705,25 @@ def _fit_two(
     x: np.ndarray,
     y: np.ndarray,
     options: FitOptions,
+    family_pairs: tuple[tuple[str, str], ...] | None = None,
 ) -> tuple[FitCandidate | None, str, SearchTrace]:
     profile = options.search_policy.profile
-    variants = _variants(options)
+    allowed_pairs = (
+        tuple(
+            (left, right)
+            for left in FAMILY_IDS
+            for right in FAMILY_IDS
+            if (left, right) != ("constant_v1", "constant_v1")
+        )
+        if family_pairs is None
+        else family_pairs
+    )
+    pair_family_ids = tuple(
+        family_id
+        for family_id in FAMILY_IDS
+        if any(family_id in pair for pair in allowed_pairs)
+    )
+    variants = _variants(options, pair_family_ids)
     cells = _eligible_cells(x, options.min_segment_share)
     if not cells:
         return (
@@ -709,6 +748,7 @@ def _fit_two(
         for direction in ("increasing", "decreasing")
         for left_variant in variants
         for right_variant in variants
+        if (left_variant.family_id, right_variant.family_id) in allowed_pairs
         if not (left_variant.family_id == right_variant.family_id == "constant_v1")
     )
     lower_x = float(x[0])
@@ -960,12 +1000,20 @@ def fit_candidates(
     y: Iterable[float],
     options: FitOptions | None = None,
 ) -> CandidateSet:
-    """Fit the minimum one-function model first, then an optional balanced P2."""
+    """Fit the best P1 and P2 within one frozen hypothesis portfolio."""
 
     resolved = FitOptions() if options is None else options
+    hypothesis_space = resolved.hypothesis_space or HypothesisSpace.full_registry()
     xv, yv = _as_problem(x, y)
-    one = _fit_one(xv, yv, resolved)
-    two, two_status, search_trace = _fit_two(xv, yv, resolved)
+    one = _fit_one(xv, yv, resolved, hypothesis_space.p1_family_ids)
+    if one is None:
+        raise ValueError("hypothesis space produced no valid P1 model")
+    two, two_status, search_trace = _fit_two(
+        xv,
+        yv,
+        resolved,
+        hypothesis_space.p2_family_pairs,
+    )
     if two is None and one.model.direction == "flat" and two_status == "NO_VALID_TWO_MODEL":
         two_status = "COLLAPSED_TO_P1"
     if two is not None:
@@ -982,4 +1030,28 @@ def fit_candidates(
         two=two,
         two_status=two_status,
         search_trace=search_trace,
+        hypothesis_space=hypothesis_space,
     )
+
+
+def fit_hypothesis(
+    x: Iterable[float],
+    y: Iterable[float],
+    hypothesis: EquationHypothesis,
+    options: FitOptions | None = None,
+) -> FitCandidate | None:
+    """Optimize and certify one typed equation skeleton for LLM-SR fitness."""
+
+    if not isinstance(hypothesis, EquationHypothesis):
+        raise ValueError("hypothesis must be an EquationHypothesis")
+    resolved = FitOptions() if options is None else options
+    xv, yv = _as_problem(x, y)
+    if hypothesis.structure == "P1":
+        return _fit_one(xv, yv, resolved, (hypothesis.family_ids[0],))
+    candidate, _, _ = _fit_two(
+        xv,
+        yv,
+        resolved,
+        ((hypothesis.family_ids[0], hypothesis.family_ids[1]),),
+    )
+    return candidate

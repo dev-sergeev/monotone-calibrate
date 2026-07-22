@@ -11,7 +11,8 @@ from monotone_calibrate.application import (
     RunRequest,
     run_calibration,
 )
-from monotone_calibrate.llm_advisor import AdviceResult, StartSuggestion
+from monotone_calibrate.hypotheses import HypothesisSpace
+from monotone_calibrate.symbolic_search import SymbolicSearchResult
 from monotone_calibrate.validation import ValidationOptions
 
 
@@ -32,6 +33,7 @@ def _clear_llm_environment(monkeypatch) -> None:
         "ACCESS_TOKEN",
         "TIMEOUT_SECONDS",
         "MAX_RETRIES",
+        "SEARCH_ITERATIONS",
         "ALLOW_INSECURE_HTTP",
     ):
         monkeypatch.delenv(f"MONOTONE_CALIBRATE_LLM_{suffix}", raising=False)
@@ -100,7 +102,7 @@ def test_offline_run_publishes_one_complete_bundle_and_returns_final_paths(
     assert result.dataset.n_used == 12
     assert result.dataset.n_skipped == 1
     assert result.llm_advisor["status"] == "DISABLED"
-    assert result.llm_advisor["scope"] == "full_data_p1_refit_only"
+    assert result.llm_advisor["scope"] == "deterministic_full_registry"
     assert result.llm_advisor["used_in_validation"] is False
     report = json.loads(result.bundle.report_json.read_text(encoding="utf-8"))
     assert report["llm_advisor"] == result.llm_advisor
@@ -161,16 +163,22 @@ def test_publish_race_preserves_existing_output_and_cleans_the_staging_tree(
         encoding="utf-8",
     )
 
-    class RacingAdvisor:
-        def __init__(self, _config) -> None:
-            pass
+    def racing_search(*_args, options, **_kwargs):
+        output.mkdir()
+        (output / "owner-marker.txt").write_text("keep", encoding="utf-8")
+        return SymbolicSearchResult(
+            "ACCEPTED",
+            HypothesisSpace.linear_seeds(),
+            options.iterations,
+            1,
+            0,
+            1,
+            4,
+            1,
+            1,
+        )
 
-        def advise(self, _training_summary) -> AdviceResult:
-            output.mkdir()
-            (output / "owner-marker.txt").write_text("keep", encoding="utf-8")
-            return AdviceResult(status="ACCEPTED")
-
-    monkeypatch.setattr(application, "ChatOpenAIStartAdvisor", RacingAdvisor)
+    monkeypatch.setattr(application, "run_symbolic_search", racing_search)
 
     with pytest.raises(CalibrationRunError) as captured:
         run_calibration(
@@ -190,7 +198,7 @@ def test_publish_race_preserves_existing_output_and_cleans_the_staging_tree(
     assert not tuple(tmp_path.glob(".race-report.tmp-*"))
 
 
-def test_enabled_advisor_can_only_supply_a_declared_full_data_p1_start(
+def test_enabled_llm_sr_search_supplies_a_typed_portfolio_used_by_fit_and_validation(
     tmp_path,
     monkeypatch,
 ) -> None:
@@ -209,24 +217,31 @@ def test_enabled_advisor_can_only_supply_a_declared_full_data_p1_start(
     )
     captured: dict[str, object] = {}
 
-    class AcceptedAdvisor:
-        def __init__(self, config) -> None:
-            captured["config"] = config
+    selected_space = HypothesisSpace.linear_seeds()
 
-        def advise(self, training_summary) -> AdviceResult:
-            captured["summary"] = training_summary
-            first = training_summary.replaceable_slots[0]
-            return AdviceResult(
-                status="ACCEPTED",
-                suggestions=(
-                    StartSuggestion(
-                        slot_id=first.slot_id,
-                        parameter_vector=(-3.5,),
-                    ),
-                ),
-            )
+    def accepted_search(x, y, config, fit_options, *, options):
+        captured["x"] = x
+        captured["y"] = y
+        captured["config"] = config
+        captured["fit_options"] = fit_options
+        captured["options"] = options
+        return SymbolicSearchResult(
+            "ACCEPTED",
+            selected_space,
+            options.iterations,
+            1,
+            0,
+            2,
+            5,
+            2,
+            1,
+            (
+                "LLM_TRAINING_SUMMARY_DISCLOSED",
+                "LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION",
+            ),
+        )
 
-    monkeypatch.setattr(application, "ChatOpenAIStartAdvisor", AcceptedAdvisor)
+    monkeypatch.setattr(application, "run_symbolic_search", accepted_search)
 
     result = run_calibration(
         RunRequest(
@@ -240,17 +255,22 @@ def test_enabled_advisor_can_only_supply_a_declared_full_data_p1_start(
         )
     )
 
-    assert captured["summary"].observation_count == 12
-    assert captured["summary"].replaceable_slots
+    assert len(captured["x"]) == 12
+    assert captured["options"].iterations == 4
+    assert captured["fit_options"].hypothesis_space is None
     assert result.llm_advisor["status"] == "ACCEPTED"
-    assert result.llm_advisor["accepted_slot_count"] == 1
-    assert result.llm_advisor["scope"] == "full_data_p1_refit_only"
-    assert result.llm_advisor["used_in_validation"] is False
+    assert result.llm_advisor["hypotheses_accepted"] == 2
+    assert result.llm_advisor["scope"] == "full_data_hypothesis_portfolio_replayed_in_validation"
+    assert result.llm_advisor["used_in_validation"] is True
+    assert result.llm_advisor["family_search_space_changed"] is True
+    assert result.llm_advisor["portfolio_size"] == 3
+    assert result.candidates.hypothesis_space == selected_space
+    assert "LLM_TRAINING_SUMMARY_DISCLOSED" in result.warning_codes
+    assert "LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION" in result.warning_codes
     assert result.llm_advisor["endpoint_origin_sha256"] == sha256(
         base_url.encode("utf-8")
     ).hexdigest()
-    assert result.llm_advisor["baseline_p1_model_hash"]
-    assert result.llm_advisor["final_p1_model_hash"]
+    assert result.llm_advisor["hypothesis_space_hash"] == selected_space.space_hash
     serialized = result.bundle.report_json.read_text(encoding="utf-8")
     assert base_url not in serialized
     assert "boundary-secret" not in serialized

@@ -7,7 +7,8 @@ import numpy as np
 import pytest
 
 from monotone_calibrate.data import read_xy_csv
-from monotone_calibrate.engine import fit_candidates
+from monotone_calibrate.engine import FitOptions, fit_candidates
+from monotone_calibrate.hypotheses import HypothesisSpace
 from monotone_calibrate.model_runtime import model_from_dict
 from monotone_calibrate.reporting import write_report_bundle
 from monotone_calibrate.validation import (
@@ -35,7 +36,8 @@ def test_report_bundle_contains_comparison_plots_metrics_and_executable_recommen
     dataset = read_xy_csv(source)
     x = np.asarray([row.x for row in dataset.observations])
     y = np.asarray([row.y for row in dataset.observations])
-    candidates = fit_candidates(x, y)
+    hypothesis_space = HypothesisSpace.linear_seeds()
+    candidates = fit_candidates(x, y, FitOptions(hypothesis_space=hypothesis_space))
     validation = validate_candidates(
         x,
         y,
@@ -45,22 +47,32 @@ def test_report_bundle_contains_comparison_plots_metrics_and_executable_recommen
 
     llm_provenance = {
         "status": "ACCEPTED",
-        "mode": "openai_compatible",
+        "mode": "llm_sr_typed_symbolic_search",
         "provider_model": "local-compatible-model",
         "endpoint_origin_sha256": "a" * 64,
-        "prompt_version": "start-advisor-v1",
-        "output_schema_version": "llm-start-advice-v1",
-        "calls_requested": 1,
-        "accepted_slot_count": 1,
-        "scope": "full_data_p1_refit_only",
-        "used_in_validation": False,
-        "family_search_space_changed": False,
-        "selection_policy_changed": False,
+        "prompt_version": "llm-sr-registry-prompt-v1",
+        "output_schema_version": "llm-sr-hypotheses-v1",
+        "calls_requested": 4,
+        "calls_succeeded": 4,
+        "calls_failed": 0,
+        "iterations_requested": 4,
+        "hypotheses_proposed": 8,
+        "hypotheses_evaluated": 5,
+        "hypotheses_accepted": 2,
+        "hypotheses_buffered": 2,
+        "portfolio_size": 3,
+        "p1_hypotheses": 2,
+        "p2_hypotheses": 1,
+        "island_count": 10,
+        "experiences_per_prompt": 2,
+        "samples_per_prompt": 4,
+        "scope": "full_data_hypothesis_portfolio_replayed_in_validation",
+        "used_in_validation": True,
+        "family_search_space_changed": True,
+        "selection_policy_changed": True,
         "certificate_policy_changed": False,
-        "baseline_p1_model_hash": candidates.one.model.model_instance_hash,
-        "final_p1_model_hash": candidates.one.model.model_instance_hash,
-        "influenced_final_refit": False,
-        "formula_source": "certified_registry_solver",
+        "hypothesis_space_hash": hypothesis_space.space_hash,
+        "formula_source": "typed_skeleton_plus_certified_registry_solver",
     }
     bundle = write_report_bundle(
         dataset,
@@ -68,7 +80,10 @@ def test_report_bundle_contains_comparison_plots_metrics_and_executable_recommen
         validation,
         tmp_path / "report",
         llm_advisor=llm_provenance,
-        extra_warning_codes=("LLM_ADVISOR_NO_IMPROVEMENT",),
+        extra_warning_codes=(
+            "LLM_TRAINING_SUMMARY_DISCLOSED",
+            "LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION",
+        ),
     )
 
     assert bundle.report_html.is_file()
@@ -86,7 +101,8 @@ def test_report_bundle_contains_comparison_plots_metrics_and_executable_recommen
     assert report["recommendation"]["structure"] == "P2"
     assert report["diagnostics"]["source"] == "grouped_oof"
     assert report["llm_advisor"] == llm_provenance
-    assert "LLM_ADVISOR_NO_IMPROVEMENT" in report["warnings"]
+    assert "LLM_TRAINING_SUMMARY_DISCLOSED" in report["warnings"]
+    assert "LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION" in report["warnings"]
     rendered_html = bundle.report_html.read_text(encoding="utf-8")
     raw_r2 = report["candidates"]["P2"]["metrics"]["r2_refit"]
     assert f"Refit global R²: {raw_r2}</p>" not in rendered_html
