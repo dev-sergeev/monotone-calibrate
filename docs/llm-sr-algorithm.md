@@ -65,7 +65,7 @@ Machine-readable contracts:
 | LLM-SR | Реализация проекта |
 |---|---|
 | Equation program skeleton | `EquationHypothesis(structure, family_ids)` |
-| Linear initial program | constant/P1-linear/P2-linear seed portfolio |
+| Safe initial program | complete P1 registry plus P2-linear seed portfolio |
 | `params` placeholders | параметры принадлежат registry family и оцениваются solver-ом |
 | Batch `b=4` | `samples_per_prompt=4` |
 | Generation temperature `0.8` | `ChatOpenAI(..., temperature=0.8)` |

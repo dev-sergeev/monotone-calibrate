@@ -11,6 +11,7 @@ from monotone_calibrate.engine import (
     fit_candidates,
     p1_start_slots,
 )
+from monotone_calibrate.hypotheses import EquationHypothesis, HypothesisSpace
 from monotone_calibrate.model_runtime import FittedModel, SegmentModel
 
 
@@ -118,6 +119,76 @@ def test_two_function_candidate_is_continuous_monotone_and_balanced_at_raw_x_gap
     assert np.all(np.diff(candidates.two.model.predict(grid)) >= -1e-10)
 
 
+def test_practically_tied_p2_candidates_choose_simpler_families() -> None:
+    x = np.arange(30, dtype=float)
+    breakpoint = 11.5
+    join = 2.0 + 0.15 * breakpoint
+    mean = np.where(
+        x <= 11.0,
+        join + 0.15 * (x - breakpoint),
+        join + 1.20 * (x - breakpoint),
+    )
+    y = mean + 0.03 * np.where(np.arange(x.size) % 2 == 0, -1.0, 1.0)
+    portfolio = HypothesisSpace(
+        (
+            EquationHypothesis("P1", ("poly1_v1",)),
+            EquationHypothesis("P2", ("poly1_v1", "poly1_v1")),
+            EquationHypothesis("P2", ("poly2_v1", "poly2_v1")),
+        ),
+        "llm_sr",
+    )
+
+    candidates = fit_candidates(x, y, FitOptions(hypothesis_space=portfolio))
+
+    assert candidates.two is not None
+    assert candidates.two.model.family_ids == ("poly1_v1", "poly1_v1")
+
+
+def test_practically_tied_p1_candidates_choose_simpler_family() -> None:
+    x = np.linspace(0.0, 10.0, 40)
+    y = 2.0 + 0.5 * x + np.random.default_rng(2).normal(0.0, 0.1, x.size)
+    portfolio = HypothesisSpace(
+        (
+            EquationHypothesis("P1", ("poly1_v1",)),
+            EquationHypothesis("P1", ("poly2_v1",)),
+            EquationHypothesis("P2", ("poly1_v1", "poly1_v1")),
+        ),
+        "llm_sr",
+    )
+
+    candidates = fit_candidates(x, y, FitOptions(hypothesis_space=portfolio))
+
+    assert candidates.one.model.family_ids == ("poly1_v1",)
+
+
+def test_p2_parsimony_tolerance_prevents_fold_level_family_flapping() -> None:
+    x = np.linspace(0.0, 10.0, 100)
+    mean = np.where(x <= 5.0, 10.0 + 0.5 * x, 12.5 + 2.0 * (x - 5.0))
+    rng = np.random.default_rng(6)
+    innovation = rng.normal(0.0, 0.12, x.size)
+    noise = np.empty_like(innovation)
+    noise[0] = innovation[0]
+    for index in range(1, noise.size):
+        noise[index] = 0.65 * noise[index - 1] + innovation[index]
+    portfolio = HypothesisSpace(
+        (
+            EquationHypothesis("P1", ("poly1_v1",)),
+            EquationHypothesis("P2", ("poly1_v1", "poly1_v1")),
+            EquationHypothesis("P2", ("poly1_v1", "poly2_v1")),
+        ),
+        "llm_sr",
+    )
+
+    candidates = fit_candidates(
+        x,
+        mean + noise,
+        FitOptions(hypothesis_space=portfolio),
+    )
+
+    assert candidates.two is not None
+    assert candidates.two.model.family_ids == ("poly1_v1", "poly1_v1")
+
+
 def test_budgeted_search_profiles_are_reproducible_and_close_to_exhaustive() -> None:
     x = np.arange(60, dtype=float)
     breakpoint = 23.5
@@ -164,6 +235,88 @@ def test_fast_profile_keeps_the_full_nonlinear_shape_registry() -> None:
     assert fast.two.sse == pytest.approx(exhaustive.two.sse, abs=1e-10)
     assert fast.two.breakpoint == pytest.approx(exhaustive.two.breakpoint, abs=1e-12)
     assert fast.two.model.model_instance_hash == exhaustive.two.model.model_instance_hash
+
+
+def test_fast_profile_refines_the_linear_baseline_before_parsimony_selection() -> None:
+    rng = np.random.default_rng(101)
+    x = np.sort(rng.uniform(0.0, 100.0, 140))
+    for index in range(14, x.size, 29):
+        x[index] = x[index - 1]
+    join = 12.0 + 0.08 * 45.0
+    mean = np.where(
+        x <= 45.0,
+        12.0 + 0.08 * x,
+        join + 0.35 * (x - 45.0),
+    )
+    relative_position = (x - float(np.min(x))) / float(np.ptp(x))
+    sigma = (0.004 + 0.006 * relative_position) * float(np.ptp(mean))
+    y = mean + rng.normal(0.0, sigma)
+    portfolio = HypothesisSpace(
+        (
+            EquationHypothesis("P1", ("poly1_v1",)),
+            EquationHypothesis("P2", ("poly1_v1", "poly1_v1")),
+            EquationHypothesis("P2", ("poly1_v1", "poly2_v1")),
+            EquationHypothesis("P2", ("poly2_v1", "poly2_v1")),
+        ),
+        "llm_sr",
+    )
+
+    fast = fit_candidates(
+        x,
+        y,
+        FitOptions(
+            hypothesis_space=portfolio,
+            search_policy=SearchPolicy("fast"),
+        ),
+    )
+    exhaustive = fit_candidates(
+        x,
+        y,
+        FitOptions(
+            hypothesis_space=portfolio,
+            search_policy=SearchPolicy("exhaustive"),
+        ),
+    )
+
+    assert fast.two is not None
+    assert exhaustive.two is not None
+    assert fast.two.model.family_ids == exhaustive.two.model.family_ids
+    assert fast.two.breakpoint == exhaustive.two.breakpoint
+
+
+def test_finite_sample_complexity_guard_rejects_noise_fitting_polynomial_degrees() -> None:
+    rng = np.random.default_rng(101)
+    x = np.sort(rng.uniform(0.0, 100.0, 140))
+    for index in range(14, x.size, 29):
+        x[index] = x[index - 1]
+    join = 12.0 + 0.08 * 45.0
+    mean = np.where(
+        x <= 45.0,
+        12.0 + 0.08 * x,
+        join + 0.35 * (x - 45.0),
+    )
+    relative_position = (x - float(np.min(x))) / float(np.ptp(x))
+    sigma = (0.004 + 0.006 * relative_position) * float(np.ptp(mean))
+    y = mean + rng.normal(0.0, sigma)
+    polynomial_families = ("poly1_v1", "poly2_v1", "poly3_v1")
+    hypotheses = [EquationHypothesis("P1", ("poly1_v1",))]
+    hypotheses.extend(
+        EquationHypothesis("P2", (left, right))
+        for left in polynomial_families
+        for right in polynomial_families
+    )
+
+    candidates = fit_candidates(
+        x,
+        y,
+        FitOptions(
+            hypothesis_space=HypothesisSpace(tuple(hypotheses), "llm_sr"),
+            search_policy=SearchPolicy("exhaustive"),
+        ),
+    )
+
+    assert candidates.two is not None
+    assert candidates.two.model.family_ids == ("poly1_v1", "poly1_v1")
 
 
 def test_fast_profile_adaptively_refines_a_nonlinear_breakpoint() -> None:

@@ -189,7 +189,7 @@ symbolic search, а не старую подстановку solver starts.
 
 Реализация повторяет четыре ключевых шага статьи:
 
-1. десять islands инициализируются простыми linear P1/P2 skeletons;
+1. десять islands получают полный безопасный P1 baseline и linear P2 skeleton;
 2. на каждой итерации LLM с temperature `0.8` предлагает до четырёх новых
    типизированных гипотез по problem specification, агрегированному training
    summary и двум scored examples из выбранного island;

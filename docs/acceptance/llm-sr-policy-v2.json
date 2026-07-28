@@ -52,7 +52,7 @@
   },
   "prompt": {
     "version": "llm-sr-registry-prompt-v1",
-    "training_summary": "at most 64 deterministic x-bins; no row_id, invalid raw fields, paths or secrets",
+    "training_summary": "at most 200 deterministic x-bins; no row_id, invalid raw fields, paths or secrets",
     "experience_examples": 2,
     "samples_per_prompt": 4,
     "response_schema_version": "llm-sr-hypotheses-v1",
@@ -62,6 +62,12 @@
     "initial_hypotheses": [
       "P1:constant_v1",
       "P1:poly1_v1",
+      "P1:poly2_v1",
+      "P1:poly3_v1",
+      "P1:exp_affine_v1",
+      "P1:log_shift_v1",
+      "P1:reciprocal_shift_pos_v1",
+      "P1:logistic_v1",
       "P2:poly1_v1/poly1_v1"
     ],
     "islands": 10,

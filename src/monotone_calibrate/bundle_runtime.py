@@ -205,7 +205,7 @@ def _verify_report_and_model(root: Path, report_id: str, model_present: bool) ->
         if (
             not isinstance(search, dict)
             or set(search) != _SEARCH_FIELDS
-            or search.get("policy_id") != "candidate-search-v1"
+            or search.get("policy_id") not in {"candidate-search-v1", "candidate-search-v2"}
             or search.get("profile") not in {"fast", "balanced", "quality", "exhaustive"}
             or not isinstance(search.get("approximate"), bool)
             or not isinstance(search.get("variant_count"), int)

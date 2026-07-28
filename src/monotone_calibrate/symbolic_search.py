@@ -492,7 +492,7 @@ def run_symbolic_search(
         cache[hypothesis.hypothesis_id] = experience
         return experience
 
-    seeds = HypothesisSpace.linear_seeds().hypotheses
+    seeds = HypothesisSpace.safe_search_seeds().hypotheses
     seed_experiences = tuple(item for item in (evaluate(seed) for seed in seeds) if item is not None)
     if not any(item.hypothesis.structure == "P1" for item in seed_experiences):
         raise ValueError("linear LLM-SR initialization produced no valid P1")
@@ -537,8 +537,12 @@ def run_symbolic_search(
         if (iteration + 1) % resolved.reset_period_iterations == 0:
             buffer.reset_weakest(rng)
 
-    if accepted == 0:
-        warning = "LLM_SR_SEARCH_UNAVAILABLE" if calls_succeeded == 0 else "LLM_SR_NO_VALID_HYPOTHESES"
+    if calls_failed:
+        warning = (
+            "LLM_SR_SEARCH_UNAVAILABLE"
+            if calls_succeeded == 0
+            else "LLM_SR_PARTIAL_FAILURE"
+        )
         return SymbolicSearchResult(
             "FALLBACK",
             HypothesisSpace.full_registry(),
@@ -552,12 +556,24 @@ def run_symbolic_search(
             ("LLM_TRAINING_SUMMARY_DISCLOSED", warning),
         )
 
+    if accepted == 0:
+        return SymbolicSearchResult(
+            "FALLBACK",
+            HypothesisSpace.full_registry(),
+            resolved.iterations,
+            calls_succeeded,
+            calls_failed,
+            proposed,
+            evaluated,
+            accepted,
+            buffered,
+            ("LLM_TRAINING_SUMMARY_DISCLOSED", "LLM_SR_NO_VALID_HYPOTHESES"),
+        )
+
     warnings = [
         "LLM_TRAINING_SUMMARY_DISCLOSED",
         "LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION",
     ]
-    if calls_failed:
-        warnings.append("LLM_SR_PARTIAL_FAILURE")
     return SymbolicSearchResult(
         "ACCEPTED",
         HypothesisSpace(tuple(portfolio.values()), "llm_sr"),

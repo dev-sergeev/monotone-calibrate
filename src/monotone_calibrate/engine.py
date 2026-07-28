@@ -127,7 +127,22 @@ class CandidateSet:
 
 
 SearchProfile = Literal["fast", "balanced", "quality", "exhaustive"]
-SEARCH_POLICY_ID = "candidate-search-v1"
+SEARCH_POLICY_ID = "candidate-search-v2"
+SELECTION_TIE_RELATIVE_MSE = 0.015
+
+
+def _selection_tolerance(
+    observation_count: int,
+    best_complexity: int,
+    candidate_complexity: int,
+) -> float:
+    """Combine the calibrated floor with a finite-sample BIC guard."""
+
+    complexity_gap = max(0, best_complexity - candidate_complexity)
+    finite_sample = math.expm1(
+        complexity_gap * math.log(observation_count) / observation_count
+    )
+    return max(SELECTION_TIE_RELATIVE_MSE, finite_sample)
 
 
 @dataclass(frozen=True, slots=True)
@@ -534,9 +549,22 @@ def _fit_one(
 
     if not contenders:
         return None
-    sse, _, _, model, prediction = min(
+    best_item = min(
         contenders,
         key=lambda item: (round(item[0], 12), item[1], item[2], item[3].model_instance_hash),
+    )
+    best_sse = best_item[0]
+    best_complexity = best_item[1]
+    practically_tied = tuple(
+        item
+        for item in contenders
+        if item[0]
+        <= best_sse
+        * (1.0 + _selection_tolerance(y.size, best_complexity, item[1]))
+    )
+    sse, _, _, model, prediction = min(
+        practically_tied,
+        key=lambda item: (item[1], item[2], round(item[0], 12), item[3].model_instance_hash),
     )
     sse, r2, rmse, mae = _metric_values(y, prediction)
     metrics = SegmentMetrics("single", y.size, np.unique(x).size, 1.0, r2, rmse, mae)
@@ -754,6 +782,7 @@ def _fit_two(
     lower_x = float(x[0])
     upper_x = float(x[-1])
     best: _TwoIncumbent | None = None
+    selection_contenders: dict[tuple[int, int], _TwoIncumbent] = {}
     pair_scores: dict[tuple[Direction, _Variant, _Variant], _PairBest] = {}
     evaluated_pair_cells: dict[tuple[Direction, _Variant, _Variant], set[int]] = {}
     evaluated_candidates = 0
@@ -884,8 +913,6 @@ def _fit_two(
                     pair_score = (round(sse, 12), complexity, registry_order)
                     if pair not in pair_scores or pair_score < pair_scores[pair].key:
                         pair_scores[pair] = _PairBest(pair_score, cell_index)
-                    if best is not None and pair_score > best.key[:3]:
-                        continue
                     contender = _TwoIncumbent(
                         sse,
                         complexity,
@@ -894,6 +921,10 @@ def _fit_two(
                         prediction,
                         left_n,
                     )
+                    selection_key = (complexity, registry_order)
+                    selected_for_structure = selection_contenders.get(selection_key)
+                    if selected_for_structure is None or contender.key < selected_for_structure.key:
+                        selection_contenders[selection_key] = contender
                     if best is None or contender.key < best.key:
                         best = contender
 
@@ -902,19 +933,35 @@ def _fit_two(
     evaluate_cells(coarse_indices, all_pairs)
     refinement_pairs = 0
     if profile != "exhaustive" and len(coarse_indices) < len(cells) and pair_scores:
+        ranked = sorted(
+            pair_scores.items(),
+            key=lambda item: (
+                item[1].key,
+                item[0][0],
+                item[0][1].family_id,
+                item[0][1].shape,
+                item[0][2].family_id,
+                item[0][2].shape,
+            ),
+        )
+        selected_for_refinement = list(ranked[: budget.refinement_pairs])
+        linear_baseline = next(
+            (
+                item
+                for item in ranked
+                if item[0][1].family_id == "poly1_v1"
+                and item[0][2].family_id == "poly1_v1"
+            ),
+            None,
+        )
+        if (
+            linear_baseline is not None
+            and all(item[0] != linear_baseline[0] for item in selected_for_refinement)
+        ):
+            selected_for_refinement.append(linear_baseline)
         ranked_pairs = tuple(
             (pair, pair_best.cell_index)
-            for pair, pair_best in sorted(
-                pair_scores.items(),
-                key=lambda item: (
-                    item[1].key,
-                    item[0][0],
-                    item[0][1].family_id,
-                    item[0][1].shape,
-                    item[0][2].family_id,
-                    item[0][2].shape,
-                ),
-            )[: budget.refinement_pairs]
+            for pair, pair_best in selected_for_refinement
         )
         refinement_pairs = len(ranked_pairs)
         for pair, anchor in ranked_pairs:
@@ -956,6 +1003,31 @@ def _fit_two(
                 "NO_VALID_TWO_MODEL",
             ),
         )
+    best_sse = best.sse
+    best_complexity = best.complexity
+    practically_tied = tuple(
+        contender
+        for contender in selection_contenders.values()
+        if contender.sse
+        <= best_sse
+        * (
+            1.0
+            + _selection_tolerance(
+                y.size,
+                best_complexity,
+                contender.complexity,
+            )
+        )
+    )
+    best = min(
+        practically_tied,
+        key=lambda contender: (
+            contender.complexity,
+            contender.registry_order,
+            round(contender.sse, 12),
+            contender.model.model_instance_hash,
+        ),
+    )
     sse = best.sse
     model = best.model
     prediction = best.prediction

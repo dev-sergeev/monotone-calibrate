@@ -129,7 +129,7 @@ tools, remote files, conversation state и provider-specific `extra_body`
 их выключенными. Такой guard и redirect-origin allowlist остаются будущим
 security hardening.
 
-Для full-data строится bounded summary максимум из 64 deterministic `x`-bins.
+Для full-data строится bounded summary максимум из 200 deterministic `x`-bins.
 На каждой итерации request содержит problem specification, разрешённый registry,
 evaluation policy и два scored experience examples из одного из десяти islands.
 Response — strict [`llm-sr-hypotheses-v1`](llm-sr-hypotheses.schema.json): до

@@ -4,7 +4,7 @@ import numpy as np
 
 import monotone_calibrate.validation as validation_module
 from monotone_calibrate.engine import FitOptions, SearchPolicy, fit_candidates
-from monotone_calibrate.hypotheses import HypothesisSpace
+from monotone_calibrate.hypotheses import EquationHypothesis, HypothesisSpace
 from monotone_calibrate.validation import ValidationOptions, validate_candidates
 
 
@@ -108,3 +108,33 @@ def test_validation_replays_the_full_fit_search_policy(monkeypatch) -> None:
     assert all(options.max_elementary_starts == 1 for options in seen)
     assert all(options.search_policy.profile == "balanced" for options in seen)
     assert all(options.hypothesis_space == hypothesis_space for options in seen)
+
+
+def test_frequent_edge_breakpoints_fail_the_p2_stability_gate() -> None:
+    rng = np.random.default_rng(303)
+    x = np.sort(rng.uniform(0.0, 100.0, 150))
+    for index in range(14, x.size, 29):
+        x[index] = x[index - 1]
+    mean = 75.0 + 42.0 * np.exp(-x / 28.0)
+    span = float(np.ptp(mean))
+    relative_position = (x - float(np.min(x))) / float(np.ptp(x))
+    sigma = (0.004 + 0.006 * relative_position) * span
+    y = mean + rng.normal(0.0, sigma)
+    hypothesis_space = HypothesisSpace(
+        (
+            EquationHypothesis("P1", ("exp_affine_v1",)),
+            EquationHypothesis("P2", ("poly3_v1", "poly3_v1")),
+        ),
+        "llm_sr",
+    )
+    full = fit_candidates(x, y, FitOptions(hypothesis_space=hypothesis_space))
+
+    result = validate_candidates(
+        x,
+        y,
+        full,
+        ValidationOptions(repetitions=2, bootstrap_resamples=0),
+    )
+
+    assert result.stability.edge_frequency > 0.20
+    assert result.stability.passed is False

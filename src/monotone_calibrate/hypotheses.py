@@ -153,3 +153,14 @@ class HypothesisSpace:
             ),
             "llm_sr",
         )
+
+    @classmethod
+    def safe_search_seeds(cls) -> HypothesisSpace:
+        """Keep a complete P1 baseline while the LLM explores P2 structures."""
+
+        hypotheses = [
+            EquationHypothesis("P1", (family_id,))
+            for family_id in FAMILY_IDS
+        ]
+        hypotheses.append(EquationHypothesis("P2", ("poly1_v1", "poly1_v1")))
+        return cls(tuple(hypotheses), "llm_sr")

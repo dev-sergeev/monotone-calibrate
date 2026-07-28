@@ -102,18 +102,18 @@ def test_dotenv_loader_uses_only_named_settings_and_environment_wins(tmp_path) -
     assert config.access_token == "file-secret"
 
 
-def test_training_summary_is_numeric_deterministic_and_bounded_to_64_x_bins() -> None:
-    x = np.repeat(np.arange(100, dtype=float), 10)
-    y = 2.0 + 0.5 * x + np.tile(np.linspace(-0.2, 0.2, 10), 100)
+def test_training_summary_is_numeric_deterministic_and_bounded_to_200_x_bins() -> None:
+    x = np.repeat(np.arange(300, dtype=float), 3)
+    y = 2.0 + 0.5 * x + np.tile(np.linspace(-0.2, 0.2, 3), 300)
 
     first = summarize_training(x, y)
     second = summarize_training(x[::-1], y[::-1])
     payload = first.to_payload()
 
     assert first == second
-    assert first.observation_count == 1_000
-    assert 1 <= len(first.bins) <= 64
-    assert sum(item.observation_count for item in first.bins) == 1_000
+    assert first.observation_count == 900
+    assert len(first.bins) == 200
+    assert sum(item.observation_count for item in first.bins) == 900
     assert set(payload) == {
         "observation_count",
         "x_min",
@@ -129,6 +129,15 @@ def test_training_summary_is_numeric_deterministic_and_bounded_to_64_x_bins() ->
         for item in payload["bins"]
         for value in item.values()
     )
+
+
+def test_training_summary_accepts_200_bins_and_rejects_larger_limits() -> None:
+    x = np.arange(201, dtype=float)
+    y = 1.0 + x
+
+    assert len(summarize_training(x, y, max_bins=200).bins) == 200
+    with pytest.raises(ValueError, match=r"max_bins must be an integer in 1\.\.200"):
+        summarize_training(x, y, max_bins=201)
 
 
 def test_disabled_advisor_does_not_construct_or_call_the_external_client() -> None:

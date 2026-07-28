@@ -21,7 +21,7 @@ from langchain_openai import ChatOpenAI
 from monotone_calibrate.config import LLMConfig
 
 
-MAX_TRAINING_BINS = 64
+MAX_TRAINING_BINS = 200
 MAX_REPLACEABLE_SLOTS = 4096
 MAX_RESPONSE_CHARACTERS = 262_144
 _SLOT_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:~-]{0,255}$")
@@ -274,7 +274,7 @@ def summarize_training(
     max_bins: int = MAX_TRAINING_BINS,
     replaceable_slots: tuple[ReplaceableStartSlot, ...] = (),
 ) -> TrainingSummary:
-    """Aggregate finite training observations into at most 64 atomic x bins."""
+    """Aggregate finite training observations into at most 200 atomic x bins."""
 
     x_values = np.asarray(x, dtype=np.float64)
     y_values = np.asarray(y, dtype=np.float64)
@@ -287,9 +287,11 @@ def summarize_training(
     if (
         isinstance(max_bins, bool)
         or not isinstance(max_bins, int)
-        or not 1 <= max_bins <= 64
+        or not 1 <= max_bins <= MAX_TRAINING_BINS
     ):
-        raise ValueError("max_bins must be an integer in 1..64")
+        raise ValueError(
+            f"max_bins must be an integer in 1..{MAX_TRAINING_BINS}"
+        )
 
     # Sorting on both values makes summaries independent of input row order,
     # including the order of separate observations that share an x value.

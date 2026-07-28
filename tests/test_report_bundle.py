@@ -95,7 +95,7 @@ def test_report_bundle_contains_comparison_plots_metrics_and_executable_recommen
     assert report["candidates"]["P1"]["metrics"]["r2_refit"] is not None
     assert report["candidates"]["P2"]["metrics"]["r2_refit"] > 0.999999
     assert len(report["candidates"]["P2"]["segment_metrics"]) == 2
-    assert report["search"]["policy_id"] == "candidate-search-v1"
+    assert report["search"]["policy_id"] == "candidate-search-v2"
     assert report["search"]["profile"] == "fast"
     assert report["search"]["approximate"] is True
     assert report["recommendation"]["structure"] == "P2"

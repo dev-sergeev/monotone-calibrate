@@ -2,6 +2,7 @@
 
 **Исходная дата:** 2026-07-16.
 **Актуализация LLM-SR:** 2026-07-22, Europe/Moscow.
+**Актуализация training summary:** 2026-07-28, Europe/Moscow.
 **Область:** `langchain-openai` / `ChatOpenAI`, внешний
 OpenAI-compatible Chat Completions endpoint и локальный typed fitting runtime.
 
@@ -114,7 +115,7 @@ ambient `LANGSMITH_TRACING`/`LANGCHAIN_TRACING_V2`. Оператор обяза�
 На каждой итерации prompt содержит:
 
 - generic problem specification для одной конечной координаты `x` и цели `y`;
-- агрегированный training summary максимум из 64 deterministic `x`-bins;
+- агрегированный training summary максимум из 200 deterministic `x`-bins;
 - список разрешённых registry families и их program skeletons;
 - локальную evaluation/certificate policy;
 - до двух scored experience examples из выбранного island.

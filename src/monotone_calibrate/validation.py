@@ -410,6 +410,7 @@ def validate_candidates(
         and dominant_pair_share >= 0.60
         and breakpoint_width_fraction is not None
         and breakpoint_width_fraction <= 0.25
+        and edge_frequency <= 0.20
     )
     stability = StabilityMetrics(
         p2_success_rate,
