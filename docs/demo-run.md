@@ -1,61 +1,57 @@
 # Проверенный демонстрационный прогон
 
-Дата пересборки: 2026-07-22.
+Дата пересборки: 2026-09-12. Runtime отчёта: `monotone-report-v3`.
 
-Команды выполняют offline baseline с полным registry. `run` является
-блокирующим и печатает JSON только после завершения:
+Команды выполняют offline baseline с полным registry. `run` блокирует
+выполнение до готовности результата; выходной каталог должен быть новым:
 
 ```console
-uv sync --frozen
-uv run --frozen --no-sync monotone-calibrate run examples/demo.csv \
-  --output examples/demo-output --no-dotenv
-uv run --frozen --no-sync monotone-calibrate verify examples/demo-output
-uv run --frozen --no-sync monotone-calibrate predict \
-  examples/demo-output/recommended-model.json examples/predict.csv \
-  --output examples/demo-predictions.csv
+uv sync --frozen --no-editable
+MONOTONE_CALIBRATE_LLM_ENABLED=false uv run --frozen --no-sync monotone-calibrate run examples/demo.csv \
+  --output outputs/demo-rerun --no-dotenv
+uv run --frozen --no-sync monotone-calibrate verify outputs/demo-rerun
 ```
 
-## Результат
+Сохранённый [отчёт](../examples/demo-output/report.html) использует профиль
+`fast`, 10 повторов grouped validation и 200 bootstrap resamples:
 
-- принято 30 из 32 строк; две невалидные строки пропущены с
-  `INVALID_ROWS_SKIPPED`;
+- 32 входные строки, 30 использованы, 2 пропущены (`INVALID_ROWS_SKIPPED`);
 - P1 refit `R² = 0.9973525132`, grouped OOF `R² = 0.9962296148`;
-- P2 global refit `R² = 0.9999864821`, grouped OOF `R² = 0.9995557661`;
+- P2 global refit `R² = 0.9999863916`, grouped OOF `R² = 0.9994967195`;
 - граница P2: `x = 11.5`, доли сегментов `40% / 60%`;
-- segment refit `R²`: left `0.9971446020`, right `0.9999803536`;
-- relative OOF MSE uplift P2: `0.8821781069` (около `88.22%`);
-- paired bootstrap 90% interval uplift:
-  `[0.8029444045, 0.9413716749]`;
-- состояние решения: `CLEAR_PRACTICAL_UPLIFT`, рекомендация: `P2`;
-- LLM-SR: `DISABLED`, scope `deterministic_full_registry`, portfolio `71`
-  typed hypotheses (`8` P1 и `63` P2);
-- output schema в provenance: `llm-sr-hypotheses-v1`.
+- relative OOF MSE uplift P2: `0.8665174728` (около `86.65%`);
+- paired bootstrap 90% interval uplift: `[0.7735673546, 0.9344765085]`;
+- состояние решения: `UNSTABLE_SELECTION`, рекомендация: `P1`;
+- LLM: `DISABLED`, scope `deterministic_full_registry`, portfolio `71`
+  (`8` P1 и `63` P2), provenance `llm-formulas-v1`.
+
+P2 имеет меньшую ошибку, но не проходит проверку устойчивости выбора:
+наиболее частая пара семейств встречается только в 38% внешних fits.
+Поэтому текущая политика сохраняет рекомендацию P1. Обе модели доступны
+отдельно; рекомендация не скрывает метрики более точного варианта.
 
 ## Рекомендованная функция
 
-Коэффициенты и breakpoint исполнимой модели округлены до тысячных:
-
 ```text
-f(x)=2.009
-     +1.675*((x-0.000)/11.500)
-     +0.060*((x-0.000)/11.500)^2
-     -0.017*((x-0.000)/11.500)^3, x <= 11.500
-
-f(x)=3.727
-     +20.969*((x-11.500)/17.500)
-     +0.082*((x-11.500)/17.500)^2
-     -0.060*((x-11.500)/17.500)^3, x > 11.500
+f(x)=1.612+26.434/(1+exp(-6.139*(((x-0.000)/29.000)-0.717)))
 ```
 
-Обе ветви имеют direction `increasing`, проходят certificate и соединяются в
-одной direction-safe grid cell. Канонический исполнимый артефакт —
-[`recommended-model.json`](../examples/demo-output/recommended-model.json),
-визуальный отчёт — [`report.html`](../examples/demo-output/report.html).
+Коэффициенты округлены до тысячных. Канонический исполнимый артефакт —
+[recommended-model.json](../examples/demo-output/recommended-model.json).
+`verify` проверяет 11 content artifacts и semantic binding модели.
+[predict.csv](../examples/predict.csv) и
+[demo-predictions.csv](../examples/demo-predictions.csv) показывают применение:
+три `OK`, одна строка `OUT_OF_DOMAIN` без экстраполяции и одна `INVALID_X`.
 
-`verify` подтвердил `8` content artifacts и semantic binding модели. `predict`
-обработал пять строк: три `OK`, одну `OUT_OF_DOMAIN` без экстраполяции и одну
-`INVALID_X`.
+## Примеры с LLM
 
-Этот demo не тестирует внешний provider. Для текущего LLM-SR нужен отдельный
-output directory, настроенный `.env` и `--llm-symbolic-search`; исторический
-[`llm-demo-output`](../examples/llm-demo-output) к этой schema не относится.
+Готовые реальные OpenRouter-запуски нового поиска формул:
+
+- [Плавная корневая зависимость](../examples/llm-sqrt-output/report.html):
+  новая LLM-формула имеет наименьший holdout RMSE в этом примере.
+- [Два режима](../examples/llm-two-regime-output/report.html):
+  алгоритмическая P2 точнее новой LLM-формулы.
+
+Каждый пакет содержит три кандидата и общий holdout. Данные, команды
+OpenRouter/GigaChat и применение готовых формул описаны в
+[examples/README.md](../examples/README.md).

@@ -1,0 +1,47 @@
+{
+  "breakpoint": 5.0,
+  "coefficient_decimal_places": 3,
+  "direction": "increasing",
+  "formula": "f(x)=1.792+1.707*((x-0.000)/5.000)-0.849*((x-0.000)/5.000)^2+0.370*((x-0.000)/5.000)^3 for x<=5.000; 3.020+7.815*((x-5.000)/5.000)-4.505*((x-5.000)/5.000)^2+1.690*((x-5.000)/5.000)^3 for x>5.000",
+  "model_instance_hash": "16f40a0dd7876f10427b5a2a32938ac8653b10343f809baa705c76e1f369118d",
+  "model_structure_hash": "ff2a860de42ea93c2bba19c2e8da136c2e471e508c949c37cccdfc164d63e4f2",
+  "monotonicity_certified": true,
+  "polynomial_degree": 3,
+  "registry_version": "registry-v1",
+  "schema_version": "model-runtime-v2",
+  "segment_count": 2,
+  "segments": [
+    {
+      "canonical_ast_id": "poly3.a_plus_b_t_plus_c_t2_plus_d_t3.v1",
+      "family_id": "poly3_v1",
+      "formula": "1.792+1.707*((x-0.000)/5.000)-0.849*((x-0.000)/5.000)^2+0.370*((x-0.000)/5.000)^3",
+      "interval": {
+        "lower": 0.0,
+        "upper": 5.0
+      },
+      "parameters": {
+        "a": 1.792,
+        "b": 1.707,
+        "c": -0.849,
+        "d": 0.37
+      },
+      "segment_id": "left"
+    },
+    {
+      "canonical_ast_id": "poly3.a_plus_b_t_plus_c_t2_plus_d_t3.v1",
+      "family_id": "poly3_v1",
+      "formula": "3.020+7.815*((x-5.000)/5.000)-4.505*((x-5.000)/5.000)^2+1.690*((x-5.000)/5.000)^3",
+      "interval": {
+        "lower": 5.0,
+        "upper": 10.0
+      },
+      "parameters": {
+        "a": 3.02,
+        "b": 7.815,
+        "c": -4.505,
+        "d": 1.69
+      },
+      "segment_id": "right"
+    }
+  ]
+}

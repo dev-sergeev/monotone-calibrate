@@ -2,8 +2,8 @@
   "breakpoint": null,
   "coefficient_decimal_places": 3,
   "direction": "increasing",
-  "formula": "f(x)=1.612+26.434/(1+exp(-6.139*(((x-0.000)/29.000)-0.717)))",
-  "model_instance_hash": "7b2b147cfd3677b0e0d794816631e5b0cf4dc4e491fa12688809f0ac3188e6fd",
+  "formula": "f(x)=2.029+6.474/(1+exp(-7.046*(((x-0.000)/10.000)-0.686)))",
+  "model_instance_hash": "c3a3a21acffc2e504f20044a70f354d2005a70a7a5a98c7c0d395c7d8e61e57e",
   "model_structure_hash": "f02bba2d83b8dcd528542de24ee951ab6e66c923ab29948537dc9ef7c7d86c5d",
   "monotonicity_certified": true,
   "polynomial_degree": 0,
@@ -14,16 +14,16 @@
     {
       "canonical_ast_id": "logistic.a_plus_b_sigma_k_t_minus_m.v1",
       "family_id": "logistic_v1",
-      "formula": "1.612+26.434/(1+exp(-6.139*(((x-0.000)/29.000)-0.717)))",
+      "formula": "2.029+6.474/(1+exp(-7.046*(((x-0.000)/10.000)-0.686)))",
       "interval": {
         "lower": 0.0,
-        "upper": 29.0
+        "upper": 10.0
       },
       "parameters": {
-        "a": 1.612,
-        "b": 26.434,
-        "k": 6.139,
-        "m": 0.717
+        "a": 2.029,
+        "b": 6.474,
+        "k": 7.046,
+        "m": 0.686
       },
       "segment_id": "single"
     }

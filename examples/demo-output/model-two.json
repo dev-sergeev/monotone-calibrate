@@ -1,0 +1,43 @@
+{
+  "breakpoint": 11.5,
+  "coefficient_decimal_places": 3,
+  "direction": "increasing",
+  "formula": "f(x)=2.003+1.722*((x-0.000)/11.500) for x<=11.500; 3.725+20.998*((x-11.500)/17.500) for x>11.500",
+  "model_instance_hash": "c24242ed955cd4232d5a374918a630bc30b9f772f584d629aa0fc3229912a886",
+  "model_structure_hash": "d10923f0f65a2fbbe91ff9626063aa09aa08371c58f1fec06f497215f6adcebe",
+  "monotonicity_certified": true,
+  "polynomial_degree": 1,
+  "registry_version": "registry-v1",
+  "schema_version": "model-runtime-v2",
+  "segment_count": 2,
+  "segments": [
+    {
+      "canonical_ast_id": "poly1.a_plus_b_t.v1",
+      "family_id": "poly1_v1",
+      "formula": "2.003+1.722*((x-0.000)/11.500)",
+      "interval": {
+        "lower": 0.0,
+        "upper": 11.5
+      },
+      "parameters": {
+        "a": 2.003,
+        "b": 1.722
+      },
+      "segment_id": "left"
+    },
+    {
+      "canonical_ast_id": "poly1.a_plus_b_t.v1",
+      "family_id": "poly1_v1",
+      "formula": "3.725+20.998*((x-11.500)/17.500)",
+      "interval": {
+        "lower": 11.5,
+        "upper": 29.0
+      },
+      "parameters": {
+        "a": 3.725,
+        "b": 20.998
+      },
+      "segment_id": "right"
+    }
+  ]
+}

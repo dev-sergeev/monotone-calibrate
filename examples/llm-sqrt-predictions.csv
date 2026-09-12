@@ -1,0 +1,6 @@
+row_id,x,prediction,status
+id:left,0.0,1.498,OK
+id:middle,5.0,3.824206703410539,OK
+id:right,10.0,5.4990000000000006,OK
+id:outside-support,11.0,,OUT_OF_DOMAIN
+id:invalid-x,,,INVALID_X

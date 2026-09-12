@@ -1,0 +1,6 @@
+row_id,x
+left,0
+middle,5
+right,10
+outside-support,11
+invalid-x,not-a-number

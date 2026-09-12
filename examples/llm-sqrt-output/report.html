@@ -23,46 +23,58 @@
 <section class="decision warning">
   <h2>Рекомендация среди P1/P2: P1</h2>
   <p>Состояние решения: <code>UNSTABLE_SELECTION</code>.</p>
-  <p><strong>Предупреждения:</strong> INVALID_ROWS_SKIPPED, P2_NOT_RECOMMENDED</p>
+  <p><strong>Предупреждения:</strong> LLM_FORMULA_ALREADY_IN_REGISTRY, LLM_FORMULA_PROPOSALS_REJECTED, LLM_TRAINING_SUMMARY_DISCLOSED, LLM_TRANSCENDENTAL_NESTING, P2_NOT_RECOMMENDED</p>
   
   
 </section>
 <h2>Вход</h2>
-<p>Использовано 30 из 32 строк; пропущено 2.
-Уникальных x: 30.</p>
+<p>Использовано 60 из 60 строк; пропущено 0.
+Уникальных x: 60.</p>
 
 <h2>Три варианта аппроксимации</h2>
 <p>P1 и P2 получены полным алгоритмическим поиском по реестру.
-LLM предлагает новые выражения; их параметры оптимизируются численно. Статус LLM: <code>DISABLED</code>.</p>
+LLM предлагает новые выражения; их параметры оптимизируются численно. Статус LLM: <code>ACCEPTED</code>.</p>
 <p>Максимум две ветви, полиномиальная степень ≤3, монотонность на всём интервале,
 непрерывность стыка, баланс 40/60 и коэффициенты с точностью 0.001.</p>
 
 <div class="grid">
   <section class="card"><h3>P1 — одна функция</h3>
-    <p>Refit R²: 0.997</p>
-    <p>OOF R²: 0.996</p>
-    <p><code>f(x)=1.612+26.434/(1+exp(-6.139*(((x-0.000)/29.000)-0.717)))</code></p>
+    <p>Refit R²: 1.000</p>
+    <p>OOF R²: 1.000</p>
+    <p><code>f(x)=1.512+5.671*((x-0.000)/10.000)-2.472*((x-0.000)/10.000)^2+0.791*((x-0.000)/10.000)^3</code></p>
   </section>
   <section class="card"><h3>P2 — две функции</h3>
   
     <p>Refit global R²: 1.000</p>
-    <p>OOF R²: 0.999</p>
-    <p><code>f(x)=2.003+1.722*((x-0.000)/11.500) for x&lt;=11.500; 3.725+20.998*((x-11.500)/17.500) for x&gt;11.500</code></p>
+    <p>OOF R²: 1.000</p>
+    <p><code>f(x)=1.501+3.053*((x-0.000)/5.169)-0.928*((x-0.000)/5.169)^2+0.266*((x-0.000)/5.169)^3 for x&lt;=5.169; 3.892+1.787*((x-5.169)/4.831)-0.185*((x-5.169)/4.831)^2 for x&gt;5.169</code></p>
     <table><caption>Локальные refit-метрики P2</caption><thead><tr><th scope="col">Интервал</th><th scope="col">n</th><th scope="col">доля</th><th scope="col">R²</th></tr></thead><tbody>
-    <tr><td>left</td><td>12</td><td>0.400</td><td>0.997</td></tr><tr><td>right</td><td>18</td><td>0.600</td><td>1.000</td></tr>
+    <tr><td>left</td><td>31</td><td>0.517</td><td>1.000</td></tr><tr><td>right</td><td>29</td><td>0.483</td><td>1.000</td></tr>
     </tbody></table>
   
   </section>
 
   <section class="card"><h3>LLM — новая формула</h3>
-  <p>Недоступна: <code>DISABLED</code>. Результат поиска не заменён моделью из реестра.</p>
+  
+    <p>Refit R²: 1.000</p>
+    <p>Ветвей: 1; параметров: 4.</p>
+    <p><code>f(x)=1.498+4.001*(((sqrt(1+(3.029*((x-(0.0))/(10.0-(0.0)))))-1)+((0.061*((x-(0.0))/(10.0-(0.0))))^3))/((sqrt(1+(3.029*1))-1)+((0.061*1)^3)))</code></p>
+    <p><a href="model-llm.json">Скачать модель LLM</a></p>
+  
   </section>
 
 </div>
 
 <h2>Сравнение на общей контрольной выборке</h2>
-<p>Общая контрольная оценка недоступна: <code>DISABLED</code>.
-Refit-метрики описывают подгонку и не доказывают качество на новых данных.</p>
+
+<p>Обучение: 48 точек; проверка: 12.
+Группы одинаковых x не разделяются. LLM не видела контрольные точки и их оценки.
+R² считается относительно среднего обучающей выборки. Это оценка интерполяции одного разделения;
+она отличается от OOF выше. Сохранённые итоговые модели повторно обучены на всех точках.</p>
+<table><thead><tr><th scope="col">Вариант</th><th scope="col">R²</th><th scope="col">RMSE</th><th scope="col">MAE</th><th scope="col">Статус</th></tr></thead><tbody>
+<tr><td>P1</td><td>1.000</td><td>0.007</td><td>0.005</td><td>AVAILABLE</td></tr><tr><td>P2</td><td>1.000</td><td>0.006</td><td>0.005</td><td>AVAILABLE</td></tr><tr><td>LLM</td><td>1.000</td><td>0.005</td><td>0.004</td><td>AVAILABLE</td></tr>
+</tbody></table>
+
 <p><a href="model-comparison.json">Все результаты сравнения</a> · <a href="model-one.json">Модель P1</a> · <a href="model-two.json">Модель P2</a></p>
 
 <h2>Графики</h2>
@@ -71,10 +83,10 @@ Refit-метрики описывают подгонку и не доказыв�
 <h3>LLM</h3><img src="plot-llm.svg" alt="Точки и новая монотонная формула LLM либо причина недоступности">
 <h2>Проверочный uplift P2 относительно P1</h2>
 
-<p>Relative MSE uplift: 0.867;
+<p>Relative MSE uplift: 0.130;
 bootstrap 90% interval:
 
-[0.774, 0.934].
+[-0.161, 0.372].
 </p>
 
 <h2>Наблюдения для проверки</h2>

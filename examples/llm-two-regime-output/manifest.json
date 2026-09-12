@@ -1,0 +1,66 @@
+{
+  "artifacts": [
+    {
+      "bytes": 23,
+      "path": "input-audit.json",
+      "sha256": "096eba7c600446a2f906369a6ff747804a51b9ad3153ca10d9a1d673e416b337"
+    },
+    {
+      "bytes": 15667,
+      "path": "model-comparison.json",
+      "sha256": "ebbc4d4286b7b8a99a97ff3607afe599f6dd1dae0c45cdad7dce022545b73ac4"
+    },
+    {
+      "bytes": 1216,
+      "path": "model-llm.json",
+      "sha256": "4bb49b9cf39d06a517219607dc0750d5e5706f59781cf2d6c4f7d13163a4a256"
+    },
+    {
+      "bytes": 933,
+      "path": "model-one.json",
+      "sha256": "44bc938719c50bef0b38cae405b7f7017d110cf5e35127c47c5355bdcc3b3e20"
+    },
+    {
+      "bytes": 1514,
+      "path": "model-two.json",
+      "sha256": "311390b06c08241d2299fbee1cc2a4036c6f54565b8a6612343565e1b279a54c"
+    },
+    {
+      "bytes": 15137,
+      "path": "observations.csv",
+      "sha256": "be2450ed9cf64991e1cd706edd195930ad755309500a242c99da125ddfc35287"
+    },
+    {
+      "bytes": 18541,
+      "path": "plot-llm.svg",
+      "sha256": "8fd7e4df050e12b2c50f2c49c9b28a31963e3138817da7b22a010884868a5045"
+    },
+    {
+      "bytes": 19043,
+      "path": "plot-one.svg",
+      "sha256": "7ea65409922c6df63fd70617ce6a4c8593e995b5deef0d3e0bddff0793ccc186"
+    },
+    {
+      "bytes": 23720,
+      "path": "plot-two.svg",
+      "sha256": "1eaf8f443a3726a9bb2492a054be159f8d27c3bbb716dc3f092216c4d09ba823"
+    },
+    {
+      "bytes": 1514,
+      "path": "recommended-model.json",
+      "sha256": "311390b06c08241d2299fbee1cc2a4036c6f54565b8a6612343565e1b279a54c"
+    },
+    {
+      "bytes": 6213,
+      "path": "report.html",
+      "sha256": "e3298eb1f933807f56c5ef4af44e20d80d828765ed1899b13eb37d5e3889b2cc"
+    },
+    {
+      "bytes": 29199,
+      "path": "report.json",
+      "sha256": "f120e71b90f7f5ad08e00424c4b51f9451a022995afd41f5755ffd661df20022"
+    }
+  ],
+  "report_id": "f65160ee94731e655346ef8fd488c9051b569bd7b9a59d861bd133d20f3245a2",
+  "schema_version": "bundle-manifest-v1"
+}

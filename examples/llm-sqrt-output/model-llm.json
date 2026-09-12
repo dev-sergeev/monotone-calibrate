@@ -1,0 +1,45 @@
+{
+  "coefficient_decimal_places": 3,
+  "formula": "f(x)=1.498+4.001*(((sqrt(1+(3.029*((x-(0.0))/(10.0-(0.0)))))-1)+((0.061*((x-(0.0))/(10.0-(0.0))))^3))/((sqrt(1+(3.029*1))-1)+((0.061*1)^3)))",
+  "grammar_version": "monotone-expression-v1",
+  "model_instance_hash": "1d9aefd9ebc9e74f7a62bea42bc1b02ed2448b67df54d98b81a7d1e779662636",
+  "monotonicity_certified": true,
+  "schema_version": "formula-runtime-v1",
+  "segments": [
+    {
+      "amplitude": 4.001,
+      "anchored_right": false,
+      "direction": "increasing",
+      "expression": {
+        "args": [
+          {
+            "arg": {
+              "arg": {
+                "op": "t"
+              },
+              "op": "scale"
+            },
+            "op": "sqrt1p"
+          },
+          {
+            "arg": {
+              "arg": {
+                "op": "t"
+              },
+              "op": "scale"
+            },
+            "op": "cube"
+          }
+        ],
+        "op": "add"
+      },
+      "offset": 1.498,
+      "shape": [
+        3.029,
+        0.061
+      ],
+      "x_lower": 0.0,
+      "x_upper": 10.0
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 row_id,x,prediction,status
-id:left-interval,5.0,2.7472058025807513,OK
-id:near-boundary,11.5,3.727,OK
-id:right-interval,20.0,13.92441282798834,OK
+id:left-interval,5.0,2.5138768193172094,OK
+id:near-boundary,11.5,4.855095255132632,OK
+id:right-interval,20.0,13.722229662281373,OK
 id:outside-support,35.0,,OUT_OF_DOMAIN
 id:invalid-x,,,INVALID_X

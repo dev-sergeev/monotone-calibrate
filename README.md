@@ -52,6 +52,12 @@ P2 расходятся в общей точке не более чем на о�
 [`examples/demo-output`](examples/demo-output), а его численное заключение — в
 [`docs/demo-run.md`](docs/demo-run.md).
 
+Актуальные LLM-примеры с тремя вариантами сравнения:
+[плавная кривая](examples/llm-sqrt-output/report.html) и
+[два режима](examples/llm-two-regime-output/report.html).
+Исходные CSV, команды OpenRouter/GigaChat и применение сохранённых моделей —
+в [`examples/README.md`](examples/README.md).
+
 Разбор статьи LLM-SR, точное соответствие её шагов реализации и осознанные
 ограничения адаптации описаны в
 [`docs/llm-sr-algorithm.md`](docs/llm-sr-algorithm.md). Карта актуальной и

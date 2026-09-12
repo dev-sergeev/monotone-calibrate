@@ -85,8 +85,9 @@ def test_quick_start_and_examples_describe_the_current_runtime() -> None:
         (ROOT / "examples" / "demo-output" / "report.json").read_text(encoding="utf-8")
     )
     provenance = report["llm_advisor"]
-    assert provenance["mode"] == "llm_sr_typed_symbolic_search"
-    assert provenance["output_schema_version"] == "llm-sr-hypotheses-v1"
+    assert report["schema_version"] == "monotone-report-v3"
+    assert provenance["mode"] == "llm_formula_discovery"
+    assert provenance["output_schema_version"] == "llm-formulas-v1"
     assert provenance["scope"] == "deterministic_full_registry"
     assert "llm-start-advice-v1" not in json.dumps(report, sort_keys=True)
 

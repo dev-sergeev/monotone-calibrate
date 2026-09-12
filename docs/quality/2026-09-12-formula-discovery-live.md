@@ -13,10 +13,17 @@
 
 Оба пакета прошли `verify`: 12 артефактов в каждом, пересчитаны refit/holdout метрики и прогнозы. Загрузка `model-llm.json` и `predict` проверены на трёх точках внутри диапазона, одной вне диапазона и одной нечисловой строке: `3 OK / 1 OUT_OF_DOMAIN / 1 INVALID_X`. Дополнительная плотная сетка из 10001 точки подтвердила монотонность обеих итоговых формул; основной сертификат остаётся структурным.
 
-Локальные пакеты (не включены в Git):
+Проверенные пакеты и исходные CSV включены в примеры проекта:
 
-- `outputs/comparison-sqrt/report.html`
-- `outputs/comparison-two-regime/report.html`
+- [Плавная кривая: отчёт](../../examples/llm-sqrt-output/report.html),
+  [исходный CSV](../../examples/llm-sqrt.csv).
+- [Два режима: отчёт](../../examples/llm-two-regime-output/report.html),
+  [исходный CSV](../../examples/llm-two-regime.csv).
+
+Это точные копии локальных пакетов `outputs/comparison-sqrt` и
+`outputs/comparison-two-regime`; исходные SHA-256 сохранены. Команды для
+повторного запуска через OpenRouter или GigaChat — в
+[examples/README.md](../../examples/README.md).
 
 Исходные fixtures генерируются детерминированно:
 

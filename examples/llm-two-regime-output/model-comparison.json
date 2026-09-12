@@ -1,0 +1,566 @@
+{
+  "LLM": {
+    "available": true,
+    "budget_exhausted": false,
+    "evaluations": 220,
+    "metrics": {
+      "mae_refit": 0.1811862569160214,
+      "r2_refit": 0.9879905890898173,
+      "rmse_refit": 0.21922627060748565,
+      "sse_refit": 3.844812617957322
+    },
+    "model": {
+      "coefficient_decimal_places": 3,
+      "formula": "f(x)=1.985+6.428*(((sqrt(1+(5.133*((1.394*((x-(0.0))/(10.0-(0.0))))^3)))-1)+(0.238*((x-(0.0))/(10.0-(0.0)))))/((sqrt(1+(5.133*((1.394*1)^3)))-1)+(0.238*1)))",
+      "grammar_version": "monotone-expression-v1",
+      "model_instance_hash": "ca46ed79ebfc37467b6e65c3890635c49ff95858ebb87525cf93f8cae8ce3eab",
+      "monotonicity_certified": true,
+      "schema_version": "formula-runtime-v1",
+      "segments": [
+        {
+          "amplitude": 6.428,
+          "anchored_right": false,
+          "direction": "increasing",
+          "expression": {
+            "args": [
+              {
+                "arg": {
+                  "arg": {
+                    "arg": {
+                      "arg": {
+                        "op": "t"
+                      },
+                      "op": "scale"
+                    },
+                    "op": "cube"
+                  },
+                  "op": "scale"
+                },
+                "op": "sqrt1p"
+              },
+              {
+                "arg": {
+                  "op": "t"
+                },
+                "op": "scale"
+              }
+            ],
+            "op": "add"
+          },
+          "offset": 1.985,
+          "shape": [
+            5.133,
+            1.394,
+            0.238
+          ],
+          "x_lower": 0.0,
+          "x_upper": 10.0
+        }
+      ]
+    },
+    "parameter_count": 5,
+    "segment_count": 1,
+    "segment_shares": [
+      1.0
+    ],
+    "status": "VALID"
+  },
+  "P1": {
+    "available": true,
+    "metrics": {
+      "mae_refit": 0.110056389362581,
+      "r2_refit": 0.9955466932707959,
+      "rmse_refit": 0.1334974739318431,
+      "sse_refit": 1.4257260436946506
+    },
+    "model": {
+      "breakpoint": null,
+      "coefficient_decimal_places": 3,
+      "direction": "increasing",
+      "formula": "f(x)=2.029+6.474/(1+exp(-7.046*(((x-0.000)/10.000)-0.686)))",
+      "model_instance_hash": "c3a3a21acffc2e504f20044a70f354d2005a70a7a5a98c7c0d395c7d8e61e57e",
+      "model_structure_hash": "f02bba2d83b8dcd528542de24ee951ab6e66c923ab29948537dc9ef7c7d86c5d",
+      "monotonicity_certified": true,
+      "polynomial_degree": 0,
+      "registry_version": "registry-v1",
+      "schema_version": "model-runtime-v2",
+      "segment_count": 1,
+      "segments": [
+        {
+          "canonical_ast_id": "logistic.a_plus_b_sigma_k_t_minus_m.v1",
+          "family_id": "logistic_v1",
+          "formula": "2.029+6.474/(1+exp(-7.046*(((x-0.000)/10.000)-0.686)))",
+          "interval": {
+            "lower": 0.0,
+            "upper": 10.0
+          },
+          "parameters": {
+            "a": 2.029,
+            "b": 6.474,
+            "k": 7.046,
+            "m": 0.686
+          },
+          "segment_id": "single"
+        }
+      ]
+    },
+    "segment_metrics": [
+      {
+        "mae_refit": 0.110056389362581,
+        "n": 80,
+        "n_unique_x": 80,
+        "r2_refit": 0.9955466932707959,
+        "rmse_refit": 0.1334974739318431,
+        "segment_id": "single",
+        "share": 1.0
+      }
+    ],
+    "status": "VALID"
+  },
+  "P2": {
+    "available": true,
+    "metrics": {
+      "mae_refit": 0.008256364974109361,
+      "r2_refit": 0.9999727029589902,
+      "rmse_refit": 0.010451762430112664,
+      "sse_refit": 0.008739147031641166
+    },
+    "model": {
+      "breakpoint": 5.0,
+      "coefficient_decimal_places": 3,
+      "direction": "increasing",
+      "formula": "f(x)=1.792+1.707*((x-0.000)/5.000)-0.849*((x-0.000)/5.000)^2+0.370*((x-0.000)/5.000)^3 for x<=5.000; 3.020+7.815*((x-5.000)/5.000)-4.505*((x-5.000)/5.000)^2+1.690*((x-5.000)/5.000)^3 for x>5.000",
+      "model_instance_hash": "16f40a0dd7876f10427b5a2a32938ac8653b10343f809baa705c76e1f369118d",
+      "model_structure_hash": "ff2a860de42ea93c2bba19c2e8da136c2e471e508c949c37cccdfc164d63e4f2",
+      "monotonicity_certified": true,
+      "polynomial_degree": 3,
+      "registry_version": "registry-v1",
+      "schema_version": "model-runtime-v2",
+      "segment_count": 2,
+      "segments": [
+        {
+          "canonical_ast_id": "poly3.a_plus_b_t_plus_c_t2_plus_d_t3.v1",
+          "family_id": "poly3_v1",
+          "formula": "1.792+1.707*((x-0.000)/5.000)-0.849*((x-0.000)/5.000)^2+0.370*((x-0.000)/5.000)^3",
+          "interval": {
+            "lower": 0.0,
+            "upper": 5.0
+          },
+          "parameters": {
+            "a": 1.792,
+            "b": 1.707,
+            "c": -0.849,
+            "d": 0.37
+          },
+          "segment_id": "left"
+        },
+        {
+          "canonical_ast_id": "poly3.a_plus_b_t_plus_c_t2_plus_d_t3.v1",
+          "family_id": "poly3_v1",
+          "formula": "3.020+7.815*((x-5.000)/5.000)-4.505*((x-5.000)/5.000)^2+1.690*((x-5.000)/5.000)^3",
+          "interval": {
+            "lower": 5.0,
+            "upper": 10.0
+          },
+          "parameters": {
+            "a": 3.02,
+            "b": 7.815,
+            "c": -4.505,
+            "d": 1.69
+          },
+          "segment_id": "right"
+        }
+      ]
+    },
+    "segment_metrics": [
+      {
+        "mae_refit": 0.006869975941491996,
+        "n": 40,
+        "n_unique_x": 40,
+        "r2_refit": 0.9993707091194735,
+        "rmse_refit": 0.008747637278114732,
+        "segment_id": "left",
+        "share": 0.5
+      },
+      {
+        "mae_refit": 0.009642754006726728,
+        "n": 40,
+        "n_unique_x": 40,
+        "r2_refit": 0.9999288382448409,
+        "rmse_refit": 0.011914592642703595,
+        "segment_id": "right",
+        "share": 0.5
+      }
+    ],
+    "status": "VALID"
+  },
+  "holdout": {
+    "candidates": {
+      "LLM": {
+        "mae": 0.16710343225018195,
+        "model": {
+          "coefficient_decimal_places": 3,
+          "formula": "f(x)=2.020+6.390*(((sqrt(1+(1.580*((2.123*((x-(0.0))/(10.0-(0.0))))^3)))-1)+(0.140*((x-(0.0))/(10.0-(0.0)))))/((sqrt(1+(1.580*((2.123*1)^3)))-1)+(0.140*1)))",
+          "grammar_version": "monotone-expression-v1",
+          "model_instance_hash": "0302ac0ef5ab242d24722940d24a4976e7ad740f015cfb6f9c86a945d1624ebc",
+          "monotonicity_certified": true,
+          "schema_version": "formula-runtime-v1",
+          "segments": [
+            {
+              "amplitude": 6.39,
+              "anchored_right": false,
+              "direction": "increasing",
+              "expression": {
+                "args": [
+                  {
+                    "arg": {
+                      "arg": {
+                        "arg": {
+                          "arg": {
+                            "op": "t"
+                          },
+                          "op": "scale"
+                        },
+                        "op": "cube"
+                      },
+                      "op": "scale"
+                    },
+                    "op": "sqrt1p"
+                  },
+                  {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  }
+                ],
+                "op": "add"
+              },
+              "offset": 2.02,
+              "shape": [
+                1.58,
+                2.123,
+                0.14
+              ],
+              "x_lower": 0.0,
+              "x_upper": 10.0
+            }
+          ]
+        },
+        "mse": 0.03618752622652767,
+        "predictions": [
+          2.027427406607962,
+          2.03160678032739,
+          2.036344496861026,
+          2.176072268136668,
+          2.4505140406027954,
+          2.5476329043071377,
+          2.600546238960068,
+          3.715616494610958,
+          3.904490170889809,
+          4.411253658312056,
+          4.518167733375503,
+          5.928130882047766,
+          6.183794843703414,
+          6.5773047338001405,
+          6.98235081132723,
+          8.11536247989025
+        ],
+        "r2": 0.9910310239078007,
+        "rmse": 0.19023019273114264,
+        "status": "AVAILABLE"
+      },
+      "P1": {
+        "mae": 0.13340677107157853,
+        "model": {
+          "breakpoint": null,
+          "coefficient_decimal_places": 3,
+          "direction": "increasing",
+          "formula": "f(x)=2.066+6.333/(1+exp(-7.351*(((x-0.000)/10.000)-0.682)))",
+          "model_instance_hash": "2475fcb969c0443931c8f27ac2c96fa08344c709ae63b5d0d019eb6a446f6e58",
+          "model_structure_hash": "f02bba2d83b8dcd528542de24ee951ab6e66c923ab29948537dc9ef7c7d86c5d",
+          "monotonicity_certified": true,
+          "polynomial_degree": 0,
+          "registry_version": "registry-v1",
+          "schema_version": "model-runtime-v2",
+          "segment_count": 1,
+          "segments": [
+            {
+              "canonical_ast_id": "logistic.a_plus_b_sigma_k_t_minus_m.v1",
+              "family_id": "logistic_v1",
+              "formula": "2.066+6.333/(1+exp(-7.351*(((x-0.000)/10.000)-0.682)))",
+              "interval": {
+                "lower": 0.0,
+                "upper": 10.0
+              },
+              "parameters": {
+                "a": 2.066,
+                "b": 6.333,
+                "k": 7.351,
+                "m": 0.682
+              },
+              "segment_id": "single"
+            }
+          ]
+        },
+        "mse": 0.020923086352691474,
+        "predictions": [
+          2.116313439588242,
+          2.121177122643361,
+          2.126506438653348,
+          2.2315733741814197,
+          2.404774413675106,
+          2.469652090212606,
+          2.5062785814138646,
+          3.533841826774857,
+          3.754052236692565,
+          4.387500128640465,
+          4.52595044901308,
+          6.244944854389339,
+          6.501107604946283,
+          6.850342022483064,
+          7.153362094310392,
+          7.739167421027832
+        ],
+        "r2": 0.9948142721860124,
+        "rmse": 0.1446481467309259,
+        "status": "AVAILABLE"
+      },
+      "P2": {
+        "mae": 0.00736138329949107,
+        "model": {
+          "breakpoint": 5.0,
+          "coefficient_decimal_places": 3,
+          "direction": "increasing",
+          "formula": "f(x)=1.792+1.694*((x-0.000)/5.000)-0.810*((x-0.000)/5.000)^2+0.341*((x-0.000)/5.000)^3 for x<=5.000; 3.017+7.829*((x-5.000)/5.000)-4.515*((x-5.000)/5.000)^2+1.688*((x-5.000)/5.000)^3 for x>5.000",
+          "model_instance_hash": "d699b4ff26db54974e36a2ab436be7d9e28e58f4583397305dfdf4f2cc1029f6",
+          "model_structure_hash": "ff2a860de42ea93c2bba19c2e8da136c2e471e508c949c37cccdfc164d63e4f2",
+          "monotonicity_certified": true,
+          "polynomial_degree": 3,
+          "registry_version": "registry-v1",
+          "schema_version": "model-runtime-v2",
+          "segment_count": 2,
+          "segments": [
+            {
+              "canonical_ast_id": "poly3.a_plus_b_t_plus_c_t2_plus_d_t3.v1",
+              "family_id": "poly3_v1",
+              "formula": "1.792+1.694*((x-0.000)/5.000)-0.810*((x-0.000)/5.000)^2+0.341*((x-0.000)/5.000)^3",
+              "interval": {
+                "lower": 0.0,
+                "upper": 5.0
+              },
+              "parameters": {
+                "a": 1.792,
+                "b": 1.694,
+                "c": -0.81,
+                "d": 0.341
+              },
+              "segment_id": "left"
+            },
+            {
+              "canonical_ast_id": "poly3.a_plus_b_t_plus_c_t2_plus_d_t3.v1",
+              "family_id": "poly3_v1",
+              "formula": "3.017+7.829*((x-5.000)/5.000)-4.515*((x-5.000)/5.000)^2+1.688*((x-5.000)/5.000)^3",
+              "interval": {
+                "lower": 5.0,
+                "upper": 10.0
+              },
+              "parameters": {
+                "a": 3.017,
+                "b": 7.829,
+                "c": -4.515,
+                "d": 1.688
+              },
+              "segment_id": "right"
+            }
+          ]
+        },
+        "mse": 9.03550982357431e-05,
+        "predictions": [
+          1.875739825855561,
+          1.916135291528662,
+          1.9555920566121545,
+          2.337156914564568,
+          2.571071067400348,
+          2.6261382730372245,
+          2.653342765988086,
+          3.307885260598046,
+          3.6764345315482148,
+          4.509467313944739,
+          4.662244489786812,
+          6.2129158971197,
+          6.432131748198419,
+          6.74692405874586,
+          7.048822671228848,
+          7.824593415531023
+        ],
+        "r2": 0.9999776057442885,
+        "rmse": 0.009505529876642497,
+        "status": "AVAILABLE"
+      }
+    },
+    "n_test": 16,
+    "n_train": 64,
+    "policy": "grouped-interpolation-holdout-v1",
+    "r2_reference": "discovery_training_mean",
+    "scope": "training_only_discovery_then_untouched_test_before_full_refit",
+    "seed": 20260912,
+    "status": "AVAILABLE",
+    "test_indices": [
+      2,
+      3,
+      4,
+      15,
+      23,
+      25,
+      26,
+      41,
+      43,
+      48,
+      49,
+      61,
+      63,
+      66,
+      69,
+      77
+    ],
+    "train_indices": [
+      0,
+      1,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      24,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      42,
+      44,
+      45,
+      46,
+      47,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      62,
+      64,
+      65,
+      67,
+      68,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      78,
+      79
+    ],
+    "train_mean": 4.163843240444337
+  },
+  "validation": {
+    "decision_state": "CLEAR_PRACTICAL_UPLIFT",
+    "folds": 5,
+    "one": {
+      "mae_oos": 0.11635827279900302,
+      "mse_oos": 0.01990626304386612,
+      "r2_oos": 0.9951614285680187,
+      "r2_status": "DEFINED",
+      "rmse_oos": 0.14108955682071625
+    },
+    "oof_appearances": 160,
+    "recommended_structure": "P2",
+    "repetitions": 2,
+    "stability": {
+      "breakpoint_width_fraction": 0.007569999999999943,
+      "direction_agreement": 1.0,
+      "dominant_pair_share": 0.8,
+      "edge_frequency": 0.0,
+      "p2_success_rate": 1.0,
+      "passed": true,
+      "selected_breakpoints": [
+        4.937,
+        5.0,
+        4.873,
+        5.0,
+        5.0,
+        5.0,
+        5.0,
+        5.063,
+        4.937,
+        5.0
+      ],
+      "selected_pairs": [
+        "poly3_v1/poly3_v1",
+        "poly3_v1/poly3_v1",
+        "poly2_v1/poly3_v1",
+        "poly3_v1/poly3_v1",
+        "poly3_v1/poly3_v1",
+        "poly3_v1/poly3_v1",
+        "poly3_v1/poly3_v1",
+        "poly3_v1/poly3_v1",
+        "poly2_v1/poly3_v1",
+        "poly3_v1/poly3_v1"
+      ]
+    },
+    "status": "VALIDATED",
+    "two": {
+      "mae_oos": 0.010714212908260138,
+      "mse_oos": 0.0002666372844223767,
+      "r2_oos": 0.9999351890636498,
+      "r2_status": "DEFINED",
+      "rmse_oos": 0.016329031949946594
+    },
+    "uplift": {
+      "bootstrap_interval": {
+        "lower": 0.9820769912587101,
+        "upper": 0.9901257335855255
+      },
+      "delta_mae": 0.10564405989074288,
+      "delta_r2": 0.004773760495631052,
+      "delta_rmse": 0.12476052487076966,
+      "p10_repetition": 0.984632213925327,
+      "positive_repetition_share": 1.0,
+      "relative_mse": 0.9866053571263071,
+      "repetition_effects": [
+        0.9841402122792109,
+        0.9890602287403719
+      ]
+    },
+    "warning_codes": []
+  }
+}

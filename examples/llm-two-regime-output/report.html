@@ -21,48 +21,60 @@
 <body>
 <h1>Отчёт о монотонной калибровке</h1>
 <section class="decision warning">
-  <h2>Рекомендация среди P1/P2: P1</h2>
-  <p>Состояние решения: <code>UNSTABLE_SELECTION</code>.</p>
-  <p><strong>Предупреждения:</strong> INVALID_ROWS_SKIPPED, P2_NOT_RECOMMENDED</p>
+  <h2>Рекомендация среди P1/P2: P2</h2>
+  <p>Состояние решения: <code>CLEAR_PRACTICAL_UPLIFT</code>.</p>
+  <p><strong>Предупреждения:</strong> LLM_TRAINING_SUMMARY_DISCLOSED</p>
   
   
 </section>
 <h2>Вход</h2>
-<p>Использовано 30 из 32 строк; пропущено 2.
-Уникальных x: 30.</p>
+<p>Использовано 80 из 80 строк; пропущено 0.
+Уникальных x: 80.</p>
 
 <h2>Три варианта аппроксимации</h2>
 <p>P1 и P2 получены полным алгоритмическим поиском по реестру.
-LLM предлагает новые выражения; их параметры оптимизируются численно. Статус LLM: <code>DISABLED</code>.</p>
+LLM предлагает новые выражения; их параметры оптимизируются численно. Статус LLM: <code>ACCEPTED</code>.</p>
 <p>Максимум две ветви, полиномиальная степень ≤3, монотонность на всём интервале,
 непрерывность стыка, баланс 40/60 и коэффициенты с точностью 0.001.</p>
 
 <div class="grid">
   <section class="card"><h3>P1 — одна функция</h3>
-    <p>Refit R²: 0.997</p>
-    <p>OOF R²: 0.996</p>
-    <p><code>f(x)=1.612+26.434/(1+exp(-6.139*(((x-0.000)/29.000)-0.717)))</code></p>
+    <p>Refit R²: 0.996</p>
+    <p>OOF R²: 0.995</p>
+    <p><code>f(x)=2.029+6.474/(1+exp(-7.046*(((x-0.000)/10.000)-0.686)))</code></p>
   </section>
   <section class="card"><h3>P2 — две функции</h3>
   
     <p>Refit global R²: 1.000</p>
-    <p>OOF R²: 0.999</p>
-    <p><code>f(x)=2.003+1.722*((x-0.000)/11.500) for x&lt;=11.500; 3.725+20.998*((x-11.500)/17.500) for x&gt;11.500</code></p>
+    <p>OOF R²: 1.000</p>
+    <p><code>f(x)=1.792+1.707*((x-0.000)/5.000)-0.849*((x-0.000)/5.000)^2+0.370*((x-0.000)/5.000)^3 for x&lt;=5.000; 3.020+7.815*((x-5.000)/5.000)-4.505*((x-5.000)/5.000)^2+1.690*((x-5.000)/5.000)^3 for x&gt;5.000</code></p>
     <table><caption>Локальные refit-метрики P2</caption><thead><tr><th scope="col">Интервал</th><th scope="col">n</th><th scope="col">доля</th><th scope="col">R²</th></tr></thead><tbody>
-    <tr><td>left</td><td>12</td><td>0.400</td><td>0.997</td></tr><tr><td>right</td><td>18</td><td>0.600</td><td>1.000</td></tr>
+    <tr><td>left</td><td>40</td><td>0.500</td><td>0.999</td></tr><tr><td>right</td><td>40</td><td>0.500</td><td>1.000</td></tr>
     </tbody></table>
   
   </section>
 
   <section class="card"><h3>LLM — новая формула</h3>
-  <p>Недоступна: <code>DISABLED</code>. Результат поиска не заменён моделью из реестра.</p>
+  
+    <p>Refit R²: 0.988</p>
+    <p>Ветвей: 1; параметров: 5.</p>
+    <p><code>f(x)=1.985+6.428*(((sqrt(1+(5.133*((1.394*((x-(0.0))/(10.0-(0.0))))^3)))-1)+(0.238*((x-(0.0))/(10.0-(0.0)))))/((sqrt(1+(5.133*((1.394*1)^3)))-1)+(0.238*1)))</code></p>
+    <p><a href="model-llm.json">Скачать модель LLM</a></p>
+  
   </section>
 
 </div>
 
 <h2>Сравнение на общей контрольной выборке</h2>
-<p>Общая контрольная оценка недоступна: <code>DISABLED</code>.
-Refit-метрики описывают подгонку и не доказывают качество на новых данных.</p>
+
+<p>Обучение: 64 точек; проверка: 16.
+Группы одинаковых x не разделяются. LLM не видела контрольные точки и их оценки.
+R² считается относительно среднего обучающей выборки. Это оценка интерполяции одного разделения;
+она отличается от OOF выше. Сохранённые итоговые модели повторно обучены на всех точках.</p>
+<table><thead><tr><th scope="col">Вариант</th><th scope="col">R²</th><th scope="col">RMSE</th><th scope="col">MAE</th><th scope="col">Статус</th></tr></thead><tbody>
+<tr><td>P1</td><td>0.995</td><td>0.145</td><td>0.133</td><td>AVAILABLE</td></tr><tr><td>P2</td><td>1.000</td><td>0.010</td><td>0.007</td><td>AVAILABLE</td></tr><tr><td>LLM</td><td>0.991</td><td>0.190</td><td>0.167</td><td>AVAILABLE</td></tr>
+</tbody></table>
+
 <p><a href="model-comparison.json">Все результаты сравнения</a> · <a href="model-one.json">Модель P1</a> · <a href="model-two.json">Модель P2</a></p>
 
 <h2>Графики</h2>
@@ -71,15 +83,17 @@ Refit-метрики описывают подгонку и не доказыв�
 <h3>LLM</h3><img src="plot-llm.svg" alt="Точки и новая монотонная формула LLM либо причина недоступности">
 <h2>Проверочный uplift P2 относительно P1</h2>
 
-<p>Relative MSE uplift: 0.867;
+<p>Relative MSE uplift: 0.987;
 bootstrap 90% interval:
 
-[0.774, 0.934].
+[0.982, 0.990].
 </p>
 
 <h2>Наблюдения для проверки</h2>
 
 <p>Флаги основаны на grouped OOF-остатках рекомендуемой процедуры; они ничего не удаляют.</p>
-<p>Больших OOF-остатков по текущему robust rule не обнаружено.</p>
+<table><caption>Наблюдения с большим OOF-остатком</caption><thead><tr><th scope="col">row_id</th><th scope="col">OOF-прогноз</th><th scope="col">OOF-остаток</th><th scope="col">действие</th></tr></thead><tbody>
+<tr><td><code>row-000041</code></td><td>3.1509250624357463</td><td>-0.04550285576245172</td><td>review_only</td></tr><tr><td><code>row-000080</code></td><td>8.039479329736498</td><td>-0.04850829681877045</td><td>review_only</td></tr>
+</tbody></table>
 
 </body></html>
