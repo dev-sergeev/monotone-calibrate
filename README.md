@@ -169,6 +169,7 @@ uv run --frozen --no-sync monotone-calibrate verify examples/demo-output
 
 ```dotenv
 MONOTONE_CALIBRATE_LLM_ENABLED=false
+MONOTONE_CALIBRATE_LLM_PROVIDER=openai
 MONOTONE_CALIBRATE_LLM_MODEL=deepseek/deepseek-v4-flash-0731
 MONOTONE_CALIBRATE_LLM_BASE_URL=https://openrouter.ai/api/v1
 MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN=your-access-token
@@ -197,6 +198,51 @@ uv run --frozen --no-sync monotone-calibrate predict \
 в `.env`. Блокирующий `run` печатает JSON-заключение только после окончания
 всех запросов, численного подбора и проверки. Alias `--llm-start-advisor`
 также включает новый поиск формул.
+
+### GigaChat через langchain-gigachat
+
+Зависимость `langchain-gigachat` включена в проект. После обновления выполните
+`uv sync --frozen --no-editable`. Скопируйте
+[`.env.gigachat.example`](.env.gigachat.example) в `.env.gigachat`, задайте
+`MONOTONE_CALIBRATE_LLM_GIGACHAT_CREDENTIALS` (ключ авторизации GigaChat) и
+`MONOTONE_CALIBRATE_LLM_MODEL` (точный идентификатор доступной вам модели).
+В примере выбран `GigaChat-2`; модель не подменяется автоматически.
+
+```console
+cp .env.gigachat.example .env.gigachat
+# Заполните ключ и модель в .env.gigachat, затем:
+uv run --frozen --no-sync monotone-calibrate run data.csv \
+  --dotenv .env.gigachat --llm-symbolic-search --output outputs/with-gigachat
+uv run --frozen --no-sync monotone-calibrate verify outputs/with-gigachat
+```
+
+Провайдер выбирается через `MONOTONE_CALIBRATE_LLM_PROVIDER=gigachat`;
+по умолчанию используется `openai`, включая OpenRouter. Конфигурации можно
+хранить в отдельных локальных dotenv-файлах и выбирать через `--dotenv`.
+Окружение процесса имеет приоритет над dotenv.
+
+Для GigaChat SDK получает и обновляет OAuth-токен по `GIGACHAT_CREDENTIALS`.
+Альтернатива — заполнить `MONOTONE_CALIBRATE_LLM_GIGACHAT_ACCESS_TOKEN`,
+оставив credentials пустым; готовый токен после истечения нужно заменить.
+`MONOTONE_CALIBRATE_LLM_GIGACHAT_SCOPE`: `GIGACHAT_API_PERS` (по умолчанию),
+`GIGACHAT_API_B2B` или `GIGACHAT_API_CORP` согласно вашему договору.
+Все имена переменных в примере имеют префикс `MONOTONE_CALIBRATE_LLM_`;
+обычные `GIGACHAT_*` credentials/endpoints и `OPENAI_*` не используются.
+
+TLS проверяется по умолчанию. При необходимости укажите PEM-файл доверенных
+сертификатов через `MONOTONE_CALIBRATE_LLM_GIGACHAT_CA_BUNDLE_FILE`.
+API и OAuth endpoints настраиваются отдельно через `GIGACHAT_BASE_URL` и
+`GIGACHAT_AUTH_URL` с тем же префиксом. `REASONING_EFFORT` оставьте пустым,
+если выбранная модель не поддерживает этот параметр.
+Параметры SDK: [официальная документация langchain-gigachat](https://github.com/ai-forever/langchain-gigachat/blob/master/libs/gigachat/README.md).
+
+GigaChat предлагает деревья формул; общие проверки и численный оптимизатор
+сохраняют степень ≤3, максимум две ветви и монотонность. Каждый запуск
+сохраняет сравнение P1/P2/LLM. При ошибке провайдера P1/P2 остаются доступны,
+а LLM-кандидат получает явный статус недоступности. В отчёте фиксируются
+провайдер, модель и расход токенов; денежную стоимость GigaChat не сообщает.
+
+### Общий поиск формул
 
 LLM получает до 200 агрегированных интервалов **обучающих** точек и оценки
 ранее оптимизированных выражений. Ответ — strict JSON с деревьями операций

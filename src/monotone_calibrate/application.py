@@ -101,6 +101,7 @@ def _resolve_formula_comparison(x, y, request: RunRequest):
     provenance = {
         "status": search.status,
         "mode": "llm_formula_discovery",
+        "provider": None if config is None else config.provider,
         "provider_model": None if config is None else config.model,
         "max_output_tokens": None if config is None else config.max_output_tokens,
         "reasoning_effort": None if config is None else config.reasoning_effort,

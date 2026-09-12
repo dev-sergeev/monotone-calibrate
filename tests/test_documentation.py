@@ -105,6 +105,7 @@ def test_example_environment_uses_documented_safe_defaults() -> None:
     )
     assert values == {
         "MONOTONE_CALIBRATE_LLM_ENABLED": "false",
+        "MONOTONE_CALIBRATE_LLM_PROVIDER": "openai",
         "MONOTONE_CALIBRATE_LLM_MODEL": "my-model-id",
         "MONOTONE_CALIBRATE_LLM_BASE_URL": "https://provider.example/v1",
         "MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN": "your-access-token",

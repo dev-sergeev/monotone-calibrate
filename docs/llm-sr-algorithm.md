@@ -118,12 +118,13 @@ Holdout — одно воспроизводимое разделение для 
 
 ## Провайдер и сбои
 
-Используется OpenAI-compatible Chat Completions через явный HTTP-клиент:
+При `MONOTONE_CALIBRATE_LLM_PROVIDER=openai` (по умолчанию) используется
+OpenAI-compatible Chat Completions через явный HTTP-клиент:
 модель не подменяется, redirect не пересылает credentials, ambient proxy и
 LangChain tracing не участвуют. В artifacts попадают только фиксированные
 коды ошибок, деревья, численные оценки и расход токенов/кредитов из usage.
 API key и необработанные ответы/ошибки не сохраняются.
-Запрос использует JSON mode; строгая схема и семантические ограничения
+Запрос OpenAI-compatible использует JSON mode; строгая схема и семантические ограничения
 проверяются локально. Рекурсивный provider-side constrained decoding на
 указанном DeepSeek в проверке вырождался в тривиальное `t`; JSON mode
 с тем же prompt дал новые выражения без ослабления локального парсера. Для OpenRouter DeepSeek используется `reasoning.effort=none` и
@@ -132,6 +133,21 @@ API key и необработанные ответы/ошибки не сохр�
 Настройки задаются `MONOTONE_CALIBRATE_LLM_REASONING_EFFORT` и
 `MONOTONE_CALIBRATE_LLM_MAX_OUTPUT_TOKENS` (512–32768). Протокол reasoning:
 [официальная документация OpenRouter](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
+
+При `PROVIDER=gigachat` работает `GigaChatFormulaSampler` через
+`langchain_gigachat.GigaChat`. Он использует тот же prompt и локальный parser;
+JSON запрашивается инструкцией, без зависимости от поддержки provider-side
+JSON Schema конкретной моделью. SDK выполняет OAuth и сетевые запросы;
+TLS включён, доступны отдельный scope, API/OAuth URL и CA bundle.
+Credentials и access token GigaChat заданы отдельными настройками проекта,
+чтобы ключ OpenRouter не попадал другому провайдеру. SDK-алиасы авторизации
+и endpoints перекрыты явно, LangSmith tracing отключён, cache выключен.
+Сетевые proxy-настройки у GigaChat обрабатываются SDK/httpx.
+Повторы временных ошибок выполняет адаптер (SDK retries выключены).
+Для GigaChat `usage.http_attempts` считает попытки генерации, включая повторы,
+но не OAuth-запросы; денежный `cost` не выдумывается, сохраняются только токены.
+Пример запуска и полный набор настроек: [README](../README.md#gigachat-через-langchain-gigachat),
+[dotenv](../.env.gigachat.example).
 
 Неверный JSON, недопустимая грамматика или сбой провайдера не меняют P1/P2.
 Внутри корректного JSON каждая гипотеза проверяется отдельно: невалидные

@@ -1,4 +1,4 @@
-"""Configuration for optional OpenAI-compatible LLM-SR hypothesis search.
+"""Configuration for optional OpenAI-compatible or GigaChat formula search.
 
 Only the explicitly documented ``MONOTONE_CALIBRATE_LLM_*`` names are read.
 The mathematical pipeline can therefore construct the default configuration
@@ -18,6 +18,8 @@ from dotenv import dotenv_values
 
 
 _PREFIX = "MONOTONE_CALIBRATE_LLM_"
+GIGACHAT_BASE_URL = "https://api.giga.chat/v1"
+GIGACHAT_AUTH_URL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
 
 
 class LLMConfigError(ValueError):
@@ -42,6 +44,14 @@ class LLMConfig:
     allow_insecure_http: bool = False
     max_output_tokens: int = 4096
     reasoning_effort: str | None = None
+    provider: str = "openai"
+    gigachat_credentials: str | None = field(default=None, repr=False)
+    gigachat_access_token: str | None = field(default=None, repr=False)
+    gigachat_scope: str = "GIGACHAT_API_PERS"
+    gigachat_auth_url: str = GIGACHAT_AUTH_URL
+    gigachat_verify_ssl_certs: bool = True
+    gigachat_ca_bundle_file: str | None = None
+
     @classmethod
     def from_mapping(
         cls,
@@ -57,6 +67,11 @@ class LLMConfig:
             default=False,
         )
         enabled = force_enable or configured_enabled
+        provider = _optional_text(values.get(f"{_PREFIX}PROVIDER")) or "openai"
+        if provider not in {"openai", "gigachat"}:
+            raise LLMConfigError(
+                "LLM_CONFIG_PROVIDER", "provider must be openai or gigachat"
+            )
         allow_insecure = _exact_bool(
             values.get(f"{_PREFIX}ALLOW_INSECURE_HTTP"),
             name=f"{_PREFIX}ALLOW_INSECURE_HTTP",
@@ -108,6 +123,48 @@ class LLMConfig:
         token = values.get(f"{_PREFIX}ACCESS_TOKEN")
         if token is not None and not token.strip():
             token = None
+        credentials = gigachat_token = ca_bundle = None
+        scope = "GIGACHAT_API_PERS"
+        auth_url = GIGACHAT_AUTH_URL
+        verify_ssl = True
+        if provider == "gigachat":
+            # Separate credentials prevent accidentally forwarding an OpenRouter key.
+            token = None
+            credentials = _optional_text(values.get(f"{_PREFIX}GIGACHAT_CREDENTIALS"))
+            gigachat_token = _optional_text(
+                values.get(f"{_PREFIX}GIGACHAT_ACCESS_TOKEN")
+            )
+            if credentials and gigachat_token:
+                raise LLMConfigError(
+                    "LLM_CONFIG_AUTH",
+                    "choose GigaChat credentials or access token, not both",
+                )
+            base_url = (
+                _optional_text(values.get(f"{_PREFIX}GIGACHAT_BASE_URL"))
+                or GIGACHAT_BASE_URL
+            )
+            auth_url = (
+                _optional_text(values.get(f"{_PREFIX}GIGACHAT_AUTH_URL"))
+                or GIGACHAT_AUTH_URL
+            )
+            scope = _optional_text(values.get(f"{_PREFIX}GIGACHAT_SCOPE")) or scope
+            if scope not in {
+                "GIGACHAT_API_PERS",
+                "GIGACHAT_API_B2B",
+                "GIGACHAT_API_CORP",
+            }:
+                raise LLMConfigError("LLM_CONFIG_SCOPE", "unsupported GigaChat scope")
+            verify_ssl = _exact_bool(
+                values.get(f"{_PREFIX}GIGACHAT_VERIFY_SSL_CERTS"),
+                name=f"{_PREFIX}GIGACHAT_VERIFY_SSL_CERTS",
+                default=True,
+            )
+            ca_bundle = _optional_text(values.get(f"{_PREFIX}GIGACHAT_CA_BUNDLE_FILE"))
+            if ca_bundle and not verify_ssl:
+                raise LLMConfigError(
+                    "LLM_CONFIG_TLS", "CA bundle requires TLS verification"
+                )
+            _validate_base_url(auth_url, allow_insecure_http=allow_insecure)
         if base_url is not None:
             _validate_base_url(base_url, allow_insecure_http=allow_insecure)
 
@@ -117,7 +174,16 @@ class LLMConfig:
                 for name, value in (
                     (f"{_PREFIX}MODEL", model),
                     (f"{_PREFIX}BASE_URL", base_url),
-                    (f"{_PREFIX}ACCESS_TOKEN", token),
+                    (
+                        (
+                            f"{_PREFIX}GIGACHAT_CREDENTIALS or {_PREFIX}GIGACHAT_ACCESS_TOKEN"
+                        )
+                        if provider == "gigachat"
+                        else f"{_PREFIX}ACCESS_TOKEN",
+                        (credentials or gigachat_token)
+                        if provider == "gigachat"
+                        else token,
+                    ),
                 )
                 if value is None
             )
@@ -138,6 +204,13 @@ class LLMConfig:
             allow_insecure_http=allow_insecure,
             max_output_tokens=max_output_tokens,
             reasoning_effort=reasoning_effort,
+            provider=provider,
+            gigachat_credentials=credentials,
+            gigachat_access_token=gigachat_token,
+            gigachat_scope=scope,
+            gigachat_auth_url=auth_url,
+            gigachat_verify_ssl_certs=verify_ssl,
+            gigachat_ca_bundle_file=ca_bundle,
         )
 
     @classmethod

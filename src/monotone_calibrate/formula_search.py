@@ -493,6 +493,16 @@ class HTTPFormulaSampler:
         raise FormulaProviderError("LLM_TRANSPORT_FAILURE")
 
 
+def make_formula_sampler(config: LLMConfig) -> FormulaSampler:
+    if config.provider == "gigachat":
+        from .gigachat_sampler import GigaChatFormulaSampler
+
+        return GigaChatFormulaSampler(config)
+    if config.provider == "openai":
+        return HTTPFormulaSampler(config)
+    raise ValueError("LLM_CONFIG_PROVIDER")
+
+
 @dataclass(frozen=True, slots=True)
 class FormulaSearchResult:
     status: str
@@ -531,7 +541,7 @@ def run_formula_search(
         return FormulaSearchResult("DISABLED")
     xv, yv = _as_problem(x, y)
     resolved = fit_options or FormulaFitOptions()
-    provider = sampler or HTTPFormulaSampler(config)
+    provider = sampler or make_formula_sampler(config)
     summary = summarize_training(xv, yv).to_payload()
     summary.pop("replaceable_slots", None)
     rng = np.random.default_rng(resolved.seed)

@@ -28,6 +28,7 @@ _LLM_PROVENANCE_FIELDS = frozenset(
         "status",
         "mode",
         "provider_model",
+        "provider",
         "max_output_tokens",
         "reasoning_effort",
         "endpoint_origin_sha256",

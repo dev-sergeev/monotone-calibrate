@@ -3,6 +3,7 @@
 .env
 .env.*
 !.env.example
+!.env.gigachat.example
 .hypothesis/
 .pytest_cache/
 .ruff_cache/
