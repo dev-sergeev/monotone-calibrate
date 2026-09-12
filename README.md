@@ -228,3 +228,13 @@ uv run --frozen --no-sync pytest -q
 Формальный release/security hardening из ранней acceptance-карты осознанно
 отложен product-owner waiver для личного проекта. Математические ограничения,
 аудит строк, model verification и воспроизводимый demo сохранены.
+
+Если `.env` уже настроен:
+
+```bash
+uv run --frozen --no-sync monotone-calibrate run examples/demo.csv \
+  --output outputs/with-llm \
+  --llm-symbolic-search
+```
+
+Не добавляйте `--no-dotenv`: иначе настройки LLM из `.env` не загрузятся. Каталог `outputs/with-llm` не должен существовать до запуска.
