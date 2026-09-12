@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from hashlib import sha256
 
 import pytest
 
@@ -12,7 +11,8 @@ from monotone_calibrate.application import (
     run_calibration,
 )
 from monotone_calibrate.hypotheses import HypothesisSpace
-from monotone_calibrate.symbolic_search import SymbolicSearchResult
+from monotone_calibrate.comparison import FormulaComparison
+from monotone_calibrate.formula_search import FormulaSearchResult
 from monotone_calibrate.validation import ValidationOptions
 
 
@@ -48,8 +48,7 @@ def test_budgeted_search_admits_the_reported_large_input_to_the_solver(
     source.write_text(
         "x,y\n"
         + "\n".join(
-            f"{value / 1000:.3f},{2.0 + value / 2000:.4f}"
-            for value in range(5000)
+            f"{value / 1000:.3f},{2.0 + value / 2000:.4f}" for value in range(5000)
         )
         + "\n",
         encoding="utf-8",
@@ -163,22 +162,12 @@ def test_publish_race_preserves_existing_output_and_cleans_the_staging_tree(
         encoding="utf-8",
     )
 
-    def racing_search(*_args, options, **_kwargs):
+    def racing_search(*_args, **_kwargs):
         output.mkdir()
         (output / "owner-marker.txt").write_text("keep", encoding="utf-8")
-        return SymbolicSearchResult(
-            "ACCEPTED",
-            HypothesisSpace.linear_seeds(),
-            options.iterations,
-            1,
-            0,
-            1,
-            4,
-            1,
-            1,
-        )
+        return FormulaComparison(FormulaSearchResult("UNAVAILABLE"))
 
-    monkeypatch.setattr(application, "run_symbolic_search", racing_search)
+    monkeypatch.setattr(application, "compare_formula_discovery", racing_search)
 
     with pytest.raises(CalibrationRunError) as captured:
         run_calibration(
@@ -198,79 +187,91 @@ def test_publish_race_preserves_existing_output_and_cleans_the_staging_tree(
     assert not tuple(tmp_path.glob(".race-report.tmp-*"))
 
 
-def test_enabled_llm_sr_search_supplies_a_typed_portfolio_used_by_fit_and_validation(
-    tmp_path,
-    monkeypatch,
+def test_formula_discovery_never_changes_registry_baselines(
+    tmp_path, monkeypatch
 ) -> None:
+    from monotone_calibrate.bundle_runtime import verify_bundle, write_predictions
+    from monotone_calibrate.formula_search import fit_formula
+    from monotone_calibrate.expressions import Expression as E, FormulaHypothesis
+
     _clear_llm_environment(monkeypatch)
     source = tmp_path / "curve.csv"
-    output = tmp_path / "advised-report"
+    source.write_text(
+        "x,y\n"
+        + "\n".join(
+            f"{i},{3 + (0.2 if i <= 11 else 1.5) * (i - 11.5)}" for i in range(24)
+        )
+    )
+    offline = run_calibration(
+        RunRequest(
+            source,
+            tmp_path / "offline",
+            dotenv_path=None,
+            validation_options=ValidationOptions(1, 0),
+        )
+    )
     dotenv = tmp_path / ".env"
-    _write_ready_curve(source)
-    base_url = "https://llm.example.test/v1"
     dotenv.write_text(
         "MONOTONE_CALIBRATE_LLM_ENABLED=true\n"
         "MONOTONE_CALIBRATE_LLM_MODEL=compatible-model\n"
-        f"MONOTONE_CALIBRATE_LLM_BASE_URL={base_url}\n"
-        "MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN=boundary-secret\n",
-        encoding="utf-8",
+        "MONOTONE_CALIBRATE_LLM_BASE_URL=https://llm.example.test/v1\n"
+        "MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN=boundary-secret\n"
     )
-    captured: dict[str, object] = {}
+    captured = {}
 
-    selected_space = HypothesisSpace.linear_seeds()
-
-    def accepted_search(x, y, config, fit_options, *, options):
+    def discovery(x, y, config, fit_options):
         captured["x"] = x
-        captured["y"] = y
-        captured["config"] = config
         captured["fit_options"] = fit_options
-        captured["options"] = options
-        return SymbolicSearchResult(
-            "ACCEPTED",
-            selected_space,
-            options.iterations,
-            1,
-            0,
-            2,
-            5,
-            2,
-            1,
-            (
-                "LLM_TRAINING_SUMMARY_DISCLOSED",
-                "LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION",
+        h = FormulaHypothesis((E("sqrt1p", (E("scale", (E("t"),)),)),))
+        fitted = fit_formula(x, y, h)
+        return FormulaComparison(
+            FormulaSearchResult(
+                "ACCEPTED",
+                fitted,
+                calls_succeeded=1,
+                warning_codes=("LLM_TRAINING_SUMMARY_DISCLOSED",),
             ),
+            fitted,
         )
 
-    monkeypatch.setattr(application, "run_symbolic_search", accepted_search)
-
+    monkeypatch.setattr(application, "compare_formula_discovery", discovery)
     result = run_calibration(
         RunRequest(
-            input_path=source,
-            output_dir=output,
+            source,
+            tmp_path / "with-llm",
             dotenv_path=dotenv,
-            validation_options=ValidationOptions(
-                repetitions=1,
-                bootstrap_resamples=0,
-            ),
+            validation_options=ValidationOptions(1, 0),
         )
     )
-
-    assert len(captured["x"]) == 12
-    assert captured["options"].iterations == 4
+    assert len(captured["x"]) == 24
+    assert result.candidates.two is not None and offline.candidates.two is not None
     assert captured["fit_options"].hypothesis_space is None
+    assert result.candidates.hypothesis_space == HypothesisSpace.full_registry()
+    assert (
+        result.candidates.one.model.to_dict() == offline.candidates.one.model.to_dict()
+    )
+    assert result.candidates.two_status == offline.candidates.two_status
+    assert (
+        None if result.candidates.two is None else result.candidates.two.model.to_dict()
+    ) == (
+        None
+        if offline.candidates.two is None
+        else offline.candidates.two.model.to_dict()
+    )
+    assert result.validation.to_dict() == offline.validation.to_dict()
     assert result.llm_advisor["status"] == "ACCEPTED"
-    assert result.llm_advisor["hypotheses_accepted"] == 2
-    assert result.llm_advisor["scope"] == "full_data_hypothesis_portfolio_replayed_in_validation"
-    assert result.llm_advisor["used_in_validation"] is True
-    assert result.llm_advisor["family_search_space_changed"] is True
-    assert result.llm_advisor["portfolio_size"] == 3
-    assert result.candidates.hypothesis_space == selected_space
-    assert "LLM_TRAINING_SUMMARY_DISCLOSED" in result.warning_codes
-    assert "LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION" in result.warning_codes
-    assert result.llm_advisor["endpoint_origin_sha256"] == sha256(
-        base_url.encode("utf-8")
-    ).hexdigest()
-    assert result.llm_advisor["hypothesis_space_hash"] == selected_space.space_hash
-    serialized = result.bundle.report_json.read_text(encoding="utf-8")
-    assert base_url not in serialized
-    assert "boundary-secret" not in serialized
+    assert result.llm_advisor["family_search_space_changed"] is False
+    report = json.loads(result.bundle.report_json.read_text())
+    assert set(report["candidates"]) == {"P1", "P2", "LLM"}
+    assert report["candidates"]["LLM"]["available"]
+    assert verify_bundle(result.bundle.root).status == "VERIFIED"
+    prediction_input = tmp_path / "predict.csv"
+    prediction_input.write_text("x\n5\n100\nbad\n")
+    output = write_predictions(
+        result.bundle.root / "model-llm.json",
+        prediction_input,
+        tmp_path / "predictions.csv",
+    )
+    assert (output.n_ok, output.n_out_of_domain, output.n_invalid_x) == (1, 1, 1)
+    assert "boundary-secret" not in result.bundle.report_json.read_text()
+    assert "https://llm.example.test/v1" not in result.bundle.report_json.read_text()

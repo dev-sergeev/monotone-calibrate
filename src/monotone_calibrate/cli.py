@@ -21,7 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="monotone-calibrate",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=(
-            "Fit and compare monotone one- and two-function approximations.\n"
+            "Compare registry P1, registry P2 and an optional LLM-discovered formula.\n"
             "LLM-SR symbolic search: disabled by default."
         ),
     )
@@ -42,7 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--llm-start-advisor",
         dest="llm_symbolic_search",
         action="store_true",
-        help="enable configured OpenAI-compatible LLM-SR equation-skeleton search",
+        help="add independent LLM formula discovery and a common holdout comparison",
     )
     dotenv = run.add_mutually_exclusive_group()
     dotenv.add_argument("--dotenv", type=Path, default=Path(".env"), help="dotenv path (default: .env)")
@@ -127,6 +127,12 @@ def _run(arguments: argparse.Namespace) -> dict[str, object]:
         "r2_oos": None if validation_metrics is None else validation_metrics.r2_oos,
         "warnings": list(result.warning_codes),
         "llm_status": result.llm_advisor["status"],
+        "comparison": {
+            "P1": str(result.bundle.root / "model-one.json"),
+            "P2": None if result.candidates.two is None else str(result.bundle.root / "model-two.json"),
+            "LLM": None if result.formula_comparison.fitted is None else str(result.bundle.root / "model-llm.json"),
+            "holdout_status": result.formula_comparison.holdout["status"],
+        },
         "search": {
             "policy_id": trace.policy_id,
             "profile": trace.profile,

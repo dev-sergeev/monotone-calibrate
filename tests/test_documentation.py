@@ -111,17 +111,20 @@ def test_example_environment_uses_documented_safe_defaults() -> None:
         "MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS": "20",
         "MONOTONE_CALIBRATE_LLM_MAX_RETRIES": "1",
         "MONOTONE_CALIBRATE_LLM_SEARCH_ITERATIONS": "4",
+        "MONOTONE_CALIBRATE_LLM_MAX_OUTPUT_TOKENS": "4096",
+        "MONOTONE_CALIBRATE_LLM_REASONING_EFFORT": "",
         "MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP": "false",
     }
 
 
-def test_current_acceptance_policy_is_separate_from_frozen_v1() -> None:
+def test_historical_registry_policy_is_separate_from_frozen_v1() -> None:
     policy = json.loads(
         (ROOT / "docs" / "acceptance" / "llm-sr-policy-v2.json").read_text(
             encoding="utf-8"
         )
     )
-    assert policy["status"] == "current_implementation_policy"
+    assert policy["status"] == "historical_registry_selector_policy"
+    assert policy["superseded_by"] == "llm-formula-discovery-v1"
     assert policy["prompt"]["response_schema_version"] == OUTPUT_SCHEMA_VERSION
     assert policy["prompt"]["version"] == PROMPT_VERSION
     assert policy["supersedes_llm_policy"] == "llm-start-advisor-v1"

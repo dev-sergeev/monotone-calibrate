@@ -1,6 +1,6 @@
 # Карта документации
 
-Дата актуализации: 2026-07-22.
+Дата актуализации: 2026-09-12.
 
 ## Текущая документация
 
@@ -18,7 +18,8 @@
 
 Исследования RQ1–RQ5 и human-контракты 01–07 продолжают задавать математические
 и отчётные инварианты. Поправки LLM-SR не меняют CSV contract, монотонность,
-баланс P2, локальный solver, uplift thresholds или model runtime.
+баланс P2, исходный registry solver или uplift thresholds. Для новых формул
+добавлен отдельный runtime `formula-runtime-v1` и общий независимый holdout.
 
 ## Исторические материалы
 
@@ -37,5 +38,6 @@
 
 Исторические имена `report.json.llm_advisor` и CLI alias
 `--llm-start-advisor` сохранены только для совместимости. Активный режим имеет
-`mode=llm_sr_typed_symbolic_search` и output schema
-`llm-sr-hypotheses-v1`.
+`mode=llm_formula_discovery` и output schema
+`llm-formulas-v1`; отчёт — `monotone-report-v3`. Registry-selector v2
+сохранён для истории, но не вызывается application pipeline.

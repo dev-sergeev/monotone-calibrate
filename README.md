@@ -1,20 +1,26 @@
 # Monotone Calibrate
 
 Локальный Python-инструмент принимает UTF-8 CSV с полями `x,y`, сравнивает
-одну монотонную функцию P1 с непрерывной аппроксимацией P2 из двух функций и
-создаёт готовую исполнимую модель, HTML/JSON-отчёт, таблицу результатов и два
-scatterplot.
+три варианта: алгоритмическую P1 (одна кривая), алгоритмическую P2 (две кривые)
+и новую формулу LLM-SR с численной оптимизацией параметров. Создаёт отдельные
+исполнимые модели, HTML/JSON-отчёт, общую таблицу сравнения и три графика.
+LLM-вариант включается явно; P1/P2 работают полностью offline.
 
 ## Быстрый старт
 
 Нужны Python 3.12 и [uv](https://docs.astral.sh/uv/).
 
 ```console
-uv sync --frozen
+uv sync --frozen --no-editable
 uv run --frozen --no-sync monotone-calibrate run examples/demo.csv --output outputs/my-run --no-dotenv
 # Дождитесь итоговой JSON-строки, затем запускайте verify:
 uv run --frozen --no-sync monotone-calibrate verify outputs/my-run
 ```
+
+Установка `--no-editable` не зависит от `.pth`-файла, который macOS может
+пометить скрытым. После правок исходников обновите установленную CLI командой
+`uv sync --frozen --no-editable --reinstall-package monotone-calibrate`;
+тестовая команда ниже проверяет непосредственно `src`.
 
 Это **offline baseline**: `--no-dotenv` выключает LLM-SR и использует полный
 реестр функций. `run` является блокирующей batch-командой и печатает
@@ -77,12 +83,12 @@ x,y
    непрерывностью в границе интервалов.
 3. Каждый сегмент P2 обязан содержать от 40% до 60% наблюдений. Третьего
    сегмента и сегмента на несколько процентов точек нет.
-4. Допустимы константа, полиномы степеней 1–3 и конечный реестр элементарных
-   семейств (`exp`, `log`, reciprocal, logistic). Произвольные выражения и
-   `eval` не используются.
-5. При включённом LLM-SR семейства P1 и ordered-пары P2 выбираются итеративным
-   generate/evaluate/refine search. LLM называет только типизированные skeleton
-   IDs; коэффициенты и breakpoint оценивает локальный solver.
+4. P1/P2 всегда используют полный реестр: константа, полиномы степеней 1–3,
+   экспонента, логарифм, обратная функция и логистика.
+5. При включённом LLM-SR независимо ищется третий кандидат. LLM составляет
+   новые деревья математических операций; численные коэффициенты и границу
+   подбирает локальный оптимизатор. Готовые family IDs не ограничивают эту ветку.
+   Дерево имеет максимум две ветви, степень ≤3 и структурный сертификат монотонности.
 6. P1 и P2 сравниваются repeated grouped OOF-проверкой. P2 рекомендуется только
    при практически существенном, устойчивом uplift; иначе остаётся P1.
 7. Если проверочный `R²` рекомендации ниже `0.60`, отчёт обязательно содержит
@@ -97,7 +103,9 @@ x,y
 По умолчанию LLM выключен, и используется детерминированный приближённый профиль
 `fast`: полный реестр проверяется на грубой сетке допустимых границ, после чего
 перспективные пары уточняют breakpoint многоуровневым поиском. При включённом
-LLM-SR тот же профиль применяется уже к найденному portfolio skeletons.
+LLM-SR P1/P2 сохраняют тот же полный поиск. У третьего варианта отдельный
+ограниченный бюджет: до четырёх формул на запрос, три старта оптимизатора,
+до девяти допустимых границ, максимум 8000 вычислений на формулу.
 
 ```console
 uv run --frozen --no-sync monotone-calibrate run data.csv --output outputs/fast --no-dotenv
@@ -118,6 +126,9 @@ uv run --frozen --no-sync monotone-calibrate run data.csv --output outputs/quali
 
 - `report.html` — автономное заключение и графики;
 - `report.json` — полные refit/OOF-метрики, uplift, warning и provenance;
+- `model-one.json`, `model-two.json` — отдельные модели P1/P2 (P2 при наличии);
+- `model-llm.json` — новая формула при успешном поиске;
+- `plot-llm.svg` — новая формула или явный статус недоступности;
 - `plot-one.svg` — точки и P1;
 - `plot-two.svg` — точки, две интервальные линии и красная граница P2 либо
   явная причина недоступности P2;
@@ -151,67 +162,75 @@ uv run --frozen --no-sync monotone-calibrate predict \
 uv run --frozen --no-sync monotone-calibrate verify examples/demo-output
 ```
 
-## LLM-SR selector через OpenAI-compatible модель
+## Новые формулы LLM-SR через OpenRouter
 
-Математический pipeline полностью работает без LLM. Чтобы заменить полный
-перебор семейств на адаптацию алгоритма LLM-SR, скопируйте `.env.example` в
-`.env` и задайте:
+Скопируйте `.env.example` в `.env`. Для OpenRouter используются следующие
+имена настроек проекта (соответствуют `OPENAI_BASE_URL`, `OPENAI_API_KEY` и model):
 
 ```dotenv
-MONOTONE_CALIBRATE_LLM_ENABLED=true
-MONOTONE_CALIBRATE_LLM_MODEL=my-model-id
-MONOTONE_CALIBRATE_LLM_BASE_URL=https://my-provider.example/v1
-MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN=my-access-token
-MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS=20
+MONOTONE_CALIBRATE_LLM_ENABLED=false
+MONOTONE_CALIBRATE_LLM_MODEL=deepseek/deepseek-v4-flash-0731
+MONOTONE_CALIBRATE_LLM_BASE_URL=https://openrouter.ai/api/v1
+MONOTONE_CALIBRATE_LLM_ACCESS_TOKEN=your-access-token
+MONOTONE_CALIBRATE_LLM_TIMEOUT_SECONDS=120
 MONOTONE_CALIBRATE_LLM_MAX_RETRIES=1
 MONOTONE_CALIBRATE_LLM_SEARCH_ITERATIONS=4
-MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP=false
+MONOTONE_CALIBRATE_LLM_MAX_OUTPUT_TOKENS=4096
+MONOTONE_CALIBRATE_LLM_REASONING_EFFORT=none
 ```
 
-`BASE_URL` — API root OpenAI-compatible Chat Completions endpoint; token
-указывается без префикса `Bearer`. Non-loopback HTTP по умолчанию запрещён;
-для локального `http://127.0.0.1:...` отдельный opt-in не нужен.
-
-Запуск:
+Токен хранится только локально в игнорируемом `.env`; `false` исключает
+неожиданные сетевые вызовы без флага. Для указанного DeepSeek явный
+`REASONING_EFFORT=none` оставляет бюджет для JSON-ответа; без него модель может
+потратить весь лимит на рассуждения (`LLM_OUTPUT_TRUNCATED`). Обычные `OPENAI_*` переменные процесс
+не подхватывает. Запуск:
 
 ```console
 uv run --frozen --no-sync monotone-calibrate run data.csv \
   --output outputs/with-llm --llm-symbolic-search
+uv run --frozen --no-sync monotone-calibrate verify outputs/with-llm
+uv run --frozen --no-sync monotone-calibrate predict \
+  outputs/with-llm/model-llm.json examples/predict.csv --output outputs/llm-predictions.csv
 ```
 
 В этой команде не следует указывать `--no-dotenv`, если credentials находятся
-в `.env`. LLM-SR добавляет provider latency и локальную оценку предложенных
-skeletons, поэтому run может выполняться заметно дольше offline baseline и
-также печатает JSON только после завершения.
+в `.env`. Блокирующий `run` печатает JSON-заключение только после окончания
+всех запросов, численного подбора и проверки. Alias `--llm-start-advisor`
+также включает новый поиск формул.
 
-`--llm-start-advisor` оставлен как совместимый alias, но теперь включает тот же
-symbolic search, а не старую подстановку solver starts.
+LLM получает до 200 агрегированных интервалов **обучающих** точек и оценки
+ранее оптимизированных выражений. Ответ — strict JSON с деревьями операций
+`add`, `mul`, `scale`, `square`, `cube`, `expm1`, `log1p`, `sqrt1p`, `saturate`.
+Например, сумма логарифмического и квадратичного членов или корневая
+зависимость не требуют добавления нового семейства в исходный реестр.
+Коэффициенты LLM не передаёт: `scale` обозначает численный placeholder.
 
-Реализация повторяет четыре ключевых шага статьи:
+Ограничения проверяются парсером и моделью: степень ≤3 (включая произведения
+и вложенные степени), до двух ветвей, до 31 узла, глубина ≤8, до 10
+коэффициентов. Монотонность обеспечена композицией монотонных операций на
+неотрицательных аргументах. Вложенные нелинейные преобразования запрещены,
+чтобы, например, `exp(k*log(1+t))` не скрывал полином высокой степени.
+Произвольный Python, `eval`, условия и пользовательские числовые константы
+отсутствуют. Это ограниченный поиск новых выражений, а не полная грамматика
+программ из статьи.
 
-1. десять islands получают полный безопасный P1 baseline и linear P2 skeleton;
-2. на каждой итерации LLM с temperature `0.8` предлагает до четырёх новых
-   типизированных гипотез по problem specification, агрегированному training
-   summary и двум scored examples из выбранного island;
-3. локальный solver независимо оптимизирует параметры каждой структуры и
-   присваивает fitness `-MSE` только после проверки конечности, монотонности,
-   quantization и непрерывности;
-4. experience buffer хранит валидные гипотезы, выбирает score-clusters по
-   Boltzmann distribution и внутри cluster предпочитает более короткий skeleton.
+Для данных с минимум 15 различными `x` примерно 20% внутренних групп `x`
+откладываются до поиска. P1, P2 и LLM обучаются на одинаковой оставшейся
+выборке и оцениваются на одинаковых контрольных точках. LLM не получает
+контрольные ответы или метрики; форма выбирается по обучающему BIC.
+После фиксации сравнения параметры выбранной формы повторно подбираются
+по всем данным. В отчёте отдельно показаны общий holdout, refit и прежний
+OOF для P1/P2. При меньшем числе групп новая формула остаётся описательной.
+Рекомендация `recommended-model.json` по-прежнему относится к P1/P2;
+третий кандидат сохраняется отдельно для сравнения и применения.
 
-LLM не получает `row_id`, token или raw endpoint и не возвращает исполняемый
-Python. Допустим только strict JSON по
-[`llm-sr-hypotheses-v1`](docs/specification/llm-sr-hypotheses.schema.json) с
-IDs из versioned registry. Ошибка API, timeout, невалидный JSON или отсутствие
-новых валидных гипотез атомарно возвращают полный deterministic registry.
+Ошибки провайдера и невалидные формулы не меняют P1/P2. Если новая допустимая
+формула не найдена, отчёт явно показывает `UNAVAILABLE`; модель из реестра
+не выдаётся за новый результат LLM. Если часть запросов не удалась, ранее
+проверенные новые формулы сохраняются с предупреждением. Глобальный optimum
+и превосходство LLM-варианта не гарантируются: качество оценивается на данных.
 
-Важное ограничение: найденный на полном CSV portfolio замораживается и
-повторно fit-ится внутри outer folds. Поэтому OOF-метрики честно оценивают
-параметры и выбор внутри этого portfolio, но условны относительно самой
-full-data LLM discovery-стадии. Отчёт явно добавляет
-`LLM_TRAINING_SUMMARY_DISCLOSED` и
-`LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION`; это не скрывается как полностью
-независимая validation всего stochastic search.
+Подробности: [алгоритм и ограничения](docs/llm-sr-algorithm.md).
 
 ## Исследования, спецификация и тесты
 
@@ -222,7 +241,7 @@ full-data LLM discovery-стадии. Отчёт явно добавляет
 [`docs/acceptance/README.md`](docs/acceptance/README.md).
 
 ```console
-uv run --frozen --no-sync pytest -q
+PYTHONPATH=src uv run --frozen --no-sync pytest -q
 ```
 
 Формальный release/security hardening из ранней acceptance-карты осознанно

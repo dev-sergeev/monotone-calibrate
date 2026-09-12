@@ -1,14 +1,13 @@
 """Application orchestration for one immutable calibration run.
 
-An optional LLM-SR stage now selects a finite portfolio of typed equation
-skeletons before fitting.  The numerical engine and outer validation replay
-that frozen portfolio; generated code and numeric coefficients are never
-accepted from the model.
+The complete registry baselines are always fitted independently. Optional
+LLM-SR discovers a third formula via bounded expression trees and numerical
+optimization, with a common untouched holdout for all three procedures.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from hashlib import sha256
 import os
 from pathlib import Path
@@ -26,14 +25,9 @@ from .engine import (
     fit_candidates,
 )
 from .hypotheses import HypothesisSpace
+from .comparison import FormulaComparison, compare_formula_discovery
+from .formula_search import FormulaSearchResult, OUTPUT_SCHEMA_VERSION, PROMPT_VERSION
 from .reporting import ReportBundle, write_report_bundle
-from .symbolic_search import (
-    OUTPUT_SCHEMA_VERSION,
-    PROMPT_VERSION,
-    SymbolicSearchOptions,
-    SymbolicSearchResult,
-    run_symbolic_search,
-)
 from .validation import (
     ValidationOptions,
     ValidationResult,
@@ -67,7 +61,10 @@ class RunRequest:
         object.__setattr__(self, "output_dir", Path(self.output_dir))
         if self.dotenv_path is not None:
             object.__setattr__(self, "dotenv_path", Path(self.dotenv_path))
-        if self.fit_options.start_overrides or self.fit_options.hypothesis_space is not None:
+        if (
+            self.fit_options.start_overrides
+            or self.fit_options.hypothesis_space is not None
+        ):
             raise ValueError(
                 "RunRequest.fit_options cannot contain externally supplied starts or "
                 "a hypothesis space; application orchestration owns those seams"
@@ -84,141 +81,53 @@ class RunResult:
     validation: ValidationResult
     llm_advisor: Mapping[str, object]
     warning_codes: tuple[str, ...]
+    formula_comparison: FormulaComparison
 
 
-def _base_provenance(
-    *,
-    status: str,
-    config: LLMConfig | None,
-    hypothesis_space: HypothesisSpace,
-    search: SymbolicSearchResult | None = None,
-    search_options: SymbolicSearchOptions | None = None,
-) -> dict[str, object]:
-    endpoint_digest = (
-        None
-        if config is None or config.base_url is None
-        else sha256(config.base_url.encode("utf-8")).hexdigest()
-    )
-    calls_requested = 0 if search is None else search.calls_requested
-    calls_succeeded = 0 if search is None else search.calls_succeeded
-    calls_failed = 0 if search is None else search.calls_failed
-    changed = hypothesis_space.source == "llm_sr"
-    return {
-        "status": status,
-        "mode": "llm_sr_typed_symbolic_search",
-        "provider_model": None if config is None else config.model,
-        "endpoint_origin_sha256": endpoint_digest,
-        "prompt_version": PROMPT_VERSION,
-        "output_schema_version": OUTPUT_SCHEMA_VERSION,
-        "calls_requested": calls_requested,
-        "calls_succeeded": calls_succeeded,
-        "calls_failed": calls_failed,
-        "iterations_requested": 0 if search is None else search.iterations_requested,
-        "hypotheses_proposed": 0 if search is None else search.hypotheses_proposed,
-        "hypotheses_evaluated": 0 if search is None else search.hypotheses_evaluated,
-        "hypotheses_accepted": 0 if search is None else search.hypotheses_accepted,
-        "hypotheses_buffered": 0 if search is None else search.hypotheses_buffered,
-        "portfolio_size": len(hypothesis_space.hypotheses),
-        "p1_hypotheses": len(hypothesis_space.p1_family_ids),
-        "p2_hypotheses": len(hypothesis_space.p2_family_pairs),
-        "island_count": 0 if search_options is None else search_options.num_islands,
-        "experiences_per_prompt": 0
-        if search_options is None
-        else search_options.experiences_per_prompt,
-        "samples_per_prompt": 0
-        if search_options is None
-        else search_options.samples_per_prompt,
-        "scope": (
-            "full_data_hypothesis_portfolio_replayed_in_validation"
-            if changed
-            else "deterministic_full_registry"
-        ),
-        "used_in_validation": changed,
-        "family_search_space_changed": changed,
-        "selection_policy_changed": changed,
-        "certificate_policy_changed": False,
-        "hypothesis_space_hash": hypothesis_space.space_hash,
-        "formula_source": "typed_skeleton_plus_certified_registry_solver",
-    }
-
-
-def _resolve_hypothesis_space(
-    x: np.ndarray,
-    y: np.ndarray,
-    request: RunRequest,
-) -> tuple[HypothesisSpace, dict[str, object], tuple[str, ...]]:
-    """Run typed LLM-SR search or choose the deterministic full registry."""
-
-    deterministic = HypothesisSpace.full_registry()
+def _resolve_formula_comparison(x, y, request: RunRequest):
+    config = None
     try:
         config = LLMConfig.load(
             request.dotenv_path,
             force_enable=request.llm_symbolic_search or request.llm_start_advisor,
         )
+        comparison = compare_formula_discovery(x, y, config, request.fit_options)
     except LLMConfigError as error:
-        return (
-            deterministic,
-            _base_provenance(
-                status="CONFIG_INVALID",
-                config=None,
-                hypothesis_space=deterministic,
-            ),
-            (error.code,),
+        comparison = FormulaComparison(
+            FormulaSearchResult("CONFIG_INVALID", warning_codes=(error.code,))
         )
-
-    if not config.enabled:
-        return (
-            deterministic,
-            _base_provenance(
-                status="DISABLED",
-                config=config,
-                hypothesis_space=deterministic,
-            ),
-            (),
-        )
-
-    search_options = SymbolicSearchOptions(iterations=config.search_iterations)
-    evaluation_options = replace(
-        request.fit_options,
-        hypothesis_space=None,
-        start_overrides=(),
-    )
-    try:
-        search = run_symbolic_search(
-            x,
-            y,
-            config,
-            evaluation_options,
-            options=search_options,
-        )
-    except Exception:
-        # Provider, transport, and untrusted-output details never enter the
-        # report.  A complete deterministic analysis remains available.
-        return (
-            deterministic,
-            _base_provenance(
-                status="FALLBACK",
-                config=config,
-                hypothesis_space=deterministic,
-                search_options=search_options,
-            ),
-            (
-                "LLM_TRAINING_SUMMARY_DISCLOSED",
-                "LLM_SR_SEARCH_UNAVAILABLE",
-            ),
-        )
-
-    return (
-        search.hypothesis_space,
-        _base_provenance(
-            status=search.status,
-            config=config,
-            hypothesis_space=search.hypothesis_space,
-            search=search,
-            search_options=search_options,
-        ),
-        search.warning_codes,
-    )
+    space = HypothesisSpace.full_registry()
+    search = comparison.search
+    provenance = {
+        "status": search.status,
+        "mode": "llm_formula_discovery",
+        "provider_model": None if config is None else config.model,
+        "max_output_tokens": None if config is None else config.max_output_tokens,
+        "reasoning_effort": None if config is None else config.reasoning_effort,
+        "endpoint_origin_sha256": None
+        if config is None or config.base_url is None
+        else sha256(config.base_url.encode()).hexdigest(),
+        "prompt_version": PROMPT_VERSION,
+        "output_schema_version": OUTPUT_SCHEMA_VERSION,
+        "calls_requested": search.calls_succeeded + search.calls_failed,
+        "calls_succeeded": search.calls_succeeded,
+        "calls_failed": search.calls_failed,
+        "hypotheses_evaluated": len(search.trace),
+        "hypotheses_accepted": sum(r["status"] == "VALID" for r in search.trace),
+        "portfolio_size": len(space.hypotheses),
+        "p1_hypotheses": len(space.p1_family_ids),
+        "p2_hypotheses": len(space.p2_family_pairs),
+        "scope": "independent_formula_discovery"
+        if config is not None and config.enabled
+        else "deterministic_full_registry",
+        "used_in_validation": False,
+        "family_search_space_changed": False,
+        "selection_policy_changed": False,
+        "certificate_policy_changed": False,
+        "hypothesis_space_hash": space.space_hash,
+        "formula_source": "bounded_expression_tree_plus_numeric_optimizer",
+    }
+    return comparison, provenance, comparison.warning_codes
 
 
 def _final_bundle(staged: ReportBundle, output: Path) -> ReportBundle:
@@ -247,12 +156,11 @@ def _publish_report(
     *,
     llm_advisor: Mapping[str, object],
     warning_codes: tuple[str, ...],
+    formula_comparison: FormulaComparison,
 ) -> ReportBundle:
     parent = output.parent
     parent.mkdir(parents=True, exist_ok=True)
-    staging_root = Path(
-        tempfile.mkdtemp(prefix=f".{output.name}.tmp-", dir=parent)
-    )
+    staging_root = Path(tempfile.mkdtemp(prefix=f".{output.name}.tmp-", dir=parent))
     staged_output = staging_root / "bundle"
     try:
         staged = write_report_bundle(
@@ -262,6 +170,7 @@ def _publish_report(
             staged_output,
             llm_advisor=llm_advisor,
             extra_warning_codes=warning_codes,
+            formula_comparison=formula_comparison,
         )
         if output.exists():
             raise CalibrationRunError(
@@ -290,13 +199,11 @@ def run_calibration(request: RunRequest) -> RunResult:
     x = np.asarray([row.x for row in dataset.observations], dtype=np.float64)
     y = np.asarray([row.y for row in dataset.observations], dtype=np.float64)
 
-    hypothesis_space, provenance, application_warnings = _resolve_hypothesis_space(
-        x,
-        y,
-        request,
+    # The LLM can never narrow, replace, or tune either registry baseline.
+    candidates = fit_candidates(x, y, request.fit_options)
+    formula_comparison, provenance, application_warnings = _resolve_formula_comparison(
+        x, y, request
     )
-    fit_options = replace(request.fit_options, hypothesis_space=hypothesis_space)
-    candidates = fit_candidates(x, y, fit_options)
     validation = validate_candidates(
         x,
         y,
@@ -310,6 +217,7 @@ def run_calibration(request: RunRequest) -> RunResult:
         output,
         llm_advisor=provenance,
         warning_codes=application_warnings,
+        formula_comparison=formula_comparison,
     )
     warnings = tuple(
         sorted(
@@ -325,4 +233,5 @@ def run_calibration(request: RunRequest) -> RunResult:
         validation=validation,
         llm_advisor=provenance,
         warning_codes=warnings,
+        formula_comparison=formula_comparison,
     )

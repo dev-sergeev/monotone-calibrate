@@ -318,6 +318,7 @@ name = "monotone-calibrate"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "langchain-openai" },
@@ -333,6 +334,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.28,<1" },
     { name = "jinja2", specifier = ">=3.1.6,<4" },
     { name = "jsonschema", specifier = ">=4.25,<5" },
     { name = "langchain-openai", specifier = ">=1.0,<2" },

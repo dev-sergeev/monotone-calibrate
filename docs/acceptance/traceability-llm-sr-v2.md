@@ -1,5 +1,10 @@
 # Traceability LLM-SR policy v2
 
+> Поправка 2026-09-12: этот документ сохраняет ограничения registry P1/P2.
+> Активный LLM-вариант теперь независимо ищет новые деревья выражений;
+> его контракт и validation описаны в [текущем алгоритме](../llm-sr-algorithm.md).
+
+
 Дата: 2026-07-22. Статус: current implementation checks, не подписанное
 cross-platform release evidence.
 

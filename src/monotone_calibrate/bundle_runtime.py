@@ -15,7 +15,11 @@ import tempfile
 from typing import Literal, Mapping
 from urllib.parse import quote
 
+import numpy as np
+
 from .model_runtime import model_from_dict
+from .expressions import FormulaHypothesis, formula_model_from_dict
+from .comparison import holdout_mask, prediction_metrics
 
 
 _HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -31,6 +35,8 @@ _CORE_ARTIFACTS = frozenset(
     }
 )
 _OPTIONAL_ARTIFACTS = frozenset({"recommended-model.json"})
+_THREE_WAY_CORE = frozenset({"model-one.json", "plot-llm.svg"})
+_THREE_WAY_OPTIONAL = frozenset({"model-two.json", "model-llm.json", "recommended-model.json"})
 _REPORT_FIELDS_V1 = frozenset(
     {
         "schema_version",
@@ -46,6 +52,7 @@ _REPORT_FIELDS_V1 = frozenset(
     }
 )
 _REPORT_FIELDS_V2 = _REPORT_FIELDS_V1 | {"search"}
+_REPORT_FIELDS_V3 = _REPORT_FIELDS_V2 | {"formula_search", "comparison_holdout"}
 _SEARCH_FIELDS = frozenset(
     {
         "policy_id",
@@ -183,7 +190,8 @@ def _artifact_records(manifest: Mapping[str, object]) -> tuple[dict[str, object]
         _sha256_string(raw.get("sha256"), f"artifact {name} sha256")
         records.append(raw)
     allowed_sets = {_CORE_ARTIFACTS, _CORE_ARTIFACTS | _OPTIONAL_ARTIFACTS}
-    if frozenset(names) not in allowed_sets:
+    three_way = _CORE_ARTIFACTS | _THREE_WAY_CORE <= names and names <= _CORE_ARTIFACTS | _THREE_WAY_CORE | _THREE_WAY_OPTIONAL
+    if frozenset(names) not in allowed_sets and not three_way:
         _fail("INVALID_ARTIFACT_SET", "manifest does not declare the exact v1 artifact set")
     return tuple(records)
 
@@ -194,13 +202,14 @@ def _verify_report_and_model(root: Path, report_id: str, model_present: bool) ->
     expected_fields = (
         _REPORT_FIELDS_V1
         if schema_version == "monotone-report-v1"
-        else _REPORT_FIELDS_V2 if schema_version == "monotone-report-v2" else None
+        else _REPORT_FIELDS_V2 if schema_version == "monotone-report-v2"
+        else _REPORT_FIELDS_V3 if schema_version == "monotone-report-v3" else None
     )
     if expected_fields is None or set(report) != expected_fields:
         _fail("INVALID_REPORT", "report.json is not a supported closed monotone-report object")
     if report.get("report_id") != report_id:
         _fail("REPORT_ID_MISMATCH", "manifest and report report_id values differ")
-    if schema_version == "monotone-report-v2":
+    if schema_version in {"monotone-report-v2", "monotone-report-v3"}:
         search = report.get("search")
         if (
             not isinstance(search, dict)
@@ -237,6 +246,10 @@ def _verify_report_and_model(root: Path, report_id: str, model_present: bool) ->
             or not isinstance(search.get("termination"), str)
         ):
             _fail("INVALID_REPORT", "report search provenance is malformed")
+    if schema_version == "monotone-report-v3":
+        _verify_three_way(root, report)
+    elif (root / "model-one.json").exists() or (root / "plot-llm.svg").exists():
+        _fail("INVALID_ARTIFACT_SET", "three-way artifacts require report v3")
     recommendation = report.get("recommendation")
     if not isinstance(recommendation, dict) or set(recommendation) != {
         "structure",
@@ -275,8 +288,9 @@ def _verify_report_and_model(root: Path, report_id: str, model_present: bool) ->
         _fail("MODEL_IDENTITY_MISMATCH", "report formula/hash do not match the typed model")
 
     candidates = report.get("candidates")
-    if not isinstance(candidates, dict) or set(candidates) != {"P1", "P2"}:
-        _fail("INVALID_REPORT", "report candidates must contain exactly P1 and P2")
+    expected_candidates = {"P1", "P2", "LLM"} if schema_version == "monotone-report-v3" else {"P1", "P2"}
+    if not isinstance(candidates, dict) or set(candidates) != expected_candidates:
+        _fail("INVALID_REPORT", "report candidates do not match its schema")
     selected = candidates.get(structure)
     if not isinstance(selected, dict) or selected.get("available") is not True:
         _fail("MODEL_STRUCTURE_MISMATCH", "recommended candidate is not available in report")
@@ -294,6 +308,93 @@ def _verify_report_and_model(root: Path, report_id: str, model_present: bool) ->
         or candidate_payload.get("formula") != serialized_formula
     ):
         _fail("MODEL_IDENTITY_MISMATCH", "report candidate and recommended model differ")
+
+
+def _decode_model(payload):
+    if isinstance(payload, dict) and payload.get("schema_version") == "formula-runtime-v1":
+        return formula_model_from_dict(payload)
+    return model_from_dict(payload)
+
+
+def _verify_three_way(root: Path, report: dict) -> None:
+    """Reconstruct every model and reconcile comparison metrics with saved observations."""
+    try:
+        if any(not (root / name).is_file() for name in _THREE_WAY_CORE):
+            raise ValueError("missing three-way artifacts")
+        candidates = report["candidates"]
+        if set(candidates) != {"P1", "P2", "LLM"}:
+            raise ValueError("three candidates required")
+        comparison = _load_json_object(root / "model-comparison.json", "model-comparison.json")
+        if comparison != {**candidates, "validation": report["validation"], "holdout": report["comparison_holdout"]}:
+            raise ValueError("comparison and report differ")
+        with (root / "observations.csv").open(encoding="utf-8", newline="") as stream:
+            rows = list(csv.DictReader(stream))
+        x = np.asarray([float(row["x"]) for row in rows])
+        y = np.asarray([float(row["y"]) for row in rows])
+        if x.size != report["input"]["n_used"] or not np.all(np.isfinite(x)) or not np.all(np.isfinite(y)):
+            raise ValueError("invalid observations")
+        for name, filename, column in (("P1", "model-one.json", "prediction_p1_refit"), ("P2", "model-two.json", "prediction_p2_refit"), ("LLM", "model-llm.json", "prediction_llm_refit")):
+            candidate = candidates[name]
+            if candidate["available"] is not True:
+                if (root / filename).exists() or any(row[column] != "" for row in rows):
+                    raise ValueError("unavailable candidate has a model or predictions")
+                continue
+            payload = _load_json_object(root / filename, filename)
+            if payload != candidate["model"]:
+                raise ValueError("standalone and report model differ")
+            model = _decode_model(payload)
+            if name == "LLM" and payload["schema_version"] != "formula-runtime-v1":
+                raise ValueError("LLM candidate must be a formula tree")
+            if name != "LLM" and payload["schema_version"] == "formula-runtime-v1":
+                raise ValueError("registry baseline was replaced")
+            if model.x_lower != float(np.min(x)) or model.x_upper != float(np.max(x)):
+                raise ValueError("incorrect model support")
+            prediction = np.asarray(model.predict(x))
+            if not np.allclose(prediction, [float(r[column]) for r in rows], rtol=1e-12, atol=1e-12):
+                raise ValueError("prediction CSV differs from model")
+            metrics = prediction_metrics(y, prediction, float(np.mean(y)))
+            for key, expected in (("r2_refit", metrics["r2"]), ("rmse_refit", metrics["rmse"]), ("mae_refit", metrics["mae"]), ("sse_refit", metrics["mse"]*x.size)):
+                actual = candidate["metrics"][key]
+                if expected is None:
+                    if actual is not None:
+                        raise ValueError("undefined metric")
+                elif not math.isclose(actual, expected, rel_tol=1e-10, abs_tol=1e-10):
+                    raise ValueError("refit metric mismatch")
+            if model.breakpoint is not None and not 0.40 <= float(np.mean(x <= model.breakpoint)) <= 0.60:
+                raise ValueError("unbalanced segments")
+        holdout = report["comparison_holdout"]
+        if holdout["status"] == "AVAILABLE":
+            test = holdout_mask(x)
+            train = ~test
+            if holdout["test_indices"] != np.flatnonzero(test).tolist() or holdout["train_indices"] != np.flatnonzero(train).tolist():
+                raise ValueError("holdout partition mismatch")
+            if holdout["n_test"] != int(test.sum()) or holdout["n_train"] != int(train.sum()) or holdout["train_mean"] != float(np.mean(y[train])):
+                raise ValueError("holdout counts/reference mismatch")
+            if set(holdout["candidates"]) != {"P1", "P2", "LLM"}:
+                raise ValueError("holdout candidate mismatch")
+            for name, entry in holdout["candidates"].items():
+                if entry["model"] is None:
+                    if entry["status"] != "MODEL_UNAVAILABLE" or entry["predictions"] is not None:
+                        raise ValueError("unavailable holdout model mismatch")
+                    continue
+                model = _decode_model(entry["model"])
+                prediction = model.predict(x[test])
+                if not np.allclose(prediction, entry["predictions"], rtol=1e-12, atol=1e-12):
+                    raise ValueError("holdout predictions mismatch")
+                metrics = prediction_metrics(y[test], prediction, holdout["train_mean"])
+                if any(entry[k] != v for k, v in metrics.items()):
+                    raise ValueError("holdout metric mismatch")
+                if name == "LLM" and report["formula_search"]["selected_hypothesis"] != {"branches": [s.expression.to_dict() for s in model.segments]}:
+                    raise ValueError("holdout formula differs from discovery")
+        if candidates["LLM"]["available"]:
+            if report["formula_search"]["selected_hypothesis"] != {"branches": [s["expression"] for s in candidates["LLM"]["model"]["segments"]]}:
+                raise ValueError("full refit formula differs from discovery")
+        for entry in report["formula_search"]["trace"]:
+            hypothesis = FormulaHypothesis.from_dict(entry["hypothesis"])
+            if hypothesis.hypothesis_id != entry["hypothesis_id"]:
+                raise ValueError("trace hypothesis identity mismatch")
+    except (ValueError, KeyError, TypeError, IndexError, OverflowError) as error:
+        _fail("INVALID_COMPARISON", f"three-way comparison failed verification: {error}")
 
 
 def verify_bundle(path: str | Path) -> VerificationResult:
@@ -378,7 +479,7 @@ def _load_typed_model(path: Path):
         _fail("INVALID_MODEL", f"model must be a regular non-symlink file: {path}")
     payload = _load_json_object(path, "model")
     try:
-        return model_from_dict(payload)
+        return _decode_model(payload)
     except (KeyError, TypeError, ValueError) as error:
         _fail("INVALID_MODEL", f"model is not a typed registry artifact: {error}")
 

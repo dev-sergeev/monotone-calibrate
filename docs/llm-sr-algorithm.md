@@ -1,165 +1,152 @@
-# Адаптация LLM-SR для выбора калибровочной функции
+# Три независимых варианта: P1, P2, новая формула LLM-SR
 
-Дата реализации: 2026-07-22.
+Текущий контракт: 2026-09-12. Заменяет активный registry-selector v2.
+Источник: [LLM-SR, разделы 2.2–2.4](https://arxiv.org/html/2404.18400v3).
 
-Источники:
+## Путь выполнения
 
-- локальная копия статьи: [`2404.18400v3.pdf`](2404.18400v3.pdf);
-- статья: [LLM-SR: Scientific Equation Discovery via Programming with Large Language Models](https://arxiv.org/abs/2404.18400);
-- официальный код: [deep-symbolic-mathematics/LLM-SR](https://github.com/deep-symbolic-mathematics/LLM-SR), изученный commit `41c212312df6c16d936c9cb395356a62774c47e3`.
+1. `application.run_calibration` запускает полный алгоритмический поиск P1/P2.
+   Ветка LLM не меняет их реестр, численные бюджеты, OOF или рекомендацию.
+2. `comparison.holdout_mask` по одним `x` выделяет 20% внутренних уникальных
+   групп. Оба края остаются в обучении: экстраполяция запрещена. Минимум 15
+   различных `x`; иначе явно доступен только описательный refit.
+3. `run_formula_search` получает только обучающие точки. LLM составляет новые
+   деревья выражений с placeholders; `fit_formula` численно оценивает их.
+4. Оптимизированный `-MSE` возвращается в следующий prompt. Сохраняются десять
+   островов опыта; глобально лучший пример доступен каждой итерации, второй
+   выбирается стохастически по качеству. Слабые острова сбрасываются через 32
+   итерации. По умолчанию четыре вызова, до четырёх гипотез в каждом.
+5. Итоговая структура выбирается по BIC на обучении (число коэффициентов плюс
+   одна степень свободы для границы). Контрольные метрики на выбор не влияют.
+6. P1/P2 заново обучаются на тех же обучающих точках. Все три обученные модели
+   проверяются на общей отложенной выборке. В отчёте сохраняются partition,
+   обученные модели, прогнозы и метрики, чтобы `verify` мог их пересчитать.
+7. Только параметры выбранной LLM-формулы повторно оцениваются по всем данным.
+   Сохраняются отдельные `model-one.json`, `model-two.json`, `model-llm.json`
+   при наличии моделей, три графика, таблица метрик и поисковый trace.
 
-## Алгоритм статьи
+Код: [expressions.py](../src/monotone_calibrate/expressions.py),
+[formula_search.py](../src/monotone_calibrate/formula_search.py),
+[comparison.py](../src/monotone_calibrate/comparison.py).
 
-LLM-SR разделяет дискретный поиск формы уравнения и непрерывную оценку
-коэффициентов.
+## Новые выражения вместо конечного реестра
 
-1. **Hypothesis generation.** Prompt содержит инструкцию, предметное описание,
-   evaluation/optimization function и несколько ранее найденных программ.
-   LLM стохастически генерирует batch program skeletons вида
-   `f(x, params)`, где `params` остаются placeholders.
-2. **Data-driven evaluation.** Для каждого исполнимого skeleton оптимизируются
-   числовые параметры (`numpy+BFGS` либо `torch+Adam`), после чего fitness равен
-   отрицательному MSE. Ошибочные, неfinite и слишком долгие программы
-   отбрасываются.
-3. **Experience management.** Кандидаты и scores хранятся в десяти независимо
-   развивающихся islands. Scores образуют clusters. Island выбирается случайно,
-   cluster — Boltzmann sampling с предпочтением высокого score, программа
-   внутри cluster — с предпочтением короткого кода.
-4. **Iterative refinement.** Два sampled examples добавляются в следующий
-   prompt как траектория улучшения. В экспериментах статья использует четыре
-   samples на prompt, temperature `0.8`, до десяти параметров, 30-секундный
-   evaluation timeout и примерно 2500 итераций. Периодически слабая половина
-   islands перезапускается от лучших программ выжившей половины.
-5. Лучший по fitness program возвращается как найденное уравнение.
+LLM возвращает `llm-formulas-v1`: объект с массивом `hypotheses`, у каждой
+гипотезы `branches` из одного или двух деревьев. Коэффициентов в ответе нет.
 
-Критические результаты ablation в статье: удаление iterative refinement или
-разделения «skeleton + optimizer» резко ухудшает качество; single-island top-k
-хуже multi-island sampling.
-
-## Реализованный seam
-
-Внешний interface нового deep module:
-
-```python
-run_symbolic_search(x, y, llm_config, fit_options) -> SymbolicSearchResult
+```json
+{
+  "schema_version": "llm-formulas-v1",
+  "hypotheses": [{"branches": [{
+    "op": "sqrt1p",
+    "arg": {"op": "scale", "arg": {"op": "t"}}
+  }]}]
+}
 ```
 
-Вся генерация prompt, strict parsing, fitness evaluation, clustering,
-Boltzmann sampling и island reset скрыты внутри
-[`symbolic_search.py`](../src/monotone_calibrate/symbolic_search.py). Результат
-содержит конечный `HypothesisSpace`, статистику поиска и typed warning codes.
-Application передаёт этот portfolio обычному fitting engine; validation
-получает ровно тот же immutable portfolio через `CandidateSet`.
+Это форма `sqrt(1+p*t)-1` с оптимизируемым `p`, а не ID заранее
+зарегистрированной функции. Возможны суммы, произведения и нелинейные
+преобразования допустимых полиномиальных выражений.
 
-Machine-readable contracts:
-
-- response schema:
-  [`llm-sr-hypotheses.schema.json`](specification/llm-sr-hypotheses.schema.json);
-- current policy:
-  [`llm-sr-policy-v2.json`](acceptance/llm-sr-policy-v2.json);
-- implementation traceability:
-  [`traceability-llm-sr-v2.md`](acceptance/traceability-llm-sr-v2.md).
-
-## Соответствие шагов
-
-| LLM-SR | Реализация проекта |
+| Операция | Семантика |
 |---|---|
-| Equation program skeleton | `EquationHypothesis(structure, family_ids)` |
-| Safe initial program | complete P1 registry plus P2-linear seed portfolio |
-| `params` placeholders | параметры принадлежат registry family и оцениваются solver-ом |
-| Batch `b=4` | `samples_per_prompt=4` |
-| Generation temperature `0.8` | `ChatOpenAI(..., temperature=0.8)` |
-| Negative MSE fitness | `-candidate.sse / n` после quantized certified fit |
-| `m=10` islands | `SymbolicSearchOptions.num_islands=10` |
-| `k=2` experiences | один P1 и один P2 example, затем fallback sampling |
-| Score signature clusters | `(structure, round(score, 12))` |
-| Boltzmann cluster selection | stable softmax, начальная temperature `0.1` |
-| Short program preference | softmax по отрицательной normalized skeleton length |
-| Weak-island reset | deterministic iteration-based reset, default через 32 итерации |
-| Invalid program discard | schema/registry/solver/certificate failure discards hypothesis |
-| Best equation | лучшие P1/P2 выбираются внутри найденного portfolio |
+| `t` | Локальная координата на [0,1] |
+| `scale(u)` | `p*u`, новый параметр p в [0.001,12] |
+| `add(u,v)`, `mul(u,v)` | Сложение, произведение |
+| `square(u)`, `cube(u)` | Фиксированные степени 2,3 |
+| `expm1(u)`, `log1p(u)` | exp(u)-1, log(1+u) |
+| `sqrt1p(u)` | sqrt(1+u)-1 |
+| `saturate(u)` | u/(1+u) |
 
-## Осознанные отличия
+Все формы неотрицательны, монотонно возрастают и равны нулю при t=0.
+Для B(t) используется нормировка Z(t)=B(t)/B(1).
+Одна функция: `a+s*b*Z(t)`; две: слева `j+s*b_left*(Z_left(t)-1)`, справа
+`j+s*b_right*Z_right(t)`, где s=+1/-1 и b≥0. Общий j обеспечивает точный
+непрерывный стык даже после округления. Направление выбирает оптимизатор.
 
-### Типизированные skeletons вместо произвольного Python
+## Ограничения и сертификат
 
-Официальная реализация вставляет generated body в Python template и вызывает
-`exec` в дочернем процессе. Для публикуемой calibration model это несовместимо
-с существующим typed runtime и security contract. Здесь LLM может назвать
-только P1 family либо ordered pair P2 из `registry-v1`. Любой `code`, unknown
-family, extra JSON field, duplicate key или nonfinite JSON atom отклоняет весь
-ответ. `eval`, dynamic import и generated Python отсутствуют.
+- Максимум две ветви; вложенных разбиений, условий, min/max/abs нет.
+- Степень: t=1, сумма=max, произведение=сумма, square/cube умножают степень,
+  остальные операции сохраняют бюджет. Бюджет ≤3. Ограничение консервативно:
+  некоторые допустимые неполиномиальные выражения также исключены.
+- Не более одного `expm1/log1p/sqrt1p/saturate` на пути дерева. Это исключает
+  маскировку высоких степеней через `exp(k*log(1+t))`.
+- До 31 узла суммарно, глубина ≤8, до 10 коэффициентов; без чисел от LLM.
+- Простые формулы из реестра отклоняются; «новая» означает структурно вне
+  текущего реестра, а не доказанную научную или алгебраическую уникальность.
+- Монотонность сертифицируется композицией операций, а не сеткой значений.
+  Проверка конечного B(1) ограничивает значения на всём [0,1]. Неопределённые,
+  слишком большие и вырожденные нормировки отклоняются.
+- Коэффициенты и граница округляются до 0.001 **до** итоговой проверки.
+- Две ветви: 40–60% наблюдений на каждой; одинаковые x неделимы.
+- Runtime повторно валидирует дерево, bounds, сетку коэффициентов, направление,
+  непрерывность и hash. Вне наблюдаемого диапазона прогноз отсутствует.
 
-Это сохраняет центральную идею статьи — LLM выбирает дискретный skeleton, а
-надёжный optimizer оценивает числовые placeholders — при существенно более
-узком, аудируемом пространстве.
+Это сохраняет центральное разделение статьи «структура от LLM, параметры
+от численного алгоритма», но ограничивает пространство выражений для
+проверяемой монотонности. Произвольный Python из статьи не исполняется.
 
-### Solver и ограничения продукта
+## Численная оптимизация
 
-Вместо универсальных BFGS/Adam используются уже существующие conditional
-linear least squares, `L-BFGS-B` для nonlinear shape и breakpoint search. После
-fit обязательны:
+Для фиксированной формы и nonlinear shape решается условный МНК с
+неотрицательными амплитудами; свободный offset профилируется аналитически.
+Для shape применяется bounded L-BFGS-B с тремя детерминированными стартами.
+P2 проверяет до девяти допустимых округлённых границ. Бюджет — 8000
+вычислений на гипотезу; достигнутый лимит фиксируется. Это приближённый поиск,
+не доказательство глобального optimum. Все конечные incumbents сертифицируются.
 
-- округление коэффициентов и breakpoint до `0.001`;
-- аналитический certificate domain/finiteness/монотонности;
-- для P2 — баланс `40/60..60/40`, единое направление и непрерывное сопряжение;
-- collapse вырожденной P2 в P1;
-- запрет extrapolation в runtime.
+Полные исходные P1/P2 используют прежний `engine.py`; изменение условий
+поиска LLM никак не сужает их множество семейств.
 
-LLM не может изменить эти правила, search profile, validation thresholds или
-report recommendation policy.
+## Сравнение и границы доказательств
 
-### Бюджет
+`monotone-report-v3` содержит P1/P2/LLM, `formula_search` и
+`comparison_holdout`. Старые отчёты v1/v2 и registry-модели остаются читаемыми.
+`model-comparison.json` содержит refit, прежнюю OOF-валидацию P1/P2 и отдельный
+общий holdout. R² holdout использует один baseline: среднее discovery train.
 
-Paper-scale 2500 iterations неприемлемы для одного интерактивного CSV run.
-Product default — четыре LLM calls, настраиваемые
-`MONOTONE_CALIBRATE_LLM_SEARCH_ITERATIONS` в диапазоне `1..64`. Каждый call
-может вернуть до четырёх skeletons. Numerical evaluation кэшируется по
-canonical hypothesis ID.
+Holdout — одно воспроизводимое разделение для интерполяции; малое число точек
+даёт нестабильную оценку. Оно не доказывает экстраполяцию, superiority на других
+датасетах или переносимость на зависимые наблюдения. Финальный refit включает
+эти точки, поэтому его метрики отдельно помечены как refit. Повторное ручное
+подбирание промптов по этому holdout превращает его в development set.
 
-### Две конкурирующие процедуры
+Существующий OOF применяется только к независимым P1/P2. Новая формула не
+получает его метрики и не заменяет автоматически `recommended-model.json`.
+Пользователь получает все три кандидата для сравнения и применения.
 
-Статья ищет одно уравнение. Проект обязан сравнить P1 и P2, поэтому каждый
-island хранит отдельные best scores для обеих структур и prompt по возможности
-получает по одному P1/P2 experience. Без этого более гибкая P2 систематически
-вытесняла бы P1 из buffer ещё до внешней uplift policy.
+## Провайдер и сбои
 
-### Validation scope
+Используется OpenAI-compatible Chat Completions через явный HTTP-клиент:
+модель не подменяется, redirect не пересылает credentials, ambient proxy и
+LangChain tracing не участвуют. В artifacts попадают только фиксированные
+коды ошибок, деревья, численные оценки и расход токенов/кредитов из usage.
+API key и необработанные ответы/ошибки не сохраняются.
+Запрос использует JSON mode; строгая схема и семантические ограничения
+проверяются локально. Рекурсивный provider-side constrained decoding на
+указанном DeepSeek в проверке вырождался в тривиальное `t`; JSON mode
+с тем же prompt дал новые выражения без ослабления локального парсера. Для OpenRouter DeepSeek используется `reasoning.effort=none` и
+4096 выходных токенов. Без явного бюджета стандартный high reasoning способен
+исчерпать лимит до JSON; такой ответ отмечается `LLM_OUTPUT_TRUNCATED`.
+Настройки задаются `MONOTONE_CALIBRATE_LLM_REASONING_EFFORT` и
+`MONOTONE_CALIBRATE_LLM_MAX_OUTPUT_TOKENS` (512–32768). Протокол reasoning:
+[официальная документация OpenRouter](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
 
-LLM-SR portfolio строится по полному training summary и full-data fitness,
-затем замораживается и заново fit-ится внутри каждого grouped outer fold. Это
-оценивает перенос коэффициентов, breakpoint и внутренний выбор по portfolio,
-но не является untouched оценкой самой discovery-стадии: full-data `y`
-повлиял на состав portfolio.
+Неверный JSON, недопустимая грамматика или сбой провайдера не меняют P1/P2.
+Внутри корректного JSON каждая гипотеза проверяется отдельно: невалидные
+деревья отклоняются с фиксированным кодом, валидные соседи остаются в поиске.
+Коды отказа возвращаются LLM на следующей итерации.
+Проверенные новые гипотезы сохраняются при частичной ошибке с warning; если
+их нет, статус LLM — `UNAVAILABLE`, а не замаскированный registry fallback.
 
-Поэтому каждый успешный LLM run получает warnings
-`LLM_TRAINING_SUMMARY_DISCLOSED` и
-`LLM_SR_PORTFOLIO_CONDITIONAL_VALIDATION`, а HTML прямо называет OOF conditional.
-Полностью nested LLM-SR потребовал бы отдельного external search для каждого
-outer-training scope (до сотен provider calls с текущей validation policy) и
-оставлен будущей явно бюджетируемой версией.
+## Проверки
 
-## Fallback и provenance
+[tests/test_formula_discovery.py](../tests/test_formula_discovery.py) проверяет
+восстановление параметров, оба направления, стык, границы, сериализацию,
+запрет степени через произведения/вложенность, отказ от кода, цикл обратной
+связи и контрфактическую невидимость контрольных y для всего поиска.
+Application-тест сравнивает P1/P2 и OOF при включённой и выключенной LLM.
 
-Без LLM используется полный registry, то есть offline поведение остаётся
-детерминированным. Ошибка конфигурации, transport/provider failure, malformed
-response или отсутствие новых валидных skeletons также атомарно возвращает
-полный registry; частичный случайный portfolio не используется как silent
-fallback.
-
-`report.json.llm_advisor` сохранён как исторически совместимое имя machine
-field. Теперь его `mode` равен `llm_sr_typed_symbolic_search`; он содержит
-только counts, policy versions и hashes. Access token, raw endpoint, prompts,
-responses и provider diagnostics туда не попадают.
-
-## Эксплуатационная граница
-
-Offline quick start с `--no-dotenv` не включает этот selector. Для LLM-SR нужны
-настроенный `.env` и `--llm-symbolic-search`; команда является блокирующей и
-печатает JSON только после всех provider calls, локальных fits и validation.
-
-Текущий код валидирует configured base URL и не включает tracing/callbacks сам,
-но пока не имеет собственного redirect-origin HTTP transport и не отклоняет
-ambient LangSmith tracing variables fail-closed. Поэтому formal claim о
-сетевой изоляции относится только к будущему hardening, а не к реализованному
-selector-у.
+`symbolic_search.py` и схемы `llm-sr-hypotheses-v1` оставлены как исторический
+registry-only модуль; активная application-ветка их не вызывает.

@@ -17,6 +17,7 @@ from jinja2 import Environment, StrictUndefined
 import numpy as np
 
 from .data import ObservationSet
+from .comparison import FormulaComparison, prediction_metrics
 from .engine import CandidateSet, FitCandidate
 from .model_runtime import FittedModel
 from .validation import ValidationResult
@@ -27,6 +28,8 @@ _LLM_PROVENANCE_FIELDS = frozenset(
         "status",
         "mode",
         "provider_model",
+        "max_output_tokens",
+        "reasoning_effort",
         "endpoint_origin_sha256",
         "prompt_version",
         "output_schema_version",
@@ -120,6 +123,7 @@ def _safe_llm_provenance(value: Mapping[str, object] | None) -> dict[str, object
         "FALLBACK",
         "ACCEPTED",
         "NO_IMPROVEMENT",
+        "UNAVAILABLE",
     }:
         raise ValueError("llm_advisor provenance has an invalid status")
     for name in (
@@ -301,7 +305,7 @@ def _svg_plot(
     else:
         lines.append(
             f'<text x="{width / 2}" y="{height / 2}" text-anchor="middle" font-family="sans-serif" '
-            f'font-size="18" fill="#59636e">P2 недоступна: {html.escape(unavailable_status or "UNKNOWN")}</text>'
+            f'font-size="18" fill="#59636e">{"LLM недоступна" if (unavailable_status or "").startswith("LLM_") else "P2 недоступна"}: {html.escape(unavailable_status or "UNKNOWN")}</text>'
         )
     if model is not None and model.breakpoint is not None:
         boundary_x = sx(model.breakpoint)
@@ -340,7 +344,7 @@ _HTML_TEMPLATE = """<!doctype html>
 <body>
 <h1>Отчёт о монотонной калибровке</h1>
 <section class="decision{% if warnings %} warning{% endif %}">
-  <h2>Рекомендация: {{ recommendation }}</h2>
+  <h2>Рекомендация{% if three_way %} среди P1/P2{% endif %}: {{ recommendation }}</h2>
   <p>Состояние решения: <code>{{ decision_state }}</code>.</p>
   {% if warnings %}<p><strong>Предупреждения:</strong> {{ warnings|join(', ') }}</p>{% endif %}
   {% if below_quality %}<p><strong>Проверочный R² рекомендуемой процедуры ниже 0.60.</strong>
@@ -351,6 +355,13 @@ _HTML_TEMPLATE = """<!doctype html>
 <h2>Вход</h2>
 <p>Использовано {{ input.n_used }} из {{ input.n_input }} строк; пропущено {{ input.n_skipped }}.
 Уникальных x: {{ input.n_unique_x }}.</p>
+{% if three_way %}
+<h2>Три варианта аппроксимации</h2>
+<p>P1 и P2 получены полным алгоритмическим поиском по реестру.
+LLM предлагает новые выражения; их параметры оптимизируются численно. Статус LLM: <code>{{ llm_status }}</code>.</p>
+<p>Максимум две ветви, полиномиальная степень ≤3, монотонность на всём интервале,
+непрерывность стыка, баланс 40/60 и коэффициенты с точностью 0.001.</p>
+{% else %}
 <h2>Выбор калибровочной функции</h2>
 <p>Режим: <code>{{ llm_mode }}</code>; статус: <code>{{ llm_status }}</code>.
 {% if llm_status == "ACCEPTED" %}В численный fit передано {{ llm_portfolio_size }}
@@ -361,6 +372,7 @@ _HTML_TEMPLATE = """<!doctype html>
 граница P2 и fitness вычислялись локальным solver-ом. Произвольный код модели не исполнялся.
 OOF-метрики условны относительно portfolio, найденного на полном наборе данных, и не являются
 независимой проверкой самой LLM-стадии discovery.</p>{% endif %}
+{% endif %}
 <div class="grid">
   <section class="card"><h3>P1 — одна функция</h3>
     <p>Refit R²: {{ p1.metrics.r2_refit|metric }}</p>
@@ -377,11 +389,36 @@ OOF-метрики условны относительно portfolio, найде
     </tbody></table>
   {% else %}<p>Недоступна: <code>{{ p2.status }}</code>.</p>{% endif %}
   </section>
+{% if three_way %}
+  <section class="card"><h3>LLM — новая формула</h3>
+  {% if p3.available %}
+    <p>Refit R²: {{ p3.metrics.r2_refit|metric }}</p>
+    <p>Ветвей: {{ p3.segment_count }}; параметров: {{ p3.parameter_count }}.</p>
+    <p><code>{{ p3.model.formula }}</code></p>
+    <p><a href="model-llm.json">Скачать модель LLM</a></p>
+  {% else %}<p>Недоступна: <code>{{ p3.status }}</code>. Результат поиска не заменён моделью из реестра.</p>{% endif %}
+  </section>
+{% endif %}
 </div>
+{% if three_way %}
+<h2>Сравнение на общей контрольной выборке</h2>
+{% if holdout.status == "AVAILABLE" %}
+<p>Обучение: {{ holdout.n_train }} точек; проверка: {{ holdout.n_test }}.
+Группы одинаковых x не разделяются. LLM не видела контрольные точки и их оценки.
+R² считается относительно среднего обучающей выборки. Это оценка интерполяции одного разделения;
+она отличается от OOF выше. Сохранённые итоговые модели повторно обучены на всех точках.</p>
+<table><thead><tr><th scope="col">Вариант</th><th scope="col">R²</th><th scope="col">RMSE</th><th scope="col">MAE</th><th scope="col">Статус</th></tr></thead><tbody>
+{% for name, metrics in holdout.candidates.items() %}<tr><td>{{ name }}</td><td>{{ metrics.r2|metric }}</td><td>{{ metrics.rmse|metric }}</td><td>{{ metrics.mae|metric }}</td><td>{{ metrics.status }}</td></tr>{% endfor %}
+</tbody></table>
+{% else %}<p>Общая контрольная оценка недоступна: <code>{{ holdout.status }}</code>.
+Refit-метрики описывают подгонку и не доказывают качество на новых данных.</p>{% endif %}
+<p><a href="model-comparison.json">Все результаты сравнения</a> · <a href="model-one.json">Модель P1</a>{% if p2.available %} · <a href="model-two.json">Модель P2</a>{% endif %}</p>
+{% endif %}
 <h2>Графики</h2>
 <h3>P1</h3><img src="plot-one.svg" alt="Scatterplot и односегментная аппроксимация">
 <h3>P2</h3><img src="plot-two.svg" alt="Scatterplot; две интервальные функции и красная граница либо явное состояние недоступности">
-<h2>Проверочный uplift</h2>
+{% if three_way %}<h3>LLM</h3><img src="plot-llm.svg" alt="Точки и новая монотонная формула LLM либо причина недоступности">{% endif %}
+<h2>Проверочный uplift P2 относительно P1</h2>
 {% if validation_available and validation.uplift.relative_mse is not none %}
 <p>Relative MSE uplift: {{ validation.uplift.relative_mse|metric }};
 bootstrap 90% interval:
@@ -409,6 +446,7 @@ def write_report_bundle(
     *,
     llm_advisor: Mapping[str, object] | None = None,
     extra_warning_codes: tuple[str, ...] = (),
+    formula_comparison: FormulaComparison | None = None,
 ) -> ReportBundle:
     """Write one self-contained report tree from already frozen computations."""
 
@@ -441,6 +479,22 @@ def write_report_bundle(
 
     p1 = _candidate_dict(candidates.one, candidates.one.status)
     p2 = _candidate_dict(candidates.two, candidates.two_status)
+    p3 = {"available": False, "status": "DISABLED"}
+    if formula_comparison is not None:
+        fitted = formula_comparison.fitted
+        p3 = {"available": fitted is not None, "status": (
+            "VALID" if fitted is not None else "FULL_REFIT_FAILED"
+            if formula_comparison.search.best is not None else formula_comparison.search.status
+        )}
+        if fitted is not None:
+            predictions = fitted.model.predict(x)
+            metrics = prediction_metrics(y, predictions, float(np.mean(y)))
+            p3.update({"model": fitted.model.to_dict(), "metrics": {
+                "r2_refit": metrics["r2"], "rmse_refit": metrics["rmse"], "mae_refit": metrics["mae"], "sse_refit": metrics["mse"]*y.size},
+                "parameter_count": fitted.hypothesis.parameter_count,
+                "segment_count": fitted.model.segment_count,
+                "segment_shares": [1.0] if fitted.model.breakpoint is None else [float(np.mean(x <= fitted.model.breakpoint)), float(np.mean(x > fitted.model.breakpoint))],
+                "evaluations": fitted.evaluations, "budget_exhausted": fitted.budget_exhausted})
     trace = candidates.search_trace
     search = {
         "policy_id": trace.policy_id,
@@ -474,6 +528,7 @@ def write_report_bundle(
                 "input_sha256": dataset.input_sha256,
                 "decision_state": validation.decision_state,
                 "search": search,
+                "formula_comparison": None if formula_comparison is None else {"LLM": p3, "holdout": formula_comparison.holdout, "search": formula_comparison.search.to_dict()},
                 "recommended_model": None
                 if recommendation is None
                 else recommendation.model.model_instance_hash,
@@ -481,7 +536,7 @@ def write_report_bundle(
         )
     ).hexdigest()
     report = {
-        "schema_version": "monotone-report-v2",
+        "schema_version": "monotone-report-v2" if formula_comparison is None else "monotone-report-v3",
         "report_id": report_id,
         "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "input": {
@@ -516,9 +571,23 @@ def write_report_bundle(
         },
         "llm_advisor": safe_llm_advisor,
     }
+    if formula_comparison is not None:
+        report["candidates"]["LLM"] = p3
+        report["formula_search"] = formula_comparison.search.to_dict()
+        report["comparison_holdout"] = formula_comparison.holdout
+        _write_json(root / "model-one.json", candidates.one.model.to_dict())
+        if candidates.two is not None:
+            _write_json(root / "model-two.json", candidates.two.model.to_dict())
+        if formula_comparison.fitted is not None:
+            _write_json(root / "model-llm.json", formula_comparison.fitted.model.to_dict())
+        (root / "plot-llm.svg").write_text(_svg_plot(x, y, None if formula_comparison.fitted is None else formula_comparison.fitted.model,
+            np.zeros(x.size, dtype=bool), "LLM: новая формула", "LLM_" + p3["status"]), encoding="utf-8")
     report_json = root / "report.json"
     _write_json(report_json, report)
-    _write_json(root / "model-comparison.json", {"P1": p1, "P2": p2, "validation": validation.to_dict()})
+    comparison_payload = {"P1": p1, "P2": p2, "validation": validation.to_dict()}
+    if formula_comparison is not None:
+        comparison_payload.update({"LLM": p3, "holdout": formula_comparison.holdout})
+    _write_json(root / "model-comparison.json", comparison_payload)
     _write_json(
         root / "input-audit.json",
         {
@@ -551,6 +620,7 @@ def write_report_bundle(
                 "residual_recommended_oof",
                 "diagnostic_flag",
                 "action",
+                *(["prediction_llm_refit"] if formula_comparison is not None else []),
             ]
         )
         for index, row in enumerate(dataset.observations):
@@ -571,6 +641,7 @@ def write_report_bundle(
                     "" if not np.isfinite(oof_residual[index]) else repr(float(oof_residual[index])),
                     "LARGE_RESIDUAL" if bool(flagged[index]) else "",
                     "review_only" if bool(flagged[index]) else "",
+                    *(["" if formula_comparison.fitted is None else repr(float(formula_comparison.fitted.model.predict(row.x)))] if formula_comparison is not None else []),
                 ]
             )
 
@@ -605,6 +676,9 @@ def write_report_bundle(
         input=report["input"],
         p1=p1,
         p2=p2,
+        p3=p3,
+        three_way=formula_comparison is not None,
+        holdout={"status": "DISABLED", "candidates": {}} if formula_comparison is None else formula_comparison.holdout,
         validation=validation.to_dict(),
         validation_available=validation.status == "VALIDATED",
         below_quality="BELOW_PRODUCT_R2" in warnings,

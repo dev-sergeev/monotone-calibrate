@@ -40,7 +40,8 @@ class LLMConfig:
     max_retries: int = 1
     search_iterations: int = 4
     allow_insecure_http: bool = False
-
+    max_output_tokens: int = 4096
+    reasoning_effort: str | None = None
     @classmethod
     def from_mapping(
         cls,
@@ -82,6 +83,25 @@ class LLMConfig:
             minimum=1,
             maximum=64,
         )
+        max_output_tokens = _bounded_int(
+            values.get(f"{_PREFIX}MAX_OUTPUT_TOKENS"),
+            name=f"{_PREFIX}MAX_OUTPUT_TOKENS",
+            default=4096,
+            minimum=512,
+            maximum=32768,
+        )
+        reasoning_effort = _optional_text(values.get(f"{_PREFIX}REASONING_EFFORT"))
+        if reasoning_effort not in {
+            None,
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+        }:
+            raise LLMConfigError("LLM_CONFIG_REASONING", "unsupported reasoning effort")
 
         model = _optional_text(values.get(f"{_PREFIX}MODEL"))
         base_url = _optional_text(values.get(f"{_PREFIX}BASE_URL"))
@@ -116,6 +136,8 @@ class LLMConfig:
             max_retries=retries,
             search_iterations=search_iterations,
             allow_insecure_http=allow_insecure,
+            max_output_tokens=max_output_tokens,
+            reasoning_effort=reasoning_effort,
         )
 
     @classmethod
@@ -142,9 +164,7 @@ class LLMConfig:
             )
         source = os.environ if environ is None else environ
         merged.update(
-            (key, value)
-            for key, value in source.items()
-            if key.startswith(_PREFIX)
+            (key, value) for key, value in source.items() if key.startswith(_PREFIX)
         )
         return cls.from_mapping(merged, force_enable=force_enable)
 
@@ -177,9 +197,7 @@ def _validate_base_url(value: str, *, allow_insecure_http: bool) -> None:
             "LLM_CONFIG_BASE_URL",
             "LLM base URL must be an absolute HTTP(S) endpoint without credentials, query, or fragment",
         )
-    if parsed.scheme == "http" and not (
-        allow_insecure_http or _is_loopback_host(host)
-    ):
+    if parsed.scheme == "http" and not (allow_insecure_http or _is_loopback_host(host)):
         raise LLMConfigError(
             "LLM_CONFIG_INSECURE_HTTP",
             "non-loopback HTTP requires MONOTONE_CALIBRATE_LLM_ALLOW_INSECURE_HTTP=true",
@@ -219,7 +237,9 @@ def _bounded_int(
     try:
         parsed = int(value, 10)
     except ValueError as exc:
-        raise LLMConfigError("LLM_CONFIG_INTEGER", f"{name} must be an integer") from exc
+        raise LLMConfigError(
+            "LLM_CONFIG_INTEGER", f"{name} must be an integer"
+        ) from exc
     if str(parsed) != value and value != f"+{parsed}":
         raise LLMConfigError("LLM_CONFIG_INTEGER", f"{name} must be an integer")
     if not minimum <= parsed <= maximum:

@@ -1,7 +1,7 @@
 {
   "schema_version": "llm-sr-policy-v2",
   "policy_id": "llm-sr-registry-search-v2",
-  "status": "current_implementation_policy",
+  "status": "historical_registry_selector_policy",
   "effective_date": "2026-07-22",
   "supersedes_llm_policy": "llm-start-advisor-v1",
   "default_mode": "off",
@@ -154,5 +154,6 @@
     "formal signed cross-platform release acceptance",
     "fail-closed rejection of ambient LangSmith tracing",
     "project-enforced redirect origin allowlist"
-  ]
+  ],
+  "superseded_by": "llm-formula-discovery-v1"
 }
