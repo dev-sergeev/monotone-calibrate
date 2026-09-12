@@ -6,14 +6,14 @@
       "sha256": "096eba7c600446a2f906369a6ff747804a51b9ad3153ca10d9a1d673e416b337"
     },
     {
-      "bytes": 15667,
+      "bytes": 16590,
       "path": "model-comparison.json",
-      "sha256": "ebbc4d4286b7b8a99a97ff3607afe599f6dd1dae0c45cdad7dce022545b73ac4"
+      "sha256": "a83b0bec5ab7e2faee22138cdd6c39782fa51a50c74d42e8ba5c362b3e7c59c3"
     },
     {
-      "bytes": 1216,
+      "bytes": 1562,
       "path": "model-llm.json",
-      "sha256": "4bb49b9cf39d06a517219607dc0750d5e5706f59781cf2d6c4f7d13163a4a256"
+      "sha256": "59e4944467ea04d008f8ce29c7658558e935bd6da7b7a62119c26560e0bb9aaa"
     },
     {
       "bytes": 933,
@@ -26,14 +26,14 @@
       "sha256": "311390b06c08241d2299fbee1cc2a4036c6f54565b8a6612343565e1b279a54c"
     },
     {
-      "bytes": 15137,
+      "bytes": 15147,
       "path": "observations.csv",
-      "sha256": "be2450ed9cf64991e1cd706edd195930ad755309500a242c99da125ddfc35287"
+      "sha256": "0bd6fc8ab561874e0011c66235eab8aaac556b699f3af3ffce38eeecc0afdce6"
     },
     {
-      "bytes": 18541,
+      "bytes": 23216,
       "path": "plot-llm.svg",
-      "sha256": "8fd7e4df050e12b2c50f2c49c9b28a31963e3138817da7b22a010884868a5045"
+      "sha256": "f3c7704f7ab91f24bd257a552b2cf6f9174a856b3f91eda8a811cd1e31fa0c52"
     },
     {
       "bytes": 19043,
@@ -51,16 +51,16 @@
       "sha256": "311390b06c08241d2299fbee1cc2a4036c6f54565b8a6612343565e1b279a54c"
     },
     {
-      "bytes": 6213,
+      "bytes": 8489,
       "path": "report.html",
-      "sha256": "e3298eb1f933807f56c5ef4af44e20d80d828765ed1899b13eb37d5e3889b2cc"
+      "sha256": "a4ffacb9d22e00059f21364d052cb05b83209d59aedfb4013daf21a3b9d1ee39"
     },
     {
-      "bytes": 29199,
+      "bytes": 30850,
       "path": "report.json",
-      "sha256": "f120e71b90f7f5ad08e00424c4b51f9451a022995afd41f5755ffd661df20022"
+      "sha256": "f88b1dfb3966a9554cba47d7a2e975c33eae5f3198bc43af0e2618240489cd74"
     }
   ],
-  "report_id": "f65160ee94731e655346ef8fd488c9051b569bd7b9a59d861bd133d20f3245a2",
+  "report_id": "0217ef30a5fd0d6466753fe513f0f091a33938239f1b5dcaecfede2a6f1e5337",
   "schema_version": "bundle-manifest-v1"
 }

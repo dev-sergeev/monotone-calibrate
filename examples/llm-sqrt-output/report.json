@@ -3,59 +3,44 @@
     "LLM": {
       "available": true,
       "budget_exhausted": false,
-      "evaluations": 201,
+      "evaluations": 64,
       "metrics": {
-        "mae_refit": 0.00506256635910769,
-        "r2_refit": 0.999970701272074,
-        "rmse_refit": 0.006244567821692429,
-        "sse_refit": 0.0023396776367829914
+        "mae_refit": 0.005045763052961846,
+        "r2_refit": 0.9999707624798078,
+        "rmse_refit": 0.006238041673599967,
+        "sse_refit": 0.0023347898352941926
       },
       "model": {
         "coefficient_decimal_places": 3,
-        "formula": "f(x)=1.498+4.001*(((sqrt(1+(3.029*((x-(0.0))/(10.0-(0.0)))))-1)+((0.061*((x-(0.0))/(10.0-(0.0))))^3))/((sqrt(1+(3.029*1))-1)+((0.061*1)^3)))",
+        "formula": "f(x)=1.499+4.000*((sqrt(1+(3.013*((x-(0.0))/(10.0-(0.0)))))-1)/(sqrt(1+(3.013*1))-1))",
         "grammar_version": "monotone-expression-v1",
-        "model_instance_hash": "1d9aefd9ebc9e74f7a62bea42bc1b02ed2448b67df54d98b81a7d1e779662636",
+        "model_instance_hash": "2b433abb96e56faf311db69209ece17d3c0c6f718f9d085b55a7a7364a7fee57",
         "monotonicity_certified": true,
         "schema_version": "formula-runtime-v1",
         "segments": [
           {
-            "amplitude": 4.001,
+            "amplitude": 4.0,
             "anchored_right": false,
             "direction": "increasing",
             "expression": {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "sqrt1p"
+              "arg": {
+                "arg": {
+                  "op": "t"
                 },
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "cube"
-                }
-              ],
-              "op": "add"
+                "op": "scale"
+              },
+              "op": "sqrt1p"
             },
-            "offset": 1.498,
+            "offset": 1.499,
             "shape": [
-              3.029,
-              0.061
+              3.013
             ],
             "x_lower": 0.0,
             "x_upper": 10.0
           }
         ]
       },
-      "parameter_count": 4,
+      "parameter_count": 3,
       "segment_count": 1,
       "segment_shares": [
         1.0
@@ -194,12 +179,12 @@
   "comparison_holdout": {
     "candidates": {
       "LLM": {
-        "mae": 0.004482016370212838,
+        "mae": 0.004510048771871629,
         "model": {
           "coefficient_decimal_places": 3,
-          "formula": "f(x)=1.501+3.998*(((sqrt(1+(3.000*((x-(0.0))/(10.0-(0.0)))))-1)+((0.001*((x-(0.0))/(10.0-(0.0))))^3))/((sqrt(1+(3.000*1))-1)+((0.001*1)^3)))",
+          "formula": "f(x)=1.501+3.998*((sqrt(1+(3.003*((x-(0.0))/(10.0-(0.0)))))-1)/(sqrt(1+(3.003*1))-1))",
           "grammar_version": "monotone-expression-v1",
-          "model_instance_hash": "20f3603ce53204265d9a07befc8f32dccaa074ed021b8c3dce84ceda837f0a28",
+          "model_instance_hash": "9a0bca212f09861449c2780ed0277b2d6394276b205d26fea859ba6a053ef12e",
           "monotonicity_certified": true,
           "schema_version": "formula-runtime-v1",
           "segments": [
@@ -208,55 +193,40 @@
               "anchored_right": false,
               "direction": "increasing",
               "expression": {
-                "args": [
-                  {
-                    "arg": {
-                      "arg": {
-                        "op": "t"
-                      },
-                      "op": "scale"
-                    },
-                    "op": "sqrt1p"
+                "arg": {
+                  "arg": {
+                    "op": "t"
                   },
-                  {
-                    "arg": {
-                      "arg": {
-                        "op": "t"
-                      },
-                      "op": "scale"
-                    },
-                    "op": "cube"
-                  }
-                ],
-                "op": "add"
+                  "op": "scale"
+                },
+                "op": "sqrt1p"
               },
               "offset": 1.501,
               "shape": [
-                3.0,
-                0.001
+                3.003
               ],
               "x_lower": 0.0,
               "x_upper": 10.0
             }
           ]
         },
-        "mse": 2.8087806137842488e-05,
+        "mse": 2.857447003257908e-05,
         "predictions": [
-          1.6993669918799827,
-          1.7951139192459529,
-          2.4954152088391326,
-          2.962000403812203,
-          3.108905577103638,
-          3.9831138023457973,
-          4.107344541522446,
-          4.349046354465771,
-          4.863914643373144,
-          5.027712771171375,
-          5.081525467137748,
-          5.240718407841814
+          1.6994118850628703,
+          1.7951773554290522,
+          2.4955647246094994,
+          2.9621700819161805,
+          3.1090768908152713,
+          3.9832588932513127,
+          4.107481776635831,
+          4.349165894498075,
+          4.863987142354604,
+          5.027767963515645,
+          5.081574750938373,
+          5.240749598833693
         ],
-        "r2": 0.999981399476773,
-        "rmse": 0.005299793027830661,
+        "r2": 0.9999810771944618,
+        "rmse": 0.005345509333316993,
         "status": "AVAILABLE"
       },
       "P1": {
@@ -467,36 +437,90 @@
     "selected_hypothesis": {
       "branches": [
         {
-          "args": [
-            {
-              "arg": {
-                "arg": {
-                  "op": "t"
-                },
-                "op": "scale"
-              },
-              "op": "sqrt1p"
+          "arg": {
+            "arg": {
+              "op": "t"
             },
-            {
-              "arg": {
-                "arg": {
-                  "op": "t"
-                },
-                "op": "scale"
-              },
-              "op": "cube"
-            }
-          ],
-          "op": "add"
+            "op": "scale"
+          },
+          "op": "sqrt1p"
         }
       ]
     },
     "status": "ACCEPTED",
+    "structure_selection": {
+      "alternatives": [
+        {
+          "best": {
+            "bic": -471.56681673860885,
+            "hypothesis": {
+              "branches": [
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "sqrt1p"
+                }
+              ]
+            },
+            "hypothesis_id": "c0680ab9f0920fb0f7c48f57b1103015e166ab8336d9895a754a3ff05bb42374",
+            "parameter_count": 3,
+            "train_rmse": 0.00651838017962082
+          },
+          "branches": 1,
+          "evaluated": 4,
+          "valid": 4
+        },
+        {
+          "best": {
+            "bic": -460.91362667793146,
+            "hypothesis": {
+              "branches": [
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "log1p"
+                },
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "sqrt1p"
+                }
+              ]
+            },
+            "hypothesis_id": "404f097f57f3c14bdc4c256a2b5283ffcbc98e8db4bcb2059398af12ca987e0e",
+            "parameter_count": 6,
+            "train_rmse": 0.006453493451500289
+          },
+          "branches": 2,
+          "evaluated": 8,
+          "valid": 8
+        }
+      ],
+      "comparison_complete": true,
+      "mse_floor": 1.2861543906718503e-12,
+      "n_train": 48,
+      "policy": "training-bic-one-vs-two-v1",
+      "reason": "LOWEST_TRAINING_BIC",
+      "selected_branches": 1,
+      "selected_hypothesis_id": "c0680ab9f0920fb0f7c48f57b1103015e166ab8336d9895a754a3ff05bb42374"
+    },
     "trace": [
       {
         "budget_exhausted": false,
-        "evaluations": 1053,
-        "fitness_negative_mse": -0.0005789595364782258,
+        "evaluations": 64,
+        "fitness_negative_mse": -4.248928016607355e-05,
         "hypothesis": {
           "branches": [
             {
@@ -506,7 +530,207 @@
                 },
                 "op": "scale"
               },
+              "op": "sqrt1p"
+            }
+          ]
+        },
+        "hypothesis_id": "c0680ab9f0920fb0f7c48f57b1103015e166ab8336d9895a754a3ff05bb42374",
+        "iteration": 0,
+        "status": "VALID"
+      },
+      {
+        "budget_exhausted": false,
+        "evaluations": 96,
+        "fitness_negative_mse": -0.014364075757791176,
+        "hypothesis": {
+          "branches": [
+            {
+              "args": [
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "log1p"
+                },
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "sqrt1p"
+                }
+              ],
+              "op": "mul"
+            }
+          ]
+        },
+        "hypothesis_id": "17fefc182674a8c86aed64e038858c7d095af387df7aeb04189a8b1a2b144e0e",
+        "iteration": 0,
+        "status": "VALID"
+      },
+      {
+        "budget_exhausted": false,
+        "evaluations": 1104,
+        "fitness_negative_mse": -0.00032106778427298593,
+        "hypothesis": {
+          "branches": [
+            {
+              "args": [
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "sqrt1p"
+                },
+                {
+                  "arg": {
+                    "op": "t"
+                  },
+                  "op": "square"
+                }
+              ],
+              "op": "add"
+            },
+            {
+              "arg": {
+                "arg": {
+                  "op": "t"
+                },
+                "op": "scale"
+              },
+              "op": "saturate"
+            }
+          ]
+        },
+        "hypothesis_id": "e14f0bb61c92dceee3b40edf5aa0f2ef721561cb3a3da90b6ce294b4eb35e68a",
+        "iteration": 0,
+        "status": "VALID"
+      },
+      {
+        "budget_exhausted": false,
+        "evaluations": 476,
+        "fitness_negative_mse": -0.009438693831509458,
+        "hypothesis": {
+          "branches": [
+            {
+              "op": "t"
+            },
+            {
+              "arg": {
+                "arg": {
+                  "arg": {
+                    "op": "t"
+                  },
+                  "op": "scale"
+                },
+                "op": "square"
+              },
               "op": "expm1"
+            }
+          ]
+        },
+        "hypothesis_id": "3e061c6853c37073be00797bbd7e68dbce1495e7bd51f9703583468e50b69164",
+        "iteration": 0,
+        "status": "VALID"
+      },
+      {
+        "budget_exhausted": false,
+        "evaluations": 99,
+        "fitness_negative_mse": -4.4600840520787024e-05,
+        "hypothesis": {
+          "branches": [
+            {
+              "args": [
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "sqrt1p"
+                },
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "saturate"
+                }
+              ],
+              "op": "add"
+            }
+          ]
+        },
+        "hypothesis_id": "28448140eeb3ef221e068c9f302b21992740433677f86e341565f816831b2b7f",
+        "iteration": 1,
+        "status": "VALID"
+      },
+      {
+        "budget_exhausted": false,
+        "evaluations": 1101,
+        "fitness_negative_mse": -0.00012375632391238076,
+        "hypothesis": {
+          "branches": [
+            {
+              "arg": {
+                "arg": {
+                  "op": "t"
+                },
+                "op": "scale"
+              },
+              "op": "log1p"
+            },
+            {
+              "args": [
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "sqrt1p"
+                },
+                {
+                  "arg": {
+                    "op": "t"
+                  },
+                  "op": "square"
+                }
+              ],
+              "op": "add"
+            }
+          ]
+        },
+        "hypothesis_id": "ce7e1af41ce872c8a6020dc7824b388d898c81562147b13d95b1b152cb93fddd",
+        "iteration": 1,
+        "status": "VALID"
+      },
+      {
+        "budget_exhausted": false,
+        "evaluations": 1488,
+        "fitness_negative_mse": -4.281975239921537e-05,
+        "hypothesis": {
+          "branches": [
+            {
+              "arg": {
+                "arg": {
+                  "op": "t"
+                },
+                "op": "scale"
+              },
+              "op": "saturate"
             },
             {
               "arg": {
@@ -519,14 +743,44 @@
             }
           ]
         },
-        "hypothesis_id": "4f34bba68024d58aab425de817438af0abffbe708c8c10051fc4a1fad66258e1",
-        "iteration": 0,
+        "hypothesis_id": "4c0ad0988161aad274c3e7e729dd5bdd61816dc9137583e1ae7238f3b4bc8dd5",
+        "iteration": 1,
         "status": "VALID"
       },
       {
         "budget_exhausted": false,
-        "evaluations": 192,
-        "fitness_negative_mse": -4.263489265250265e-05,
+        "evaluations": 1221,
+        "fitness_negative_mse": -4.1647577728557115e-05,
+        "hypothesis": {
+          "branches": [
+            {
+              "arg": {
+                "arg": {
+                  "op": "t"
+                },
+                "op": "scale"
+              },
+              "op": "log1p"
+            },
+            {
+              "arg": {
+                "arg": {
+                  "op": "t"
+                },
+                "op": "scale"
+              },
+              "op": "sqrt1p"
+            }
+          ]
+        },
+        "hypothesis_id": "404f097f57f3c14bdc4c256a2b5283ffcbc98e8db4bcb2059398af12ca987e0e",
+        "iteration": 2,
+        "status": "VALID"
+      },
+      {
+        "budget_exhausted": false,
+        "evaluations": 2908,
+        "fitness_negative_mse": -3.982896439364378e-05,
         "hypothesis": {
           "branches": [
             {
@@ -551,46 +805,20 @@
                 }
               ],
               "op": "add"
-            }
-          ]
-        },
-        "hypothesis_id": "0fe573ff118bc0bb43dcd95c18467abdcf3bb99c02c4f251cd085d4ca3b21d10",
-        "iteration": 0,
-        "status": "VALID"
-      },
-      {
-        "budget_exhausted": false,
-        "evaluations": 225,
-        "fitness_negative_mse": -4.404475656833714e-05,
-        "hypothesis": {
-          "branches": [
+            },
             {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "log1p"
+              "arg": {
+                "arg": {
+                  "op": "t"
                 },
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "cube"
-                }
-              ],
-              "op": "add"
+                "op": "scale"
+              },
+              "op": "sqrt1p"
             }
           ]
         },
-        "hypothesis_id": "eb6cc57049d56112e77badeff6ba612b691517346c03ac2ceaf77cd3c0a33561",
-        "iteration": 0,
+        "hypothesis_id": "873ce4bc29f05a09738c0e216923d65e194137a40a35fdcaaa1549762b8a3656",
+        "iteration": 2,
         "status": "VALID"
       },
       {
@@ -636,271 +864,24 @@
           ]
         },
         "hypothesis_id": "05e77b8fe1b263d5c568ad717a8012708a24fe4c36f72ad30dba6c96bb9fc9ee",
-        "iteration": 1,
-        "status": "VALID"
-      },
-      {
-        "budget_exhausted": false,
-        "evaluations": 96,
-        "fitness_negative_mse": -0.014364075757791176,
-        "hypothesis": {
-          "branches": [
-            {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "sqrt1p"
-                },
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "log1p"
-                }
-              ],
-              "op": "mul"
-            }
-          ]
-        },
-        "hypothesis_id": "fde622475de2c95d2d53435d8a27b0a380d75f1eb6f51adea76d6de49844c5af",
-        "iteration": 1,
-        "status": "VALID"
-      },
-      {
-        "budget_exhausted": false,
-        "evaluations": 408,
-        "fitness_negative_mse": -0.010087475516008729,
-        "hypothesis": {
-          "branches": [
-            {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "expm1"
-                },
-                {
-                  "args": [
-                    {
-                      "arg": {
-                        "op": "t"
-                      },
-                      "op": "scale"
-                    },
-                    {
-                      "arg": {
-                        "arg": {
-                          "op": "t"
-                        },
-                        "op": "scale"
-                      },
-                      "op": "log1p"
-                    }
-                  ],
-                  "op": "mul"
-                }
-              ],
-              "op": "add"
-            }
-          ]
-        },
-        "hypothesis_id": "e169f00e3a10e3ecea20474197e5e74c45df9b230c12416551a97581b88e6b18",
-        "iteration": 1,
-        "status": "VALID"
-      },
-      {
-        "budget_exhausted": false,
-        "evaluations": 84,
-        "fitness_negative_mse": -4.4008600154761726e-05,
-        "hypothesis": {
-          "branches": [
-            {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "sqrt1p"
-                },
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "log1p"
-                }
-              ],
-              "op": "add"
-            }
-          ]
-        },
-        "hypothesis_id": "d0f6633b35f9be5d166c1bb966b88b99afe359d5bcebee98a64e2dda86f93cae",
-        "iteration": 1,
-        "status": "VALID"
-      },
-      {
-        "budget_exhausted": false,
-        "evaluations": 135,
-        "fitness_negative_mse": -4.253737408364437e-05,
-        "hypothesis": {
-          "branches": [
-            {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "expm1"
-                },
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "sqrt1p"
-                }
-              ],
-              "op": "add"
-            }
-          ]
-        },
-        "hypothesis_id": "b612850a120e0d5e8ada09755932f686c3e5bc08bf6cd2f1619c5b73880c91d1",
-        "iteration": 2,
-        "status": "VALID"
-      },
-      {
-        "budget_exhausted": false,
-        "evaluations": 81,
-        "fitness_negative_mse": -0.054599425314639925,
-        "hypothesis": {
-          "branches": [
-            {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "expm1"
-                },
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "log1p"
-                }
-              ],
-              "op": "mul"
-            }
-          ]
-        },
-        "hypothesis_id": "3bf776225e71b9193ab923977f7569edaa4f131ce4e30c78aff97e50fbca75b3",
-        "iteration": 2,
-        "status": "VALID"
-      },
-      {
-        "budget_exhausted": false,
-        "evaluations": 210,
-        "fitness_negative_mse": -4.2484785537603825e-05,
-        "hypothesis": {
-          "branches": [
-            {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "sqrt1p"
-                },
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "cube"
-                }
-              ],
-              "op": "add"
-            }
-          ]
-        },
-        "hypothesis_id": "0efa8d1fb68522d4ac19d428b4c28471a26656ab88021124f4de68d6b150b260",
-        "iteration": 2,
-        "status": "VALID"
-      },
-      {
-        "budget_exhausted": false,
-        "evaluations": 150,
-        "fitness_negative_mse": -0.010027641207745934,
-        "hypothesis": {
-          "branches": [
-            {
-              "args": [
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "expm1"
-                },
-                {
-                  "arg": {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
-                  },
-                  "op": "cube"
-                }
-              ],
-              "op": "add"
-            }
-          ]
-        },
-        "hypothesis_id": "e7f16e347962312b2b70439fdd1676286b9b801bfdfc1ab70efc5a35682e5242",
         "iteration": 3,
         "status": "VALID"
       },
       {
         "budget_exhausted": false,
-        "evaluations": 165,
-        "fitness_negative_mse": -4.249757763566622e-05,
+        "evaluations": 2352,
+        "fitness_negative_mse": -4.029695333729854e-05,
         "hypothesis": {
           "branches": [
+            {
+              "arg": {
+                "arg": {
+                  "op": "t"
+                },
+                "op": "scale"
+              },
+              "op": "sqrt1p"
+            },
             {
               "args": [
                 {
@@ -915,39 +896,79 @@
                 {
                   "arg": {
                     "arg": {
-                      "arg": {
-                        "op": "t"
-                      },
-                      "op": "scale"
+                      "op": "t"
                     },
-                    "op": "cube"
+                    "op": "scale"
                   },
-                  "op": "sqrt1p"
+                  "op": "cube"
                 }
               ],
               "op": "add"
             }
           ]
         },
-        "hypothesis_id": "1480f5e7bdd0883937a08632a983a8fc1f05539621b9a2a789db995cfdc58a6b",
+        "hypothesis_id": "e2893dcbc4d71ad547ec3696938e216fd67bcb6301b45464cf68309f7133e754",
+        "iteration": 3,
+        "status": "VALID"
+      },
+      {
+        "budget_exhausted": false,
+        "evaluations": 3368,
+        "fitness_negative_mse": -3.997490978370524e-05,
+        "hypothesis": {
+          "branches": [
+            {
+              "args": [
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "log1p"
+                },
+                {
+                  "arg": {
+                    "arg": {
+                      "op": "t"
+                    },
+                    "op": "scale"
+                  },
+                  "op": "square"
+                }
+              ],
+              "op": "add"
+            },
+            {
+              "arg": {
+                "arg": {
+                  "op": "t"
+                },
+                "op": "scale"
+              },
+              "op": "sqrt1p"
+            }
+          ]
+        },
+        "hypothesis_id": "018d42f155650cf2dace32a9a1d23a25f926195d75ebef348f0967d173643f42",
         "iteration": 3,
         "status": "VALID"
       }
     ],
     "usage": {
-      "completion_tokens": 1946,
-      "cost": 0.000280262,
+      "completion_tokens": 1023,
+      "cost": 0.0005241466000000001,
       "http_attempts": 4,
-      "prompt_tokens": 20726
+      "prompt_tokens": 22271
     },
     "warnings": [
       "LLM_FORMULA_ALREADY_IN_REGISTRY",
       "LLM_FORMULA_PROPOSALS_REJECTED",
-      "LLM_TRAINING_SUMMARY_DISCLOSED",
-      "LLM_TRANSCENDENTAL_NESTING"
+      "LLM_TRAINING_SUMMARY_DISCLOSED"
     ]
   },
-  "generated_at": "2026-09-12T12:11:39.480304Z",
+  "generated_at": "2026-09-12T17:28:49.233431Z",
   "input": {
     "extra_columns_ignored": [],
     "n_input": 60,
@@ -973,7 +994,8 @@
     "p1_hypotheses": 8,
     "p2_hypotheses": 63,
     "portfolio_size": 71,
-    "prompt_version": "llm-formula-discovery-v1",
+    "prompt_version": "llm-formula-discovery-v2",
+    "provider": "openai",
     "provider_model": "deepseek/deepseek-v4-flash-0731",
     "reasoning_effort": "none",
     "scope": "independent_formula_discovery",
@@ -987,7 +1009,7 @@
     "model_instance_hash": "fabb172167acaff4829875f7c0f9f7008ae981797e485a151181cff5a253be24",
     "structure": "P1"
   },
-  "report_id": "2f444c1b8fbba9ae2145e45ab2044036d8b545034be8de2d65563e59889ce5ba",
+  "report_id": "d4b8647a31be21e7202c100bfca7c0bb162771af901d56de4bb5dadb468ce8f2",
   "schema_version": "monotone-report-v3",
   "search": {
     "approximate": true,
@@ -1080,7 +1102,6 @@
     "LLM_FORMULA_ALREADY_IN_REGISTRY",
     "LLM_FORMULA_PROPOSALS_REJECTED",
     "LLM_TRAINING_SUMMARY_DISCLOSED",
-    "LLM_TRANSCENDENTAL_NESTING",
     "P2_NOT_RECOMMENDED"
   ]
 }

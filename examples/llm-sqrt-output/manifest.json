@@ -6,14 +6,14 @@
       "sha256": "096eba7c600446a2f906369a6ff747804a51b9ad3153ca10d9a1d673e416b337"
     },
     {
-      "bytes": 14911,
+      "bytes": 14032,
       "path": "model-comparison.json",
-      "sha256": "c627fcec33bf5f1da3e09d187b87c9443650ea6bb8204bddc6f00f6d46916ec2"
+      "sha256": "0f4e2c18b47bb43fb9668b77a15ad609b062286a7d0722db42194be1774a585d"
     },
     {
-      "bytes": 1097,
+      "bytes": 744,
       "path": "model-llm.json",
-      "sha256": "fc572823290340309ef83d973d6fb9684e20ffaa6732862e9abd36a672c5f8ac"
+      "sha256": "770bb1ed0e307b9ba173513d3dec20d1dfb98295b1cb6daa1007fe030c6b117d"
     },
     {
       "bytes": 992,
@@ -26,14 +26,14 @@
       "sha256": "59d75ab30ea2a168d87068c4558a9825de03d17d8327cafe36c2abf537d4922a"
     },
     {
-      "bytes": 11348,
+      "bytes": 11351,
       "path": "observations.csv",
-      "sha256": "2e6f604796552053d99e57bbce3e1a26d95d578dc0697480534feb1a10c990e5"
+      "sha256": "00e9c491faed1a947124fbec2905e08b51cc79fd5d27008c5532d92775006361"
     },
     {
       "bytes": 15174,
       "path": "plot-llm.svg",
-      "sha256": "77a1e37fb3569d81ed5a842c6703eeb141c6fad0ed5251485d74ba1699aa0bfe"
+      "sha256": "deef7b5cfca8c5763fd87af926547b48d60a7e002354aa1f2887f8f1a9afb1e6"
     },
     {
       "bytes": 15210,
@@ -51,16 +51,16 @@
       "sha256": "d83cf2718acec4581933ee080a5fe43e530946402628788b1ff548883bb7c5ee"
     },
     {
-      "bytes": 5905,
+      "bytes": 7188,
       "path": "report.html",
-      "sha256": "d0bd73ac93faecfdd3226dff3899c050414404ed4300fcdebcb0921d68768084"
+      "sha256": "b46c157afa59911fb9cf384bf6a16f858220f93d0bb3c507887857f2d173789a"
     },
     {
-      "bytes": 30324,
+      "bytes": 30688,
       "path": "report.json",
-      "sha256": "960a4c246487f911966e989f43edb5aab4a94d3a2556f9ea034fc6ef114026bc"
+      "sha256": "7506c799635e97d4a1b0d954007a4801a25ed3f278b56607f4753cf1543813a0"
     }
   ],
-  "report_id": "2f444c1b8fbba9ae2145e45ab2044036d8b545034be8de2d65563e59889ce5ba",
+  "report_id": "d4b8647a31be21e7202c100bfca7c0bb162771af901d56de4bb5dadb468ce8f2",
   "schema_version": "bundle-manifest-v1"
 }

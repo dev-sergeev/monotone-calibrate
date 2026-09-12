@@ -395,6 +395,11 @@ OOF-метрики условны относительно portfolio, найде
   {% if p3.available %}
     <p>Refit R²: {{ p3.metrics.r2_refit|metric }}</p>
     <p>Ветвей: {{ p3.segment_count }}; параметров: {{ p3.parameter_count }}.</p>
+    {% if p3.segment_count == 2 %}<p><strong>Кусочная функция:</strong> слева и справа от границы применяются отдельные выражения.
+    Значение в точке стыка общее; параметры ветвей подобраны независимо.</p>
+    <table><thead><tr><th>Участок</th><th>Функция</th></tr></thead><tbody>
+    {% for segment in llm_segments %}<tr><td>{{ segment.interval }}</td><td><code>{{ segment.formula }}</code></td></tr>{% endfor %}
+    </tbody></table>{% endif %}
     <p><code>{{ p3.model.formula }}</code></p>
     <p><a href="model-llm.json">Скачать модель LLM</a></p>
   {% else %}<p>Недоступна: <code>{{ p3.status }}</code>. Результат поиска не заменён моделью из реестра.</p>{% endif %}
@@ -402,6 +407,23 @@ OOF-метрики условны относительно portfolio, найде
 {% endif %}
 </div>
 {% if three_way %}
+{% if structure_selection %}
+<h2>Почему выбрана такая LLM-функция</h2>
+<p>LLM предлагает форму одной кривой и выражения для двух участков. Численный алгоритм
+подбирает коэффициенты и границу, затем сравнивает варианты по обучающему BIC:
+<code>n · ln(MSE) + k · ln(n)</code>. Меньше — лучше; дополнительная граница увеличивает k.
+Контрольные точки в этом выборе не участвуют.</p>
+<table><thead><tr><th>Вариант LLM</th><th>Проверено / допустимо</th><th>Лучший train RMSE</th><th>Параметров, включая границу</th><th>BIC</th></tr></thead><tbody>
+{% for item in structure_selection.alternatives %}<tr><td>{{ "Одна кривая" if item.branches == 1 else "Две функции по участкам" }}</td>
+<td>{{ item.evaluated }} / {{ item.valid }}</td>
+{% if item.best %}<td>{{ item.best.train_rmse|metric }}</td><td>{{ item.best.parameter_count }}</td><td>{{ item.best.bic|metric }}</td>
+{% else %}<td colspan="3">Допустимая модель не получена</td>{% endif %}</tr>{% endfor %}
+</tbody></table>
+{% if structure_selection.comparison_complete %}<p>Выбрано: <strong>{{ "одна кривая" if structure_selection.selected_branches == 1 else "две функции по участкам" }}</strong> — минимальный BIC среди проверенных гипотез.</p>
+{% elif structure_selection.selected_branches %}<p><strong>Сравнение неполное:</strong> допустимые гипотезы получены только для одного типа структуры. Это не доказывает, что другой тип хуже.</p>
+{% else %}<p>Допустимых LLM-гипотез не получено.</p>{% endif %}
+<p>Таблица относится к обучающему разделению. Формулы выше повторно обучены на всех точках.</p>
+{% endif %}
 <h2>Сравнение на общей контрольной выборке</h2>
 {% if holdout.status == "AVAILABLE" %}
 <p>Обучение: {{ holdout.n_train }} точек; проверка: {{ holdout.n_test }}.
@@ -679,6 +701,11 @@ def write_report_bundle(
         p2=p2,
         p3=p3,
         three_way=formula_comparison is not None,
+        structure_selection={} if formula_comparison is None else formula_comparison.search.structure_selection,
+        llm_segments=[] if formula_comparison is None or formula_comparison.fitted is None else [
+            {"interval": (f"{segment.x_lower:g} ≤ x ≤ {segment.x_upper:g}" if i == 0 else f"{segment.x_lower:g} < x ≤ {segment.x_upper:g}"),
+             "formula": "f(x)=" + segment.formula}
+            for i, segment in enumerate(formula_comparison.fitted.model.segments)],
         holdout={"status": "DISABLED", "candidates": {}} if formula_comparison is None else formula_comparison.holdout,
         validation=validation.to_dict(),
         validation_available=validation.status == "VALIDATED",

@@ -2,23 +2,43 @@
   "LLM": {
     "available": true,
     "budget_exhausted": false,
-    "evaluations": 220,
+    "evaluations": 2388,
     "metrics": {
-      "mae_refit": 0.1811862569160214,
-      "r2_refit": 0.9879905890898173,
-      "rmse_refit": 0.21922627060748565,
-      "sse_refit": 3.844812617957322
+      "mae_refit": 0.01624883840387463,
+      "r2_refit": 0.9998892970440735,
+      "rmse_refit": 0.02104802505976266,
+      "sse_refit": 0.03544154871331175
     },
     "model": {
       "coefficient_decimal_places": 3,
-      "formula": "f(x)=1.985+6.428*(((sqrt(1+(5.133*((1.394*((x-(0.0))/(10.0-(0.0))))^3)))-1)+(0.238*((x-(0.0))/(10.0-(0.0)))))/((sqrt(1+(5.133*((1.394*1)^3)))-1)+(0.238*1)))",
+      "formula": "f(x)=3.040+1.178*(expm1((0.001*((x-(0.0))/(5.0-(0.0)))))/expm1((0.001*1))-1) for x<=5.000; 3.040+4.969*((((0.001*((x-(5.0))/(10.0-(5.0))))^2)+(sqrt(1+(4.323*((x-(5.0))/(10.0-(5.0)))))-1))/(((0.001*1)^2)+(sqrt(1+(4.323*1))-1))) for x>5.000",
       "grammar_version": "monotone-expression-v1",
-      "model_instance_hash": "ca46ed79ebfc37467b6e65c3890635c49ff95858ebb87525cf93f8cae8ce3eab",
+      "model_instance_hash": "e0a142ec8bae8993fd256d2d1909a45acc7f1eea8eb95adfbb195f5ab80f7c6e",
       "monotonicity_certified": true,
       "schema_version": "formula-runtime-v1",
       "segments": [
         {
-          "amplitude": 6.428,
+          "amplitude": 1.178,
+          "anchored_right": true,
+          "direction": "increasing",
+          "expression": {
+            "arg": {
+              "arg": {
+                "op": "t"
+              },
+              "op": "scale"
+            },
+            "op": "expm1"
+          },
+          "offset": 3.04,
+          "shape": [
+            0.001
+          ],
+          "x_lower": 0.0,
+          "x_upper": 5.0
+        },
+        {
+          "amplitude": 4.969,
           "anchored_right": false,
           "direction": "increasing",
           "expression": {
@@ -26,42 +46,39 @@
               {
                 "arg": {
                   "arg": {
-                    "arg": {
-                      "arg": {
-                        "op": "t"
-                      },
-                      "op": "scale"
-                    },
-                    "op": "cube"
+                    "op": "t"
+                  },
+                  "op": "scale"
+                },
+                "op": "square"
+              },
+              {
+                "arg": {
+                  "arg": {
+                    "op": "t"
                   },
                   "op": "scale"
                 },
                 "op": "sqrt1p"
-              },
-              {
-                "arg": {
-                  "op": "t"
-                },
-                "op": "scale"
               }
             ],
             "op": "add"
           },
-          "offset": 1.985,
+          "offset": 3.04,
           "shape": [
-            5.133,
-            1.394,
-            0.238
+            0.001,
+            4.323
           ],
-          "x_lower": 0.0,
+          "x_lower": 5.0,
           "x_upper": 10.0
         }
       ]
     },
-    "parameter_count": 5,
-    "segment_count": 1,
+    "parameter_count": 6,
+    "segment_count": 2,
     "segment_shares": [
-      1.0
+      0.5,
+      0.5
     ],
     "status": "VALID"
   },
@@ -197,17 +214,37 @@
   "holdout": {
     "candidates": {
       "LLM": {
-        "mae": 0.16710343225018195,
+        "mae": 0.031257192503011136,
         "model": {
           "coefficient_decimal_places": 3,
-          "formula": "f(x)=2.020+6.390*(((sqrt(1+(1.580*((2.123*((x-(0.0))/(10.0-(0.0))))^3)))-1)+(0.140*((x-(0.0))/(10.0-(0.0)))))/((sqrt(1+(1.580*((2.123*1)^3)))-1)+(0.140*1)))",
+          "formula": "f(x)=3.110+1.258*(expm1((0.001*((x-(0.0))/(5.19-(0.0)))))/expm1((0.001*1))-1) for x<=5.190; 3.110+4.901*((((0.407*((x-(5.19))/(10.0-(5.19))))^2)+(sqrt(1+(12.000*((x-(5.19))/(10.0-(5.19)))))-1))/(((0.407*1)^2)+(sqrt(1+(12.000*1))-1))) for x>5.190",
           "grammar_version": "monotone-expression-v1",
-          "model_instance_hash": "0302ac0ef5ab242d24722940d24a4976e7ad740f015cfb6f9c86a945d1624ebc",
+          "model_instance_hash": "ec6a3a31936f08ce322b2fb7d7402c67621f7052f74ceb4d51f97911c3be25fe",
           "monotonicity_certified": true,
           "schema_version": "formula-runtime-v1",
           "segments": [
             {
-              "amplitude": 6.39,
+              "amplitude": 1.258,
+              "anchored_right": true,
+              "direction": "increasing",
+              "expression": {
+                "arg": {
+                  "arg": {
+                    "op": "t"
+                  },
+                  "op": "scale"
+                },
+                "op": "expm1"
+              },
+              "offset": 3.11,
+              "shape": [
+                0.001
+              ],
+              "x_lower": 0.0,
+              "x_upper": 5.19
+            },
+            {
+              "amplitude": 4.901,
               "anchored_right": false,
               "direction": "increasing",
               "expression": {
@@ -215,59 +252,55 @@
                   {
                     "arg": {
                       "arg": {
-                        "arg": {
-                          "arg": {
-                            "op": "t"
-                          },
-                          "op": "scale"
-                        },
-                        "op": "cube"
+                        "op": "t"
+                      },
+                      "op": "scale"
+                    },
+                    "op": "square"
+                  },
+                  {
+                    "arg": {
+                      "arg": {
+                        "op": "t"
                       },
                       "op": "scale"
                     },
                     "op": "sqrt1p"
-                  },
-                  {
-                    "arg": {
-                      "op": "t"
-                    },
-                    "op": "scale"
                   }
                 ],
                 "op": "add"
               },
-              "offset": 2.02,
+              "offset": 3.11,
               "shape": [
-                1.58,
-                2.123,
-                0.14
+                0.407,
+                12.0
               ],
-              "x_lower": 0.0,
+              "x_lower": 5.19,
               "x_upper": 10.0
             }
           ]
         },
-        "mse": 0.03618752622652767,
+        "mse": 0.003681247069568974,
         "predictions": [
-          2.027427406607962,
-          2.03160678032739,
-          2.036344496861026,
-          2.176072268136668,
-          2.4505140406027954,
-          2.5476329043071377,
-          2.600546238960068,
-          3.715616494610958,
-          3.904490170889809,
-          4.411253658312056,
-          4.518167733375503,
-          5.928130882047766,
-          6.183794843703414,
-          6.5773047338001405,
-          6.98235081132723,
-          8.11536247989025
+          1.913335175833366,
+          1.9440038857258513,
+          1.9746733436265285,
+          2.3120867542927432,
+          2.5575351895629708,
+          2.6189047817470406,
+          2.6495907004444397,
+          3.1099693024782447,
+          3.6010798307872314,
+          4.520137419216827,
+          4.675381692099711,
+          6.206069088461092,
+          6.4253271509160506,
+          6.742741337968642,
+          7.048794397187022,
+          7.8241434797867075
         ],
-        "r2": 0.9910310239078007,
-        "rmse": 0.19023019273114264,
+        "r2": 0.9990876133187507,
+        "rmse": 0.06067328134829181,
         "status": "AVAILABLE"
       },
       "P1": {

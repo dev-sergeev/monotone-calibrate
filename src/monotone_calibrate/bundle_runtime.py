@@ -393,6 +393,23 @@ def _verify_three_way(root: Path, report: dict) -> None:
             hypothesis = FormulaHypothesis.from_dict(entry["hypothesis"])
             if hypothesis.hypothesis_id != entry["hypothesis_id"]:
                 raise ValueError("trace hypothesis identity mismatch")
+        search = report["formula_search"]
+        selection = search.get("structure_selection")
+        if selection:
+            from .formula_search import summarize_structure_selection
+
+            train_mask = ~holdout_mask(x)
+            train_x, train_y = x[train_mask], y[train_mask]
+            # Discovery canonicalizes x/y before computing the variance floor.
+            train_y = train_y[np.lexsort((train_y, train_x))]
+            expected = summarize_structure_selection(search["trace"], len(train_y), float(np.var(train_y)))
+            if selection != expected:
+                raise ValueError("formula structure selection mismatch")
+            selected = search["selected_hypothesis"]
+            if (None if selected is None else FormulaHypothesis.from_dict(selected).hypothesis_id) != expected["selected_hypothesis_id"]:
+                raise ValueError("selected formula does not minimize training BIC")
+        elif search["status"] == "ACCEPTED" and report["llm_advisor"].get("prompt_version") == "llm-formula-discovery-v2":
+            raise ValueError("missing formula structure selection")
     except (ValueError, KeyError, TypeError, IndexError, OverflowError) as error:
         _fail("INVALID_COMPARISON", f"three-way comparison failed verification: {error}")
 

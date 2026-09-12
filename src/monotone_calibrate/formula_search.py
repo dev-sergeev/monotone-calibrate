@@ -33,7 +33,7 @@ from .llm_advisor import summarize_training
 
 
 OUTPUT_SCHEMA_VERSION = "llm-formulas-v1"
-PROMPT_VERSION = "llm-formula-discovery-v1"
+PROMPT_VERSION = "llm-formula-discovery-v2"
 
 FORMULA_RESPONSE_SCHEMA = {
     "type": "object",
@@ -374,27 +374,40 @@ def parse_formulas(
 SYSTEM_PROMPT = """You perform LLM-SR scientific equation discovery for monotone scalar calibration.
 Invent NEW mathematical expressions by composing the grammar operations, not naming registry families.
 Return strict JSON only: {"schema_version":"llm-formulas-v1","hypotheses":[{"branches":[EXPRESSION]}]}.
-Propose 1 to 4 diverse hypotheses per call. Each has one or two branches, no other fields.
+Propose 2 to 4 diverse hypotheses per call: include at least one SINGLE curve and one TWO-BRANCH piecewise function.
+Each hypothesis has one or two branches, no other fields. These are alternatives, not a requirement to select two branches.
+For a piecewise function, branches[0] is the LEFT function and branches[1] the RIGHT function.
+Choose each branch expression independently: the two intervals may need DIFFERENT mathematical shapes.
+Each branch has its own local coordinate t and independently optimized shape parameters and amplitude.
+The numerical solver selects the breakpoint and the shared join value; do not supply them yourself.
 Grammar: {"op":"t"}; unary {"op":OP,"arg":EXPRESSION}; binary {"op":OP,"args":[EXPRESSION,EXPRESSION]}.
 Unary OP: scale, square, cube, expm1, log1p, sqrt1p, saturate. Binary OP: add, mul.
 scale(u)=p*u with a NEW positive parameter placeholder p optimized locally; supply NO numeric values or parameter names.
 expm1(u)=exp(u)-1, sqrt1p(u)=sqrt(1+u)-1, saturate(u)=u/(1+u).
 Each branch shape B(t) is normalized as B(t)/B(1). Solver fits offset and nonnegative amplitude,
 both directions, and (for two branches) a continuous join with fitted breakpoint and 40/60 balance.
-No Python, strings containing formulas, constants, conditionals, arbitrary powers, abs, min, max or piecewise nodes.
+No Python, strings containing formulas, constants, conditionals, arbitrary powers, abs, min or max.
+Represent piecewise functions ONLY as two entries in branches, never as a nested piecewise node.
 At most 31 nodes total, depth 8, 10 numeric parameters including offset and amplitudes.
 Polynomial degree budget: t=1, add=max, mul=sum, square=2*arg, cube=3*arg, other unary=arg; maximum 3.
 At most ONE of expm1/log1p/sqrt1p/saturate on any root-to-leaf path (also through scale).
 At least one branch must go beyond registry: sqrt1p, nonlinear transform of quadratic/cubic,
 or sum/product of a transformed term with another variable-dependent term.
 Pure polynomials and simple exp/log/reciprocal shapes alone are already in the registry and rejected.
-Use the observed training summary and previous negative-MSE feedback to improve fit while preferring short structures.
+In a TWO-branch hypothesis, a linear/polynomial/logarithmic branch IS allowed if the OTHER branch goes beyond the registry.
+Use training data and scored experience to improve both one- and two-branch alternatives while preferring short structures.
+Final selection minimizes training BIC = n*log(MSE)+k*log(n), including one extra parameter for a breakpoint.
+If one curve suffices, its smaller complexity can win; if regimes differ, propose an explicit two-branch alternative.
 Include scale nodes to give the numeric optimizer meaningful shape parameters, especially inside nonlinear functions.
-The trivial tree {"op":"t"} and scaled t are INVALID answers, even if the data look nearly linear.
+The trivial tree {"op":"t"} and scaled t ALONE are INVALID single-branch answers.
 Return an actual NEW nonlinear expression. Examples of valid syntax (adapt structures to the data):
 {"branches":[{"op":"sqrt1p","arg":{"op":"scale","arg":{"op":"t"}}}]}
 {"branches":[{"op":"expm1","arg":{"op":"square","arg":{"op":"scale","arg":{"op":"t"}}}}]}
 {"branches":[{"op":"add","args":[{"op":"log1p","arg":{"op":"scale","arg":{"op":"t"}}},{"op":"square","arg":{"op":"t"}}]}]}
+Piecewise example with DIFFERENT left and right functions (logarithm then square root):
+{"branches":[{"op":"log1p","arg":{"op":"scale","arg":{"op":"t"}}},{"op":"sqrt1p","arg":{"op":"scale","arg":{"op":"t"}}}]}
+Piecewise example with a linear left branch and a nonlinear right branch:
+{"branches":[{"op":"t"},{"op":"sqrt1p","arg":{"op":"scale","arg":{"op":"t"}}}]}
 These are examples only; invent other valid expressions if they fit better. sqrt1p is also outside the registry.
 """
 
@@ -512,6 +525,7 @@ class FormulaSearchResult:
     calls_failed: int = 0
     warning_codes: tuple[str, ...] = ()
     usage: dict = field(default_factory=dict)
+    structure_selection: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -522,10 +536,76 @@ class FormulaSearchResult:
             "trace": list(self.trace),
             "warnings": list(self.warning_codes),
             "usage": dict(self.usage),
+            "structure_selection": dict(self.structure_selection),
             "selected_hypothesis": None
             if self.best is None
             else self.best.hypothesis.to_dict(),
         }
+
+
+def summarize_structure_selection(
+    trace: list | tuple, n_train: int, variance: float
+) -> dict:
+    """Explain the training-only decision, including untested structures explicitly."""
+    floor = max(variance, 1.0) * 1e-12
+    alternatives = []
+    for branches in (1, 2):
+        entries = [r for r in trace if len(r["hypothesis"]["branches"]) == branches]
+        valid = []
+        for entry in entries:
+            if entry["status"] != "VALID":
+                continue
+            hypothesis = FormulaHypothesis.from_dict(entry["hypothesis"])
+            mse = -entry["fitness_negative_mse"]
+            if not math.isfinite(mse) or mse < 0:
+                raise ValueError("INVALID_FORMULA_FITNESS")
+            parameters = hypothesis.parameter_count + int(branches == 2)
+            valid.append(
+                {
+                    "hypothesis_id": hypothesis.hypothesis_id,
+                    "hypothesis": hypothesis.to_dict(),
+                    "train_rmse": math.sqrt(mse),
+                    "parameter_count": parameters,
+                    "bic": n_train * math.log(max(mse, floor))
+                    + parameters * math.log(n_train),
+                }
+            )
+        best = (
+            min(valid, key=lambda r: (r["bic"], r["hypothesis_id"])) if valid else None
+        )
+        alternatives.append(
+            {
+                "branches": branches,
+                "evaluated": len(entries),
+                "valid": len(valid),
+                "best": best,
+            }
+        )
+    available = [a for a in alternatives if a["best"] is not None]
+    winner = (
+        min(
+            available,
+            key=lambda a: (a["best"]["bic"], a["branches"], a["best"]["hypothesis_id"]),
+        )
+        if available
+        else None
+    )
+    return {
+        "policy": "training-bic-one-vs-two-v1",
+        "n_train": n_train,
+        "mse_floor": floor,
+        "alternatives": alternatives,
+        "comparison_complete": len(available) == 2,
+        "selected_branches": None if winner is None else winner["branches"],
+        "selected_hypothesis_id": None
+        if winner is None
+        else winner["best"]["hypothesis_id"],
+        "reason": "LOWEST_TRAINING_BIC"
+        if len(available) == 2
+        else "ONLY_ONE_STRUCTURE_VALID"
+        if available
+        else "NO_VALID_FORMULA",
+    }
 
 
 def run_formula_search(
@@ -559,13 +639,19 @@ def run_formula_search(
             (f for f in cache.values() if f is not None),
             key=lambda f: (f.mse, f.hypothesis.hypothesis_id),
         )
-        experience = pool[:1]
+        # Keep the best of EACH structure visible; a good single curve must
+        # not erase piecewise exploration from the model's feedback.
+        experience = [
+            next(f for f in pool if f.model.segment_count == count)
+            for count in (1, 2)
+            if any(f.model.segment_count == count for f in pool)
+        ]
         choices = [
             f
             for f in (island or pool)
-            if not experience or f.hypothesis != experience[0].hypothesis
+            if all(f.hypothesis != item.hypothesis for item in experience)
         ]
-        if choices:
+        if choices and len(experience) < 2:
             scores = np.asarray(
                 [-f.mse / max(float(np.var(yv)), 1e-12) for f in choices]
             )
@@ -580,14 +666,28 @@ def run_formula_search(
             "coordinate": "t=(x-A)/(B-A) in [0,1] within each branch",
             "training_summary": summary,
             "experience": [
-                {"hypothesis": f.hypothesis.to_dict(), "fitness_negative_mse": -f.mse}
+                {
+                    "hypothesis": f.hypothesis.to_dict(),
+                    "fitness_negative_mse": -f.mse,
+                    "branches": f.model.segment_count,
+                }
                 for f in experience
             ],
             "previous_rejections": rejected_responses[-4:]
             + [r["status"] for r in trace[-4:] if r["status"] != "VALID"],
-            "task": "Discover 1-4 NEW nonlinear expressions outside the registry. The linear t tree and simple registry families will be rejected. Follow the valid examples in the system instruction and adapt to this training data.",
+            "structure_coverage": {
+                "required_branch_counts": [1, 2],
+                "missing_valid_branch_counts": [
+                    count
+                    for count in (1, 2)
+                    if not any(f.model.segment_count == count for f in pool)
+                ],
+                "instruction": "Include one single curve and one explicit two-branch hypothesis. Choose LEFT and RIGHT expressions independently. Prioritize missing structures; do not duplicate a previous hypothesis.",
+            },
+            "task": "Discover 2-4 hypotheses including a single curve AND a two-branch piecewise function. At least one branch of each hypothesis must go beyond the registry. The other branch may be linear or a different shape. Coefficients and breakpoint are optimized locally.",
             "evaluation": {
                 "fitness": "negative MSE after numeric optimization and rounding",
+                "selection": "training BIC including breakpoint; heldout labels are never used for selection",
                 "shape_parameter_bounds": list(SHAPE_BOUNDS),
                 "coefficient_decimals": 3,
             },
@@ -688,22 +788,10 @@ def run_formula_search(
             islands = ranked[:5] + [
                 [founders[i % len(founders)]] if founders else [] for i in range(5)
             ]
-    valid = [f for f in cache.values() if f is not None]
-    # Training-only BIC guards excessive complexity; test labels never select a tree.
-    floor = max(float(np.var(yv)), 1.0) * 1e-12
-    best = (
-        min(
-            valid,
-            key=lambda f: (
-                len(yv) * math.log(max(f.mse, floor))
-                + (f.hypothesis.parameter_count + int(f.model.segment_count == 2))
-                * math.log(len(yv)),
-                f.hypothesis.hypothesis_id,
-            ),
-        )
-        if valid
-        else None
-    )
+    selection = summarize_structure_selection(trace, len(yv), float(np.var(yv)))
+    best = cache.get(selection["selected_hypothesis_id"])
+    if best is not None and not selection["comparison_complete"]:
+        warnings.add("LLM_STRUCTURE_COMPARISON_INCOMPLETE")
     if failed:
         warnings.add(
             "LLM_FORMULA_PARTIAL_FAILURE" if best else "LLM_FORMULA_UNAVAILABLE"
@@ -720,4 +808,5 @@ def run_formula_search(
         failed,
         tuple(sorted(warnings)),
         usage,
+        selection,
     )

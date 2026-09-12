@@ -191,7 +191,7 @@ def test_formula_discovery_never_changes_registry_baselines(
     tmp_path, monkeypatch
 ) -> None:
     from monotone_calibrate.bundle_runtime import verify_bundle, write_predictions
-    from monotone_calibrate.formula_search import fit_formula
+    from monotone_calibrate.comparison import compare_formula_discovery
     from monotone_calibrate.expressions import Expression as E, FormulaHypothesis
 
     _clear_llm_environment(monkeypatch)
@@ -223,15 +223,12 @@ def test_formula_discovery_never_changes_registry_baselines(
         captured["x"] = x
         captured["fit_options"] = fit_options
         h = FormulaHypothesis((E("sqrt1p", (E("scale", (E("t"),)),)),))
-        fitted = fit_formula(x, y, h)
-        return FormulaComparison(
-            FormulaSearchResult(
-                "ACCEPTED",
-                fitted,
-                calls_succeeded=1,
-                warning_codes=("LLM_TRAINING_SUMMARY_DISCLOSED",),
-            ),
-            fitted,
+        class Sampler:
+            def sample(self, request):
+                return (h,)
+
+        return compare_formula_discovery(
+            x, y, config, fit_options, sampler=Sampler(),
         )
 
     monkeypatch.setattr(application, "compare_formula_discovery", discovery)

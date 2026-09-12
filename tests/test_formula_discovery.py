@@ -22,6 +22,7 @@ from monotone_calibrate.formula_search import (
     fit_formula,
     parse_formulas,
     run_formula_search,
+    summarize_structure_selection,
 )
 
 
@@ -48,6 +49,91 @@ class Sampler:
     def sample(self, request):
         self.requests.append(copy.deepcopy(request))
         return (self.hypothesis,)
+
+
+@pytest.mark.parametrize("sign", [1, -1])
+def test_search_can_choose_different_left_and_right_functions(sign):
+    left = E("log1p", (E("scale", (E("t"),)),))
+    right = sqrt_hypothesis().branches[0]
+    piecewise = FormulaHypothesis((left, right))
+
+    class Both:
+        def sample(self, request):
+            return (sqrt_hypothesis(), piecewise)
+
+    x = np.linspace(0, 10, 80)
+    left_y = 1.2 * (np.log1p(2 * np.minimum(x, 5) / 5) / np.log(3) - 1)
+    right_y = 5 * (np.sqrt(1 + 5 * np.maximum(x - 5, 0) / 5) - 1) / (np.sqrt(6) - 1)
+    y = 3 + sign * np.where(x <= 5, left_y, right_y)
+    result = run_formula_search(x, y, config(1), sampler=Both())
+    assert result.best.hypothesis == piecewise
+    assert result.best.mse < 1e-5
+    model = result.best.model
+    assert model.breakpoint == 5.0
+    assert model.segments[0].expression != model.segments[1].expression
+    assert model.segments[0].predict_unchecked(5) == model.segments[
+        1
+    ].predict_unchecked(5)
+    assert np.all(sign * np.diff(model.predict(np.linspace(0, 10, 1001))) >= 0)
+    assert result.structure_selection["comparison_complete"]
+    assert result.structure_selection["selected_branches"] == 2
+
+
+def test_bic_prefers_single_curve_when_piecewise_does_not_improve_fit():
+    trace = [
+        {
+            "hypothesis": h.to_dict(),
+            "hypothesis_id": h.hypothesis_id,
+            "status": "VALID",
+            "fitness_negative_mse": -0.01,
+        }
+        for h in (sqrt_hypothesis(), sqrt_hypothesis(True))
+    ]
+    result = summarize_structure_selection(trace, 60, 1.0)
+    assert result["selected_branches"] == 1
+    assert result["comparison_complete"]
+    assert result["reason"] == "LOWEST_TRAINING_BIC"
+    one, two = result["alternatives"]
+    assert two["best"]["parameter_count"] == sqrt_hypothesis(True).parameter_count + 1
+    assert one["best"]["bic"] < two["best"]["bic"]
+
+
+def test_missing_piecewise_proposals_trigger_feedback_and_explicit_incomplete_status():
+    sampler = Sampler()
+    x = np.linspace(0, 1, 20)
+    result = run_formula_search(x, np.sqrt(1 + x), config(), sampler=sampler)
+    assert sampler.requests[0]["structure_coverage"]["missing_valid_branch_counts"] == [
+        1,
+        2,
+    ]
+    assert sampler.requests[1]["structure_coverage"]["missing_valid_branch_counts"] == [
+        2
+    ]
+    assert "LLM_STRUCTURE_COMPARISON_INCOMPLETE" in result.warning_codes
+    assert not result.structure_selection["comparison_complete"]
+    assert result.structure_selection["reason"] == "ONLY_ONE_STRUCTURE_VALID"
+    assert result.structure_selection["alternatives"][1]["evaluated"] == 0
+
+
+def test_feedback_retains_best_of_both_structures():
+    class Both(Sampler):
+        def sample(self, request):
+            self.requests.append(copy.deepcopy(request))
+            return (sqrt_hypothesis(), sqrt_hypothesis(True))
+
+    sampler = Both()
+    x = np.linspace(0, 10, 30)
+    run_formula_search(
+        x,
+        np.sqrt(1 + x),
+        config(),
+        sampler=sampler,
+        fit_options=FormulaFitOptions(starts=1, maxiter=15, max_cells=1),
+    )
+    assert (
+        sampler.requests[1]["structure_coverage"]["missing_valid_branch_counts"] == []
+    )
+    assert {item["branches"] for item in sampler.requests[1]["experience"]} == {1, 2}
 
 
 @pytest.mark.parametrize(
@@ -349,8 +435,9 @@ def test_provider_schema_and_local_parser_accept_the_same_valid_tree():
     assert list(validator.iter_errors(value))
 
 
+@pytest.mark.parametrize("shuffled", [False, True])
 def test_complete_bundle_reconciles_all_three_models_and_detects_resealed_tampering(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, shuffled
 ):
     from hashlib import sha256
     import shutil
@@ -360,6 +447,9 @@ def test_complete_bundle_reconciles_all_three_models_and_detects_resealed_tamper
 
     x = np.linspace(0, 10, 30)
     y = 1 + 2 * (np.sqrt(1 + 3 * x / 10) - 1)
+    if shuffled:
+        order = np.random.default_rng(123).permutation(len(x))
+        x, y = x[order], 1000 * y[order]
     source = tmp_path / "data.csv"
     np.savetxt(
         source, np.column_stack([x, y]), delimiter=",", header="x,y", comments=""
@@ -384,11 +474,17 @@ def test_complete_bundle_reconciles_all_three_models_and_detects_resealed_tamper
     report = json.loads(result.bundle.report_json.read_text())
     assert report["comparison_holdout"]["status"] == "AVAILABLE"
     assert all(report["candidates"][name]["available"] for name in ("P1", "P2", "LLM"))
-    assert report["comparison_holdout"]["candidates"]["LLM"]["rmse"] < 0.002
+    assert report["comparison_holdout"]["candidates"]["LLM"]["rmse"] < 0.002 * (
+        1000 if shuffled else 1
+    )
     text = result.bundle.report_html.read_text()
     assert "LLM — новая формула" in text and 'src="plot-llm.svg"' in text
+    assert "Почему выбрана такая LLM-функция" in text
+    assert "Сравнение неполное" in text
 
-    for i, corrupt in enumerate(("prediction", "metric", "expression")):
+    for i, corrupt in enumerate(
+        ("prediction", "metric", "expression", "structure_selection")
+    ):
         destination = tmp_path / f"corrupt-{i}"
         shutil.copytree(result.bundle.root, destination)
         if corrupt == "prediction":
@@ -403,11 +499,17 @@ def test_complete_bundle_reconciles_all_three_models_and_detects_resealed_tamper
                 writer.writerows(rows)
         else:
             path = destination / (
-                "report.json" if corrupt == "metric" else "model-llm.json"
+                "report.json"
+                if corrupt in {"metric", "structure_selection"}
+                else "model-llm.json"
             )
             payload = json.loads(path.read_text())
             if corrupt == "metric":
                 payload["comparison_holdout"]["candidates"]["LLM"]["rmse"] = 12345
+            elif corrupt == "structure_selection":
+                payload["formula_search"]["structure_selection"]["alternatives"][0][
+                    "best"
+                ]["bic"] = 12345
             else:
                 payload["segments"][0]["expression"] = {
                     "op": "square",
